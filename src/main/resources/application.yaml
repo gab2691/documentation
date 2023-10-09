@@ -1,0 +1,17 @@
+server:
+  port: 8089
+  servlet:
+    context-path: /docBack
+
+spring:
+  http:
+    log-request-details: 'true'
+logging:
+  level:
+    org:
+      springframework:
+        web:
+          reactive:
+            function:
+              client:
+                ExchangeFunctions: TRACE
