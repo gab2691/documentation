@@ -6,12 +6,20 @@ server:
 spring:
   http:
     log-request-details: 'true'
+  mvc:
+    throw-exception-if-valid-fails: 'true'
+
 logging:
   level:
     org:
       springframework:
-        web:
-          reactive:
-            function:
-              client:
-                ExchangeFunctions: TRACE
+        validation: DEBUG
+        web: DEBUG
+
+directory:
+  file: 'C:\Users\Usuário\IdeaProjects\docs'
+  treeView-file: 'C:\Users\Usuário\Documents\docApi\tree-view.json'
+
+confluence:
+  path: 'https://confluence.santanderbr.corp'
+  uri-login: 'https://confluence.santanderbr.corp/dologin.action'

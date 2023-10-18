@@ -1,7 +1,12 @@
 package br.documentation.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
+@AllArgsConstructor
+@NoArgsConstructor
 public class TreeViewDTO {
 
     private String title;

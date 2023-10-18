@@ -14,7 +14,8 @@ import java.util.logging.Logger;
 @Service
 public class JGitService {
 
-    private final String remoteRepo = "https://gitlab.santanderbr.corp/developer-experience/chapter-java/docs/blob/master/";
+    public static final String JAVA_DOCS_GIT = "https://gitlab.santanderbr.corp/developer-experience/chapter-java/docs.git";
+    private static final String remoteRepo = "https://gitlab.santanderbr.corp/developer-experience/chapter-java/docs/blob/master/";
     private final String localRepo = "C:\\Users\\T734536\\OneDrive - Santander Office 365\\Documents\\Workspace\\docsRepo\\docs";
     private final String user = "t734536";
     private final String pass =  "Gbb0914@";
@@ -48,7 +49,7 @@ public class JGitService {
                     .setMessage("Doc " + title).call();
 
             git.push()
-                    .setRemote("https://gitlab.santanderbr.corp/developer-experience/chapter-java/docs.git")
+                    .setRemote(JAVA_DOCS_GIT)
                     .setCredentialsProvider(new UsernamePasswordCredentialsProvider(user, pass))
                     .setForce(true)
                     .call();
