@@ -1,0 +1,486 @@
+{
+    "title": "Java",
+    "url": "/docs/java",
+    "sidenav": [
+        {
+            "title": "Arsenal Cloud Native",
+            "url": "/arsenal-cloud-native",
+            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Arsenal+Cloud+Native",
+            "children": [
+                {
+                    "title": "Arquitetura de Desenvolvimento",
+                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento",
+                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Arquitetura+de+Desenvolvimento",
+                    "children": [
+                        {
+                            "title": "Utilizando o Kafka",
+                            "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/utilizando-o-kafka",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Utilizando+o+Kafka",
+                            "children": [
+                                {
+                                    "title": "Kafka Para Windows",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/utilizando-kafka/kafka-para-windows",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Kafka+Para+Windows",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 1,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Arsenal gRPC",
+                            "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/arsenal-grpc",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Arsenal+gRPC",
+                            "children": null,
+                            "order": 2,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Arsenal Photon Serverless FaaS",
+                            "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/arsenal-photon-serverless-faas",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Arsenal+Photon+Serverless+FaaS",
+                            "children": [
+                                {
+                                    "title": "Home",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/photon/home",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Home",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Quickstart Arsenal Photon Serverless",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/photon/quickstart-arsenal-photon-serverless",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Quickstart+Arsenal+Photon+Step+Functions",
+                                    "children": null,
+                                    "order": 2,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Quickstart Arsenal Photon Step Functions",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/photon/quickstart-arsenal-photon-step-functions",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Quickstart+Arsenal+Photon+Serverless",
+                                    "children": null,
+                                    "order": 3,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 3,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Bibliotecas",
+                            "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/bibliotecas",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Bibliotecas?src=contextnavpagetreemode",
+                            "children": [
+                                {
+                                    "title": "Project Lombok",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/bibliotecas/project-lombok",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Project+Lombok",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Mapeamento de Objetos",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/bibliotecas/mapeamento-de-objetos",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Mapeamento+de+Objetos",
+                                    "children": null,
+                                    "order": 2,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 4,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Testes",
+                            "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/testes",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Testes",
+                            "children": [
+                                {
+                                    "title": "Testes Unitários",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/testes/testes-unitrios",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=108042960",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Testes de Integração",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/testes/testes-de-integrao",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=118703355",
+                                    "children": null,
+                                    "order": 2,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Cucumber",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/testes/cucumber",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Cucumber",
+                                    "children": null,
+                                    "order": 3,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 5,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Biblioteca Arsenal Core",
+                            "url": "/arsenal-cloud-native/arquitetura-de-desenvolvimento/biblioteca-arsenal-core",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Biblioteca+Arsenal+Core",
+                            "children": null,
+                            "order": 6,
+                            "indexPage": false
+                        }
+                    ],
+                    "order": 0,
+                    "indexPage": true
+                },
+                {
+                    "title": "Arquitetura de Execução",
+                    "url": "/arsenal-cloud-native/arquitetura-de-execuo",
+                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=100542347",
+                    "children": [
+                        {
+                            "title": "Configuração",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/configurao",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=108041435",
+                            "children": [
+                                {
+                                    "title": "Configuração Multi-ambiente",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/configuracao/configurao-multi-ambiente",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=100546563",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Secrets",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/configuracao/secrets",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Secrets",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 1,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Exposição de Serviços",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/exposio-de-servios",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=100545775",
+                            "children": [
+                                {
+                                    "title": "Serviços REST",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/exposicao-servicos/servios-rest",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=100545777",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 2,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Consumo de Serviços",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/consumo-de-servios",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=111054493",
+                            "children": [
+                                {
+                                    "title": "Integração IBM MQ",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/consumo-servicos/integrao-ibm-mq",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=666514945",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "REST Client",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/consumo-servicos/rest-client",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/REST+Client",
+                                    "children": null,
+                                    "order": 2,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 2,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Logging",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/logging",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Logging",
+                            "children": [
+                                {
+                                    "title": "Telemetry",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/logging/telemetry",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Telemetry",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 3,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Tratamento de Erros",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/tratamento-de-erros",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Tratamento+de+Erros",
+                            "children": null,
+                            "order": 4,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Resiliência",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/resilincia",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=113836716",
+                            "children": [
+                                {
+                                    "title": "Circuit Breaker",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/resiliencia/circuit-breaker",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Circuit+Breaker",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Rate Limiter e TimeLimiter",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/resiliencia/rate-limiter-e-timelimiter",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Rate+Limiter+e+TimeLimiter",
+                                    "children": null,
+                                    "order": 2,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Retry",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/resiliencia/retry",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Retry",
+                                    "children": null,
+                                    "order": 3,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Monitoramento",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/resiliencia/monitoramento",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Monitoramento",
+                                    "children": null,
+                                    "order": 4,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 5,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Persistência",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/persistncia",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=108041497",
+                            "children": [
+                                {
+                                    "title": "Banco Chave Valor",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/persistencia/banco-chave-valor",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Banco+Chave+Valor",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Bancos Relacionais",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/persistencia/bancos-relacionais",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=108041497",
+                                    "children": null,
+                                    "order": 2,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Padrão Repository",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/persistencia/padro-repository",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=111052215",
+                                    "children": null,
+                                    "order": 3,
+                                    "indexPage": false
+                                },
+                                {
+                                    "title": "Schema migration",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/persistencia/schema-migration",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Schema+Migration",
+                                    "children": null,
+                                    "order": 4,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 5,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Caching",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/caching",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Caching",
+                            "children": [
+                                {
+                                    "title": "Cache Local",
+                                    "url": "/arsenal-cloud-native/arquitetura-de-execucao/caching/cache-local",
+                                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Cache+Local",
+                                    "children": null,
+                                    "order": 1,
+                                    "indexPage": false
+                                }
+                            ],
+                            "order": 6,
+                            "indexPage": true
+                        },
+                        {
+                            "title": "Processamento Agendado",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/processamento-agendado",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Processamento+Agendado",
+                            "children": null,
+                            "order": 7,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Rastreabilidade de Transações",
+                            "url": "/arsenal-cloud-native/arquitetura-de-execucao/rastreabilidade-de-transaes",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=119449599",
+                            "children": null,
+                            "order": 8,
+                            "indexPage": false
+                        }
+                    ],
+                    "order": 2,
+                    "indexPage": true
+                },
+                {
+                    "title": "Arquitetura de Operação",
+                    "url": "/arsenal-cloud-native/arquitetura-de-operao",
+                    "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=100542974",
+                    "children": [
+                        {
+                            "title": "Health Check",
+                            "url": "/arsenal-cloud-native/arquitetura-de-operacao/health-check",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Health+Check",
+                            "children": null,
+                            "order": 1,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Métricas e Monitoramento",
+                            "url": "/arsenal-cloud-native/arquitetura-de-operacao/mtricas-e-monitoramento",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=119449674",
+                            "children": null,
+                            "order": 2,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Trace Distribuído",
+                            "url": "/arsenal-cloud-native/arquitetura-de-operacao/trace-distribudo",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=108286152",
+                            "children": null,
+                            "order": 3,
+                            "indexPage": false
+                        }
+                    ],
+                    "order": 3,
+                    "indexPage": true
+                },
+                {
+                    "title": "Arsenal 2",
+                    "url": "/arsenal-cloud-native/arsenal-2",
+                    "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Arsenal+2",
+                    "children": [
+                        {
+                            "title": "Arsenal Security",
+                            "url": "/arsenal-cloud-native/arsenal2/arsenal-security",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Arsenal+Security",
+                            "children": null,
+                            "order": 1,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Contract First",
+                            "url": "/arsenal-cloud-native/arsenal2/contract-first",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Contract+First",
+                            "children": null,
+                            "order": 2,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Embedded Crypto",
+                            "url": "/arsenal-cloud-native/arsenal2/embedded-crypto",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Embedded+Crypto",
+                            "children": null,
+                            "order": 3,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "RestTemplate X WebClient",
+                            "url": "/arsenal-cloud-native/arsenal2/resttemplate-x-webclient",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/RestTemplate+X+WebClient",
+                            "children": null,
+                            "order": 4,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Log and Telemetry",
+                            "url": "/arsenal-cloud-native/arsenal2/log-and-telemetry",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/Log+and+Telemetry",
+                            "children": null,
+                            "order": 5,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "Open API Specification 3 (OAS3)",
+                            "url": "/arsenal-cloud-native/arsenal2/open-api-specification-3-oas3",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=508053251",
+                            "children": null,
+                            "order": 6,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "QuickStart Arsenal 2",
+                            "url": "/arsenal-cloud-native/arsenal2/quickstart-arsenal-2",
+                            "urlConfluence": "https://confluence.santanderbr.corp/display/ARSENALCNA/QuickStart+Arsenal+2",
+                            "children": null,
+                            "order": 7,
+                            "indexPage": false
+                        },
+                        {
+                            "title": "release-notes-v2",
+                            "url": "/arsenal-cloud-native/arsenal2/release-notes-v2",
+                            "urlConfluence": "https://confluence.santanderbr.corp/pages/viewpage.action?pageId=533070223",
+                            "children": null,
+                            "order": 8,
+                            "indexPage": false
+                        }
+                    ],
+                    "order": 4,
+                    "indexPage": true
+                }
+            ],
+            "order": 0,
+            "indexPage": false
+        },
+        {
+            "title": "Camel Headers",
+            "url": "/camel-tratativa-de-headers",
+            "urlConfluence": "https://confluence.santanderbr.corp/display/ENGSW/Camel+-+Tratativa+de+headers",
+            "children": null,
+            "order": 0,
+            "indexPage": false
+        },
+        {
+            "title": "Templates",
+            "url": "/template-de-conexao-service-criptografia-descriptografia-e-resiliencia",
+            "urlConfluence": null,
+            "children": null,
+            "order": 0,
+            "indexPage": false
+        }
+    ]
+}
