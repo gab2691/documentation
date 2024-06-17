@@ -1,19 +1,42 @@
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
+const path = require('path');
+
+// Configure o caminho para o seu ChromeDriver
+const driverPath = path.join(__dirname, 'path/to/chromedriver'); // Altere para o caminho do seu ChromeDriver
+const service = new chrome.ServiceBuilder(driverPath).build();
+chrome.setDefaultService(service);
 
 (async function example() {
+    // Inicialize o navegador
     let driver = await new Builder().forBrowser('chrome').build();
+
     try {
+        // Navegue para o site onde deseja adicionar os cookies
         await driver.get('https://github.com');
 
         // Adicionar cookie
-        await driver.manage().addCookie({ name: 'user_test', value: 'Nf49uRwaB0eqBeW7pV9YYP_Sz_0nWSAa50QFtmyUxiZvW9Pm', domain: '.github.com', path: '/' });
+        await driver.manage().addCookie({
+            name: 'user_test',
+            value: 'Nf49uRwaB0eqBeW7pV9YYP_Sz_0nWSAa50QFtmyUxiZvW9Pm',
+            domain: '.github.com',
+            path: '/',
+            expiry: Math.floor(new Date('2023-12-30T23:59:59Z').getTime() / 1000),
+            httpOnly: false,
+            secure: false
+        });
+
+        // Recarregar a página para aplicar os cookies
         await driver.navigate().refresh();
 
         // Verificar se o cookie foi adicionado
         let cookies = await driver.manage().getCookies();
         console.log(cookies);
+
+        // Aguarde alguns segundos para inspeção
+        await driver.sleep(5000);
     } finally {
+        // Feche o navegador
         await driver.quit();
     }
 })();
