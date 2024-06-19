@@ -1,36 +1,38 @@
-System.setProperty("webdriver.chrome.driver", "path/to/chromedriver"); // Altere para o caminho do seu ChromeDriver
+@GetMapping("/test")
+    public ResponseEntity<String> test() throws NoSuchMethodException, MethodArgumentNotValidException {
+        // Simular um objeto de requisição inválido
+        TestRequest testRequest = new TestRequest();
+        
+        // Criar um BindException e adicionar um erro simulado
+        BindingResult bindingResult = new BindException(testRequest, "testRequest");
+        bindingResult.rejectValue("name", "NotBlank", "Name must not be blank");
 
-        // Inicializar o navegador
-        WebDriver driver = new ChromeDriver();
+        // Obter um MethodParameter real
+        Method method = TestController.class.getMethod("testWithValidRequest", TestRequest.class);
+        MethodParameter methodParameter = new MethodParameter(method, 0);
 
-        try {
-            // Navegar para o site onde deseja adicionar os cookies
-            driver.get("https://github.com");
+        // Criar a exceção MethodArgumentNotValidException
+        MethodArgumentNotValidException exception = new MethodArgumentNotValidException(methodParameter, bindingResult);
 
-            // Criar e adicionar cookies
-            Cookie cookie1 = new Cookie.Builder("user_test", "Nf49uRwaB0eqBeW7pV9YYP_Sz_0nWSAa50QFtmyUxiZvW9Pm")
-                .domain(".github.com")
-                .path("/")
-                .expiresOn(new java.util.Date(1719839632L * 1000))
-                .isHttpOnly(false)
-                .isSecure(false)
-                .build();
+        // Lançar a exceção
+        throw exception;
+    }
 
-            driver.manage().addCookie(cookie1);
+    @GetMapping("/testWithValidRequest")
+    public ResponseEntity<String> testWithValidRequest(@Valid TestRequest request) {
+        return ResponseEntity.ok("Valid request");
+    }
 
-            // Recarregar a página para aplicar os cookies
-            driver.navigate().refresh();
+    public static class TestRequest {
+        @NotBlank
+        private String name;
 
-            // Verificar se os cookies foram adicionados
-            for (Cookie cookie : driver.manage().getCookies()) {
-                System.out.println(cookie);
-            }
-
-            // Manter o navegador aberto para inspeção
-            Thread.sleep(5000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            // Fechar o navegador
-            driver.quit();
+        // getters and setters
+        public String getName() {
+            return name;
         }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
