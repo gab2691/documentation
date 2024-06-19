@@ -1,0 +1,38 @@
+@GetMapping("/test")
+    public ResponseEntity<String> test() throws NoSuchMethodException, MethodArgumentNotValidException {
+        // Simular um objeto de requisição inválido
+        TestRequest testRequest = new TestRequest();
+        
+        // Criar um BindException e adicionar um erro simulado
+        BindingResult bindingResult = new BindException(testRequest, "testRequest");
+        bindingResult.rejectValue("name", "NotBlank", "Name must not be blank");
+
+        // Obter um MethodParameter real
+        Method method = TestController.class.getMethod("testWithValidRequest", TestRequest.class);
+        MethodParameter methodParameter = new MethodParameter(method, 0);
+
+        // Criar a exceção MethodArgumentNotValidException
+        MethodArgumentNotValidException exception = new MethodArgumentNotValidException(methodParameter, bindingResult);
+
+        // Lançar a exceção
+        throw exception;
+    }
+
+    @GetMapping("/testWithValidRequest")
+    public ResponseEntity<String> testWithValidRequest(@Valid TestRequest request) {
+        return ResponseEntity.ok("Valid request");
+    }
+
+    public static class TestRequest {
+        @NotBlank
+        private String name;
+
+        // getters and setters
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
