@@ -1,28 +1,12 @@
-public ResponseEntity<String> testConstraintViolation() {
-        // Simular uma violação de restrição
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        TestRequest testRequest = new TestRequest(); // name é nulo ou vazio, violando @NotBlank
-        Set<ConstraintViolation<TestRequest>> violations = validator.validate(testRequest);
+String invalidValue = "abc";
 
-        if (!violations.isEmpty()) {
-            ConstraintViolation<TestRequest> violation = violations.iterator().next();
-            // Criar a exceção ConstraintViolationException
-            throw new ConstraintViolationException(Collections.singleton(violation));
-        }
+        // Obter um MethodParameter real
+        MethodParameter methodParameter = new MethodParameter(
+                TestController.class.getMethod("exampleMethod", Integer.class), 0);
 
-        return ResponseEntity.ok("Valid request");
-    }
+        // Criar a exceção MethodArgumentTypeMismatchException
+        MethodArgumentTypeMismatchException exception = new MethodArgumentTypeMismatchException(
+                invalidValue, Integer.class, "exampleParam", methodParameter, new TypeMismatchException(invalidValue, Integer.class));
 
-    public static class TestRequest {
-        @NotBlank
-        private String name;
-
-        // getters and setters
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-    }
+        // Lançar a exceção
+        throw exception;
