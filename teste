@@ -1,25 +1,15 @@
-@GetMapping("/test")
-    public ResponseEntity<String> test() throws NoSuchMethodException, MethodArgumentNotValidException {
-        // Simular um objeto de requisição inválido
-        TestRequest testRequest = new TestRequest();
-        
-        // Criar um BindException e adicionar um erro simulado
-        BindingResult bindingResult = new BindException(testRequest, "testRequest");
-        bindingResult.rejectValue("name", "NotBlank", "Name must not be blank");
+public ResponseEntity<String> testConstraintViolation() {
+        // Simular uma violação de restrição
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        TestRequest testRequest = new TestRequest(); // name é nulo ou vazio, violando @NotBlank
+        Set<ConstraintViolation<TestRequest>> violations = validator.validate(testRequest);
 
-        // Obter um MethodParameter real
-        Method method = TestController.class.getMethod("testWithValidRequest", TestRequest.class);
-        MethodParameter methodParameter = new MethodParameter(method, 0);
+        if (!violations.isEmpty()) {
+            ConstraintViolation<TestRequest> violation = violations.iterator().next();
+            // Criar a exceção ConstraintViolationException
+            throw new ConstraintViolationException(Collections.singleton(violation));
+        }
 
-        // Criar a exceção MethodArgumentNotValidException
-        MethodArgumentNotValidException exception = new MethodArgumentNotValidException(methodParameter, bindingResult);
-
-        // Lançar a exceção
-        throw exception;
-    }
-
-    @GetMapping("/testWithValidRequest")
-    public ResponseEntity<String> testWithValidRequest(@Valid TestRequest request) {
         return ResponseEntity.ok("Valid request");
     }
 
