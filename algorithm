@@ -42,22 +42,33 @@ public class ConfluenceClient {
                 .block();
     }
 
-    private Mono<StringBuilder> loginConfluence() {
+    private Mono<Void> loginConfluence() {
         try {
             return webClient
                     .post()
-                    .uri(uri)
+                    .uri(loginUri)
                     .headers(httpHeaders -> httpHeaders.set("Content-Type", "application/x-www-form-urlencoded"))
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(BodyInserters.fromFormData(getStringStringMultiValueMap()))
                     .retrieve()
                     .toEntity(String.class)
                     .flatMap(response -> {
-                        cookies.set(buildCookieString(response));
-                        return Mono.just(cookies.get());
+                        List<String> cookiesList = response.getHeaders().get(HttpHeaders.SET_COOKIE);
+                        if (cookiesList != null) {
+                            for (String cookie : cookiesList) {
+                                String[] cookieParts = cookie.split(";");
+                                for (String cookiePart : cookieParts) {
+                                    String[] keyValue = cookiePart.split("=", 2);
+                                    if (keyValue.length == 2) {
+                                        cookies.put(keyValue[0].trim(), keyValue[1].trim());
+                                    }
+                                }
+                            }
+                        }
+                        return Mono.empty();
                     });
         } catch (Exception e) {
-            log.error("Error making login to Confluence at URL {}: {}", uri, e.getMessage());
+            log.error("Error making login to Confluence at URL {}: {}", loginUri, e.getMessage());
             throw new AuthenticationException("Error trying to authenticate with Confluence", e);
         }
     }
@@ -84,14 +95,21 @@ public class ConfluenceClient {
     }
 
     private ExchangeFilterFunction addCookiesFilter() {
-        return (clientRequest, next) -> {
-            StringBuilder cookiesString = cookies.get();
-            if (cookiesString.length() > 0) {
+        return ExchangeFilterFunction.ofRequestProcessor(clientRequest -> {
+            if (!cookies.isEmpty()) {
+                StringBuilder cookieHeader = new StringBuilder();
+                cookies.forEach((key, value) -> {
+                    if (cookieHeader.length() > 0) {
+                        cookieHeader.append("; ");
+                    }
+                    cookieHeader.append(key).append("=").append(value);
+                });
+
                 clientRequest = ClientRequest.from(clientRequest)
-                        .header("Cookie", cookiesString.toString())
+                        .header(HttpHeaders.COOKIE, cookieHeader.toString())
                         .build();
             }
-            return next.exchange(clientRequest);
-        };
+            return Mono.just(clientRequest);
+        });
     }
 }
