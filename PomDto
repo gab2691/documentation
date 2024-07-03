@@ -1,0 +1,109 @@
+import java.util.List;
+import java.util.Map;
+
+public class PomDTO {
+    private String modelVersion;
+    private ParentDTO parent;
+    private String groupId;
+    private String artifactId;
+    private String version;
+    private String name;
+    private String description;
+    private OrganizationDTO organization;
+    private String packaging;
+    private Map<String, String> properties;
+    private List<DependencyDTO> dependencies;
+    private DependencyManagementDTO dependencyManagement;
+    private BuildDTO build;
+    private DistributionManagementDTO distributionManagement;
+
+    // Getters and setters
+
+    public static class ParentDTO {
+        private String groupId;
+        private String artifactId;
+        private String version;
+        private String relativePath;
+
+        // Getters and setters
+    }
+
+    public static class OrganizationDTO {
+        private String name;
+
+        // Getters and setters
+    }
+
+    public static class DependencyDTO {
+        private String groupId;
+        private String artifactId;
+        private String version;
+        private String scope;
+        private String type;
+
+        // Getters and setters
+    }
+
+    public static class DependencyManagementDTO {
+        private List<DependencyDTO> dependencies;
+
+        // Getters and setters
+    }
+
+    public static class BuildDTO {
+        private String finalName;
+        private List<PluginDTO> plugins;
+
+        // Getters and setters
+    }
+
+    public static class PluginDTO {
+        private String groupId;
+        private String artifactId;
+        private String version;
+        private List<ExecutionDTO> executions;
+
+        // Getters and setters
+    }
+
+    public static class ExecutionDTO {
+        private String id;
+        private String phase;
+        private List<String> goals;
+        private ConfigurationDTO configuration;
+
+        // Getters and setters
+    }
+
+    public static class ConfigurationDTO {
+        private List<ArtifactItemDTO> artifactItems;
+
+        // Getters and setters
+    }
+
+    public static class ArtifactItemDTO {
+        private String groupId;
+        private String artifactId;
+        private String version;
+        private String type;
+        private boolean overWrite;
+        private String outputDirectory;
+        private String destFileName;
+
+        // Getters and setters
+    }
+
+    public static class DistributionManagementDTO {
+        private RepositoryDTO repository;
+        private RepositoryDTO snapshotRepository;
+
+        // Getters and setters
+    }
+
+    public static class RepositoryDTO {
+        private String id;
+        private String url;
+
+        // Getters and setters
+    }
+}
