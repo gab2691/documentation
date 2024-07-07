@@ -1,33 +1,32 @@
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+version: '2'
+services:
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - HTTP_PROXY=http://10.215.80.105:80
+      - HTTPS_PROXY=http://10.215.80.105:80
+      - NO_PROXY=localhost,127.0.0.1
+    restart: always
 
-import java.util.HashMap;
-import java.util.Map;
+  kafka:
+    image: bitnami/kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - HTTP_PROXY=http://10.215.80.105:80
+      - HTTPS_PROXY=http://10.215.80.105:80
+      - NO_PROXY=localhost,127.0.0.1
+    restart: always
 
-@EnableKafka
-@Configuration
-public class KafkaConsumerConfig {
-
-    @Bean
-    public ConsumerFactory<String, String> consumerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "group_id");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        return new DefaultKafkaConsumerFactory<>(props);
-    }
-
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory());
-        return factory;
-    }
-}
+  selenium-chrome:
+    image: selenium/standalone-chrome:latest
+    ports:
+      - "4444:4444"
