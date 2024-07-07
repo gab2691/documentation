@@ -4,14 +4,21 @@ services:
     image: bitnami/zookeeper:latest
     ports:
       - "2181:2181"
+    environment:
+      - HTTP_PROXY=http://10.215.80.105:80
+      - HTTPS_PROXY=http://10.215.80.105:80
+      - NO_PROXY=localhost,127.0.0.1
 
   kafka:
     image: bitnami/kafka:latest
     ports:
       - "9092:9092"
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      ALLOW_PLAINTEXT_LISTENER: "yes"
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - HTTP_PROXY=http://10.215.80.105:80
+      - HTTPS_PROXY=http://10.215.80.105:80
+      - NO_PROXY=localhost,127.0.0.1
