@@ -5,6 +5,7 @@ services:
     ports:
       - "2181:2181"
     environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
       - HTTP_PROXY=http://10.215.80.105:80
       - HTTPS_PROXY=http://10.215.80.105:80
       - NO_PROXY=localhost,127.0.0.1
