@@ -44,9 +44,9 @@
                 </select>
             </div>
             <h3>Dependencies</h3>
-            <div th:each="topic, dependencies : ${dependencies}">
-                <h4 th:text="${topic}">Topic</h4>
-                <div th:each="dependency : ${dependencies}">
+            <div th:each="entry : ${mapDependencies}">
+                <h4 th:text="${entry.key}">Topic</h4>
+                <div th:each="dependency : ${entry.value}">
                     <div class="form-check">
                         <input type="checkbox" th:field="*{dependencies}" th:value="${dependency.artifactId}" class="form-check-input">
                         <label th:for="${dependency.artifactId}" th:text="${dependency.artifactId}" class="form-check-label"></label>
