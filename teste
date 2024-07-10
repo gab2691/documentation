@@ -1,37 +1,7 @@
-<div class="form-group row">
-                <label class="col-sm-2 col-form-label">Dependencies</label>
-                <div class="col-sm-10">
-                    <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#dependenciesModal">
-                        Select Dependencies
-                    </button>
-                </div>
-            </div>
-
-
-
-<div class="modal fade" id="dependenciesModal" tabindex="-1" role="dialog" aria-labelledby="dependenciesModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="dependenciesModalLabel">Select Dependencies</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div th:each="entry : ${mapDependencies}" class="mt-3">
-                        <h5 th:text="${entry.key}">Topic</h5>
-                        <div class="form-row" th:each="dependency : ${entry.value}">
-                            <div class="form-check col-md-4">
-                                <input type="checkbox" th:field="*{dependencies}" th:value="${dependency.artifactId}" class="form-check-input">
-                                <label th:for="${dependency.artifactId}" th:text="${dependency.artifactId}" class="form-check-label"></label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
+<head>
+    <title>Spring Initializr</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</head>
