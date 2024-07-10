@@ -1,58 +1,60 @@
-version: '2'
-services:
-  zookeeper:
-    image: bitnami/zookeeper:latest
-    ports:
-      - "2181:2181"
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
-      - HTTP_PROXY=http://10.215.80.105:80
-      - HTTPS_PROXY=http://10.215.80.105:80
-      - NO_PROXY=localhost,127.0.0.1
-    restart: always
-
-  kafka:
-    image: bitnami/kafka:latest
-    ports:
-      - "9092:9092"
-    environment:
-      - KAFKA_BROKER_ID=1
-      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
-      - ALLOW_PLAINTEXT_LISTENER=yes
-
-
-
-Dependency.builder()
-                .groupId("org.springframework.boot")
-                .artifactId("spring-boot-starter-test")
-                .scope("test")
-                .build(),
-
-            Dependency.builder()
-                .groupId("com.jayway.jsonpath")
-                .artifactId("json-path")
-                .version("2.9.0")
-                .build(),
-
-            Dependency.builder()
-                .groupId("org.springframework.restdocs")
-                .artifactId("spring-restdocs-mockmvc")
-                .scope("test")
-                .build(),
-
-            Dependency.builder()
-                .groupId("org.awaitility")
-                .artifactId("awaitility")
-                .scope("test")
-                .build()
-      - HTTP_PROXY=http://10.215.80.105:80
-      - HTTPS_PROXY=http://10.215.80.105:80
-      - NO_PROXY=localhost,127.0.0.1
-    restart: always
-
-  selenium-chrome:
-    image: selenium/standalone-chrome:latest
-    ports:
-      - "4444:4444"
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Spring Initializr</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Spring Initializr</h1>
+        <form th:action="@{/generate}" th:object="${projectMetadata}" method="post">
+            <div class="form-group">
+                <label for="groupId">Group ID</label>
+                <input type="text" id="groupId" th:field="*{groupId}" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="artifactId">Artifact ID</label>
+                <input type="text" id="artifactId" th:field="*{artifactId}" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="version">Version</label>
+                <input type="text" id="version" th:field="*{version}" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" th:field="*{name}" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <input type="text" id="description" th:field="*{description}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="packaging">Packaging</label>
+                <select id="packaging" th:field="*{packaging}" class="form-control">
+                    <option value="jar">Jar</option>
+                    <option value="war">War</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="javaVersion">Java Version</label>
+                <select id="javaVersion" th:field="*{javaVersion}" class="form-control">
+                    <option value="8">8</option>
+                    <option value="11">11</option>
+                    <option value="17">17</option>
+                </select>
+            </div>
+            <h3>Dependencies</h3>
+            <div th:each="topic, dependencies : ${dependencies}">
+                <h4 th:text="${topic}">Topic</h4>
+                <div th:each="dependency : ${dependencies}">
+                    <div class="form-check">
+                        <input type="checkbox" th:field="*{dependencies}" th:value="${dependency.artifactId}" class="form-check-input">
+                        <label th:for="${dependency.artifactId}" th:text="${dependency.artifactId}" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Generate Project</button>
+        </form>
+    </div>
+</body>
+</html>
