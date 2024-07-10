@@ -7,47 +7,61 @@
 <body>
     <div class="container">
         <h1 class="mt-5">Spring Initializr</h1>
-        <form th:action="@{/generate}" th:object="${projectMetadata}" method="post">
-            <div class="form-group">
-                <label for="groupId">Group ID</label>
-                <input type="text" id="groupId" th:field="*{groupId}" class="form-control" required>
+        <form th:action="@{/generate}" th:object="${projectMetadata}" method="post" class="mt-4">
+            <div class="form-group row">
+                <label for="groupId" class="col-sm-2 col-form-label">Group</label>
+                <div class="col-sm-10">
+                    <input type="text" id="groupId" th:field="*{groupId}" class="form-control" placeholder="com.example" required>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="artifactId">Artifact ID</label>
-                <input type="text" id="artifactId" th:field="*{artifactId}" class="form-control" required>
+            <div class="form-group row">
+                <label for="artifactId" class="col-sm-2 col-form-label">Artifact</label>
+                <div class="col-sm-10">
+                    <input type="text" id="artifactId" th:field="*{artifactId}" class="form-control" placeholder="demo" required>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="version">Version</label>
-                <input type="text" id="version" th:field="*{version}" class="form-control" required>
+            <div class="form-group row">
+                <label for="name" class="col-sm-2 col-form-label">Name</label>
+                <div class="col-sm-10">
+                    <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="demo" required>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" id="name" th:field="*{name}" class="form-control" required>
+            <div class="form-group row">
+                <label for="description" class="col-sm-2 col-form-label">Description</label>
+                <div class="col-sm-10">
+                    <input type="text" id="description" th:field="*{description}" class="form-control" placeholder="Demo project for Spring Boot">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <input type="text" id="description" th:field="*{description}" class="form-control">
+            <div class="form-group row">
+                <label for="packageName" class="col-sm-2 col-form-label">Package name</label>
+                <div class="col-sm-10">
+                    <input type="text" id="packageName" th:field="*{packageName}" class="form-control" placeholder="com.example.demo">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="packaging">Packaging</label>
-                <select id="packaging" th:field="*{packaging}" class="form-control">
-                    <option value="jar">Jar</option>
-                    <option value="war">War</option>
-                </select>
+            <div class="form-group row">
+                <label for="packaging" class="col-sm-2 col-form-label">Packaging</label>
+                <div class="col-sm-10">
+                    <select id="packaging" th:field="*{packaging}" class="form-control">
+                        <option value="jar">Jar</option>
+                        <option value="war">War</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="javaVersion">Java Version</label>
-                <select id="javaVersion" th:field="*{javaVersion}" class="form-control">
-                    <option value="8">8</option>
-                    <option value="11">11</option>
-                    <option value="17">17</option>
-                </select>
+            <div class="form-group row">
+                <label for="javaVersion" class="col-sm-2 col-form-label">Java Version</label>
+                <div class="col-sm-10">
+                    <select id="javaVersion" th:field="*{javaVersion}" class="form-control">
+                        <option value="8">8</option>
+                        <option value="11">11</option>
+                        <option value="17">17</option>
+                    </select>
+                </div>
             </div>
-            <h3>Dependencies</h3>
-            <div th:each="entry : ${mapDependencies}">
+            <h3 class="mt-5">Dependencies</h3>
+            <div th:each="entry : ${mapDependencies}" class="mt-3">
                 <h4 th:text="${entry.key}">Topic</h4>
-                <div th:each="dependency : ${entry.value}">
-                    <div class="form-check">
+                <div class="form-row" th:each="dependency : ${entry.value}">
+                    <div class="form-check col-md-4">
                         <input type="checkbox" th:field="*{dependencies}" th:value="${dependency.artifactId}" class="form-check-input">
                         <label th:for="${dependency.artifactId}" th:text="${dependency.artifactId}" class="form-check-label"></label>
                     </div>
