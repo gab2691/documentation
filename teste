@@ -21,6 +21,32 @@ services:
       - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
       - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
       - ALLOW_PLAINTEXT_LISTENER=yes
+
+
+
+Dependency.builder()
+                .groupId("org.springframework.boot")
+                .artifactId("spring-boot-starter-test")
+                .scope("test")
+                .build(),
+
+            Dependency.builder()
+                .groupId("com.jayway.jsonpath")
+                .artifactId("json-path")
+                .version("2.9.0")
+                .build(),
+
+            Dependency.builder()
+                .groupId("org.springframework.restdocs")
+                .artifactId("spring-restdocs-mockmvc")
+                .scope("test")
+                .build(),
+
+            Dependency.builder()
+                .groupId("org.awaitility")
+                .artifactId("awaitility")
+                .scope("test")
+                .build()
       - HTTP_PROXY=http://10.215.80.105:80
       - HTTPS_PROXY=http://10.215.80.105:80
       - NO_PROXY=localhost,127.0.0.1
