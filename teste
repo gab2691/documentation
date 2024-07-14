@@ -1,7 +1,45 @@
-var blob = new Blob([response], { type: 'application/octet-stream' });
-            var link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = 'project.zip';
-            document.body.appendChild(link);
-            link.click();  // Aqui está a correção
-            document.body.removeChild(link);
+import java.util.ArrayList;
+import java.util.List;
+
+public class TreeNode<T> {
+    private T data;
+    private List<TreeNode<T>> children;
+
+    public TreeNode(T data) {
+        this.data = data;
+        this.children = new ArrayList<>();
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    public List<TreeNode<T>> getChildren() {
+        return children;
+    }
+
+    public void addChild(TreeNode<T> child) {
+        this.children.add(child);
+    }
+}
+
+
+public class Tree<T> {
+    private TreeNode<T> root;
+
+    public Tree(T rootData) {
+        root = new TreeNode<>(rootData);
+    }
+
+    public TreeNode<T> getRoot() {
+        return root;
+    }
+
+    public void setRoot(TreeNode<T> root) {
+        this.root = root;
+    }
+}
