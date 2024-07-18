@@ -1,45 +1,105 @@
-import java.util.ArrayList;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+
+import javax.annotation.PostConstruct;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class TreeNode<T> {
-    private T data;
-    private List<TreeNode<T>> children;
+import org.yaml.snakeyaml.Yaml;
+import org.xml.sax.SAXException;
 
-    public TreeNode(T data) {
-        this.data = data;
-        this.children = new ArrayList<>();
+@Component
+@PropertySource("classpath:application.properties")
+public abstract class Template {
+
+    @Value("${template.pom.path}")
+    private String pomFilePath;
+
+    @Value("${template.yml.path}")
+    private String ymlFilePath;
+
+    private static Document basePomDocument;
+    private static Map<String, Object> baseYamlContent;
+
+    protected String name;
+    protected List<String> dependencies;
+    protected Map<String, String> classPaths = new HashMap<>();
+    protected Document pomDocument;
+    protected Map<String, Object> yamlContent = new HashMap<>();
+
+    @PostConstruct
+    private void loadBaseFiles() throws ParserConfigurationException, IOException, SAXException {
+        if (basePomDocument == null) {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            basePomDocument = builder.parse(new File(pomFilePath));
+        }
+
+        if (baseYamlContent == null) {
+            Yaml yaml = new Yaml();
+            baseYamlContent = yaml.load(new File(ymlFilePath).toURI().toURL().openStream());
+        }
     }
 
-    public T getData() {
-        return data;
+    protected void copyBaseFiles() throws ParserConfigurationException, IOException, SAXException {
+        if (basePomDocument != null) {
+            this.pomDocument = copyDocument(basePomDocument);
+        }
+
+        if (baseYamlContent != null) {
+            this.yamlContent = new HashMap<>(baseYamlContent);
+        }
     }
 
-    public void setData(T data) {
-        this.data = data;
+    private Document copyDocument(Document original) throws ParserConfigurationException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document copy = builder.newDocument();
+        copy.appendChild(copy.importNode(original.getDocumentElement(), true));
+        return copy;
     }
 
-    public List<TreeNode<T>> getChildren() {
-        return children;
+    public String getName() {
+        return name;
     }
 
-    public void addChild(TreeNode<T> child) {
-        this.children.add(child);
-    }
-}
-
-
-public class Tree<T> {
-    private TreeNode<T> root;
-
-    public Tree(T rootData) {
-        root = new TreeNode<>(rootData);
+    public List<String> getDependencies() {
+        return dependencies;
     }
 
-    public TreeNode<T> getRoot() {
-        return root;
+    public Map<String, String> getClassPaths() {
+        return classPaths;
     }
 
-    public void setRoot(TreeNode<T> root) {
-        this.root = root;
+    public Map<String, Object> getYamlContent() {
+        if (yamlContent.isEmpty()) {
+            try {
+                copyBaseFiles();
+            } catch (IOException | ParserConfigurationException | SAXException e) {
+                throw new RuntimeException("Failed to copy base YAML content", e);
+            }
+        }
+        return yamlContent;
     }
+
+    public Document getPomDocument() {
+        if (pomDocument == null) {
+            try {
+                copyBaseFiles();
+            } catch (ParserConfigurationException | IOException | SAXException e) {
+                throw new RuntimeException("Failed to copy base POM document", e);
+            }
+        }
+        return pomDocument;
+    }
+
+    protected abstract void initializeTemplate();
 }
