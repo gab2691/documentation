@@ -1,4 +1,6 @@
-if (value.startsWith("\"") && value.endsWith("\"") || value.matches("^\\d+\\D+$")) {
+if (value.startsWith("\"") && value.endsWith("\"")) {
+                    value = value.substring(1, value.length() - 1); // Remover aspas duplas para não duplicá-las
+                    return new ScalarNode(tag, value, null, null, DumperOptions.ScalarStyle.DOUBLE_QUOTED);
+                } else if (value.matches("^\\d+\\D+$")) {
                     return new ScalarNode(tag, value, null, null, DumperOptions.ScalarStyle.DOUBLE_QUOTED);
                 }
-                return super.representScalar(tag, value, style);
