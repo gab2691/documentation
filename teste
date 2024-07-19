@@ -1,6 +1,226 @@
-if (value.startsWith("\"") && value.endsWith("\"")) {
-                    value = value.substring(1, value.length() - 1); // Remover aspas duplas para não duplicá-las
-                    return new ScalarNode(tag, value, null, null, DumperOptions.ScalarStyle.DOUBLE_QUOTED);
-                } else if (value.matches("^\\d+\\D+$")) {
-                    return new ScalarNode(tag, value, null, null, DumperOptions.ScalarStyle.DOUBLE_QUOTED);
-                }
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.InitializingBean;
+import org.w3c.dom.Document;
+
+import javax.annotation.PostConstruct;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+import org.yaml.snakeyaml.Yaml;
+import org.xml.sax.SAXException;
+
+@Component
+public abstract class Template implements InitializingBean {
+
+    @Value("${template.pom.path}")
+    private String pomFilePath;
+
+    @Value("${template.yml.sourcePath}")
+    private String ymlFilePath;
+
+    protected String name;
+    protected static List<DependencyDTO> dependencies;
+    protected static Map<String, String> classPaths;
+    protected static Map<String, Object> baseYmlConfigurations;
+    protected static Document basePomDocument;
+    protected String ymlKey;
+
+    @Autowired
+    protected DependencyConfig dependencyConfig;
+    protected static Document copyPomDocument;
+    protected static Map<String, Object> copyYamlContent = new HashMap<>();
+    protected static boolean isInitialized = false;
+
+    public Template() {}
+
+    @Override
+    public synchronized void afterPropertiesSet() {
+        if (!isInitialized) {
+            initialize();
+        }
+    }
+
+    protected synchronized void initialize() {
+        if (!isInitialized) {
+            try {
+                System.out.println("Initializing Template: " + this);
+                initializePomDocument();
+                initializeYamlContent();
+                initializeDependencies();
+                isInitialized = true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Failed to initialize template files", e);
+            }
+        }
+    }
+
+    private void initializeDependencies() {
+        dependencies = dependencyConfig.getDependenciesByTopic().get("mandatory");
+    }
+
+    private void initializeYamlContent() throws IOException {
+        baseYmlConfigurations = new Yaml()
+                .load(new File(ymlFilePath)
+                        .toURI()
+                        .toURL()
+                        .openStream());
+    }
+
+    private void initializePomDocument() {
+        try {
+            basePomDocument = DocumentBuilderFactory
+                    .newInstance()
+                    .newDocumentBuilder()
+                    .parse(new File(pomFilePath));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Map<String, Object> getYmlConfigurations() {
+        return new HashMap<>(baseYmlConfigurations);
+    }
+
+    public Document getCopyPomDocument() throws ParserConfigurationException {
+        return copyDocument();
+    }
+
+    public List<DependencyDTO> getCopyDependencies() {
+        return new ArrayList<>(dependencies);
+    }
+
+    private Document copyDocument() throws ParserConfigurationException {
+        Document copy = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        copy.appendChild(copy.importNode(basePomDocument.getDocumentElement(), true));
+        return copy;
+    }
+
+    protected abstract void initializedTemplate();
+}
+
+
+
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
+
+@Component
+public class MongoDBTemplate extends Template {
+
+    public MongoDBTemplate() {
+        this.name = "MongoDB";
+        this.classPaths = new HashMap<>();
+        this.baseYmlConfigurations = new HashMap<>();
+        this.ymlKey = "spring";
+    }
+
+    @PostConstruct
+    private void init() {
+        initialize();
+        initializedTemplate();
+    }
+
+    @Override
+    protected void initializedTemplate() {
+        initializeClassPaths();
+        initializeYmlConfigurations();
+        initializeDependencies();
+    }
+
+    private void initializeClassPaths() {
+        classPaths.put("RegistroJpaMongoRepository.java", "adapter/output/mongo/repository");
+        classPaths.put("RegistroMongoEntity.java", "adapter/output/mongo/repository/entity");
+        classPaths.put("RegistroEntityMapper.java", "adapter/output/mongo/repository/mapper");
+        classPaths.put("NotFoundException.java", "domain/exception");
+        classPaths.put("RegistroCriarModel.java", "domain/model/registro");
+        classPaths.put("RegistroModel.java", "domain/model/registro");
+        classPaths.put("RegistroPort.java", "port/output");
+    }
+
+    private void initializeYmlConfigurations() {
+        Map<String, Object> springYml = (Map<String, Object>) getYmlConfigurations().get(ymlKey);
+        Map<String, Object> mongoConfig = new HashMap<>();
+        mongoConfig.put("uri", "${URI_MONGO}");
+        mongoConfig.put("port", "${PORT_MONGO:81451}");
+        mongoConfig.put("database", "${DATABASE_MONGO}");
+
+        springYml.put("data", mongoConfig);
+    }
+
+    private void initializeDependencies() {
+        dependencies = super.getCopyDependencies();
+        dependencies.addAll(dependencyConfig.getDependenciesByTopic().get("mongoDB"));
+    }
+}
+
+
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
+
+@Component
+public class KafkaTemplate extends Template {
+
+    public KafkaTemplate() {
+        this.name = "Kafka";
+        this.classPaths = new HashMap<>();
+        this.baseYmlConfigurations = new HashMap<>();
+        this.ymlKey = "spring";
+    }
+
+    @PostConstruct
+    private void init() {
+        initialize();
+        initializedTemplate();
+    }
+
+    @Override
+    protected void initializedTemplate() {
+        initializeClassPaths();
+        initializeYmlConfigurations();
+        initializeDependencies();
+    }
+
+    private void initializeClassPaths() {
+        classPaths.put("KafkaConsumer.java", "adapter/kafka");
+        classPaths.put("KafkaProducer.java", "adapter/kafka");
+        classPaths.put("KafkaService.java", "adapter/kafka");
+        classPaths.put("KafkaConsumerPort.java", "srv/port/output");
+        classPaths.put("KafkaProducerPort.java", "srv/port/output");
+    }
+
+    private void initializeYmlConfigurations() {
+        Map<String, Object> springMap = (Map<String, Object>) getYmlConfigurations().get(ymlKey);
+        Map<String, Object> kafkaMap = new HashMap<>();
+        Map<String, Object> consumerMap = new HashMap<>();
+        Map<String, Object> producerMap = new HashMap<>();
+
+        kafkaMap.put("bootstrap", "localhost:9092");
+
+        consumerMap.put("group-id", "group_id");
+        consumerMap.put("auto-offset-reset", "earliest");
+        consumerMap.put("key-deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        consumerMap.put("value-deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+
+        producerMap.put("key-serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        producerMap.put("value-serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+        kafkaMap.put("consumer", consumerMap);
+        kafkaMap.put("producer", producerMap);
+
+        springMap.put("kafka", kafkaMap);
+    }
+
+    private void initializeDependencies() {
+        dependencies = super.getCopyDependencies();
+        dependencies.addAll(dependencyConfig.getDependenciesByTopic().get("kafka"));
+    }
+}
