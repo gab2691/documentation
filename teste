@@ -1,4 +1,5 @@
-Representer representer = new Representer() {
+private static Representer createCustomRepresenter(DumperOptions options) {
+        return new Representer(options) {
             @Override
             protected Node representScalar(Tag tag, String value, DumperOptions.ScalarStyle style) {
                 // Forçar a representação com aspas duplas para valores que devem ser preservados
@@ -8,4 +9,4 @@ Representer representer = new Representer() {
                 return super.representScalar(tag, value, style);
             }
         };
-        representer.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+    }
