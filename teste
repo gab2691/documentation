@@ -16,19 +16,15 @@ public class YamlSerializationExample {
 
         // Configurar as opções do Dumper
         DumperOptions options = new DumperOptions();
-        options.setDefaultScalarStyle(DumperOptions.ScalarStyle.DOUBLE_QUOTED);
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        // Criar um Representer personalizado
-        Representer representer = new Representer();
-        representer.setDefaultScalarStyle(DumperOptions.ScalarStyle.DOUBLE_QUOTED);
-
         // Criar uma instância do Yaml com as opções configuradas
-        Yaml yamlWithQuotes = new Yaml(representer, options);
+        Yaml yamlWithOptions = new Yaml(options);
 
         // Serializar o objeto Map de volta para YAML
         StringWriter writer = new StringWriter();
-        yamlWithQuotes.dump(data, writer);
+        yamlWithOptions.dump(data, writer);
         String yamlOutput = writer.toString();
 
         // Exibir o YAML serializado
