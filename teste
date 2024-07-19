@@ -1,6 +1,11 @@
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.SafeRepresenter;
+import org.yaml.snakeyaml.nodes.Node;
+import org.yaml.snakeyaml.nodes.ScalarNode;
+
 import java.io.StringWriter;
 import java.util.Map;
 
@@ -8,7 +13,7 @@ public class YamlSerializationExample {
 
     public static void main(String[] args) {
         // Exemplo de dados YAML
-        String yamlInput = "Server:\n  shtdown: \"immediate\"";
+        String yamlInput = "spring:\n  lifecycle:\n    timeout-per-shutdown-phase: \"45s\"";
 
         // Carregar o YAML em um objeto Map
         Yaml yaml = new Yaml();
@@ -19,12 +24,25 @@ public class YamlSerializationExample {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
+        // Criar um Representer personalizado
+        Representer representer = new SafeRepresenter() {
+            @Override
+            protected Node representScalar(Tag tag, String value, DumperOptions.ScalarStyle style) {
+                // Forçar a representação com aspas duplas para valores que devem ser preservados
+                if (value.matches("^\\d+\\D+$")) {
+                    return super.representScalar(tag, value, DumperOptions.ScalarStyle.DOUBLE_QUOTED);
+                }
+                return super.representScalar(tag, value, style);
+            }
+        };
+        representer.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+
         // Criar uma instância do Yaml com as opções configuradas
-        Yaml yamlWithOptions = new Yaml(options);
+        Yaml yamlWithQuotes = new Yaml(representer, options);
 
         // Serializar o objeto Map de volta para YAML
         StringWriter writer = new StringWriter();
-        yamlWithOptions.dump(data, writer);
+        yamlWithQuotes.dump(data, writer);
         String yamlOutput = writer.toString();
 
         // Exibir o YAML serializado
