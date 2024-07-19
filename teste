@@ -1,12 +1,4 @@
-private static Representer createCustomRepresenter(DumperOptions options) {
-        return new Representer(options) {
-            @Override
-            protected Node representScalar(Tag tag, String value, DumperOptions.ScalarStyle style) {
-                // Forçar a representação com aspas duplas para valores que devem ser preservados
-                if (value.matches("^\\d+\\D+$")) {
-                    return new ScalarNode(tag, value, DumperOptions.ScalarStyle.DOUBLE_QUOTED);
+if (value.startsWith("\"") && value.endsWith("\"") || value.matches("^\\d+\\D+$")) {
+                    return new ScalarNode(tag, value, null, null, DumperOptions.ScalarStyle.DOUBLE_QUOTED);
                 }
                 return super.representScalar(tag, value, style);
-            }
-        };
-    }
