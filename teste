@@ -1,19 +1,24 @@
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.stream.Stream;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProjectGenerator {
 
     public static void main(String[] args) {
         String artifactId = "projeto-legal";
+        String oldGroupId = "br.com.bradesco.kit.srv";
+        String newGroupId = "br.com.bradesco." + artifactId;
         Path skeletonDir = Paths.get("c:/path/to/skeleton");
         Path targetDir = Paths.get("c:/path/to/target/" + artifactId);
 
         try {
             copySkeleton(skeletonDir, targetDir);
             System.out.println("Skeleton copied successfully!");
-            // Aqui você pode adicionar lógica para modificar a cópia conforme necessário.
-            // Por exemplo, renomear diretórios, arquivos e modificar conteúdos.
+
+            updatePackages(targetDir, oldGroupId, newGroupId);
+            System.out.println("Package names updated successfully!");
         } catch (IOException e) {
             System.err.println("Failed to copy skeleton: " + e.getMessage());
         }
@@ -36,8 +41,20 @@ public class ProjectGenerator {
         }
     }
 
-    private static void modifyCopiedProject(Path targetDir, String artifactId) throws IOException {
-        // Aqui você pode adicionar lógica para modificar o projeto copiado
-        // Renomear arquivos/diretórios e modificar conteúdos conforme necessário
+    private static void updatePackages(Path targetDir, String oldGroupId, String newGroupId) throws IOException {
+        Files.walkFileTree(targetDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (file.toString().endsWith(".java")) {
+                    List<String> lines = Files.readAllLines(file);
+                    List<String> replaced = lines.stream()
+                        .map(line -> line.replace("package " + oldGroupId, "package " + newGroupId))
+                        .map(line -> line.replace(oldGroupId + ".", newGroupId + "."))
+                        .collect(Collectors.toList());
+                    Files.write(file, replaced);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 }
