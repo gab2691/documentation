@@ -1,8 +1,10 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ProjectGenerator {
 
@@ -19,14 +21,19 @@ public class ProjectGenerator {
 
             // Exemplo de arquivo específico
             Path sourceFile = skeletonDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
+            Path mainSpringFile = skeletonDir.resolve("src/main/java/br/com/bradesco/kit/srv/YourSpringBootApplication.java");
 
             // Atualizar o pacote no arquivo copiado
             List<String> updatedContent = updatePackageInFileContent(sourceFile, oldGroupId, newGroupId);
+            List<String> updatedMainContent = updatePackageInFileContent(mainSpringFile, oldGroupId, newGroupId);
 
             // Aqui você pode salvar o conteúdo atualizado no destino desejado
             Path targetFile = targetDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
+            Path targetMainFile = targetDir.resolve("src/main/java/br/com/bradesco/kit/srv/YourSpringBootApplication.java");
+
             Files.createDirectories(targetFile.getParent()); // Certifique-se de que o diretório pai exista
             Files.write(targetFile, updatedContent);
+            Files.write(targetMainFile, updatedMainContent);
 
             System.out.println("Package names updated successfully!");
         } catch (IOException e) {
@@ -52,8 +59,13 @@ public class ProjectGenerator {
     private static List<String> updatePackageInFileContent(Path sourceFile, String oldGroupId, String newGroupId) throws IOException {
         List<String> lines = Files.readAllLines(sourceFile);
         return lines.stream()
-            .map(line -> line.replace("package " + oldGroupId, "package " + newGroupId))
-            .map(line -> line.replace(oldGroupId + ".", newGroupId + "."))
+            .map(line -> {
+                if (line.contains("package " + oldGroupId)) {
+                    return line.replace("package " + oldGroupId, "package " + newGroupId);
+                } else {
+                    return line.replace(oldGroupId + ".", newGroupId + ".");
+                }
+            })
             .collect(Collectors.toList());
     }
 }
