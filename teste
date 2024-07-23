@@ -1,10 +1,43 @@
-docker run -d --name zookeeper -p 2181:2181 confluentinc/cp-zookeeper:latest
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.stream.Stream;
 
+public class ProjectGenerator {
 
-docker run -d --name kafka -p 9092:9092 \
-  --env KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 \
-  --env KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
-  --env KAFKA_BROKER_ID=1 \
-  --env KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
-  --link zookeeper:zookeeper \
-  confluentinc/cp-kafka:latest
+    public static void main(String[] args) {
+        String artifactId = "projeto-legal";
+        Path skeletonDir = Paths.get("c:/path/to/skeleton");
+        Path targetDir = Paths.get("c:/path/to/target/" + artifactId);
+
+        try {
+            copySkeleton(skeletonDir, targetDir);
+            System.out.println("Skeleton copied successfully!");
+            // Aqui você pode adicionar lógica para modificar a cópia conforme necessário.
+            // Por exemplo, renomear diretórios, arquivos e modificar conteúdos.
+        } catch (IOException e) {
+            System.err.println("Failed to copy skeleton: " + e.getMessage());
+        }
+    }
+
+    private static void copySkeleton(Path source, Path target) throws IOException {
+        try (Stream<Path> stream = Files.walk(source)) {
+            stream.forEach(sourcePath -> {
+                Path targetPath = target.resolve(source.relativize(sourcePath));
+                try {
+                    if (Files.isDirectory(sourcePath)) {
+                        Files.createDirectories(targetPath);
+                    } else {
+                        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException("Error copying " + sourcePath + " to " + targetPath, e);
+                }
+            });
+        }
+    }
+
+    private static void modifyCopiedProject(Path targetDir, String artifactId) throws IOException {
+        // Aqui você pode adicionar lógica para modificar o projeto copiado
+        // Renomear arquivos/diretórios e modificar conteúdos conforme necessário
+    }
+}
