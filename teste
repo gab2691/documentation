@@ -1,6 +1,7 @@
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,7 +18,10 @@ public class ProjectGenerator {
             copySkeleton(skeletonDir, targetDir);
             System.out.println("Skeleton copied successfully!");
 
-            updatePackages(targetDir, oldGroupId, newGroupId);
+            // Exemplo de arquivo específico
+            Path javaFile = targetDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
+            updatePackageInFile(javaFile, oldGroupId, newGroupId);
+
             System.out.println("Package names updated successfully!");
         } catch (IOException e) {
             System.err.println("Failed to copy skeleton: " + e.getMessage());
@@ -41,20 +45,12 @@ public class ProjectGenerator {
         }
     }
 
-    private static void updatePackages(Path targetDir, String oldGroupId, String newGroupId) throws IOException {
-        Files.walkFileTree(targetDir, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (file.toString().endsWith(".java")) {
-                    List<String> lines = Files.readAllLines(file);
-                    List<String> replaced = lines.stream()
-                        .map(line -> line.replace("package " + oldGroupId, "package " + newGroupId))
-                        .map(line -> line.replace(oldGroupId + ".", newGroupId + "."))
-                        .collect(Collectors.toList());
-                    Files.write(file, replaced);
-                }
-                return FileVisitResult.CONTINUE;
-            }
-        });
+    private static void updatePackageInFile(Path file, String oldGroupId, String newGroupId) throws IOException {
+        List<String> lines = Files.readAllLines(file);
+        List<String> replaced = lines.stream()
+            .map(line -> line.replace("package " + oldGroupId, "package " + newGroupId))
+            .map(line -> line.replace(oldGroupId + ".", newGroupId + "."))
+            .collect(Collectors.toList());
+        Files.write(file, replaced);
     }
 }
