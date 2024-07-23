@@ -21,11 +21,8 @@ public class ProjectGenerator {
             Path sourceFile = skeletonDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
             Path targetFile = targetDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
 
-            // Copiar o arquivo para o novo local
-            copyFile(sourceFile, targetFile);
-
             // Atualizar o pacote no arquivo copiado
-            updatePackageInFile(targetFile, oldGroupId, newGroupId);
+            updatePackageAndCopyFile(sourceFile, targetFile, oldGroupId, newGroupId);
 
             System.out.println("Package names updated successfully!");
         } catch (IOException e) {
@@ -40,27 +37,22 @@ public class ProjectGenerator {
                 try {
                     if (Files.isDirectory(sourcePath)) {
                         Files.createDirectories(targetPath);
-                    } else {
-                        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException("Error copying " + sourcePath + " to " + targetPath, e);
+                    throw new RuntimeException("Error creating directory " + targetPath, e);
                 }
             });
         }
     }
 
-    private static void copyFile(Path sourceFile, Path targetFile) throws IOException {
-        Files.createDirectories(targetFile.getParent()); // Certifique-se de que o diretório pai exista
-        Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
-    }
-
-    private static void updatePackageInFile(Path file, String oldGroupId, String newGroupId) throws IOException {
-        List<String> lines = Files.readAllLines(file);
+    private static void updatePackageAndCopyFile(Path sourceFile, Path targetFile, String oldGroupId, String newGroupId) throws IOException {
+        List<String> lines = Files.readAllLines(sourceFile);
         List<String> replaced = lines.stream()
             .map(line -> line.replace("package " + oldGroupId, "package " + newGroupId))
             .map(line -> line.replace(oldGroupId + ".", newGroupId + "."))
             .collect(Collectors.toList());
-        Files.write(file, replaced);
+        
+        Files.createDirectories(targetFile.getParent()); // Certifique-se de que o diretório pai exista
+        Files.write(targetFile, replaced);
     }
 }
