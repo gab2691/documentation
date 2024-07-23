@@ -1,66 +1,16 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class ProjectGenerator {
+public class PackageUpdater {
 
-    public static void main(String[] args) {
-        String artifactId = "projeto-legal";
-        String oldGroupId = "br.com.bradesco.kit.srv";
-        String newGroupId = "br.com.bradesco." + artifactId;
-        Path skeletonDir = Paths.get("c:/path/to/skeleton");
-        Path targetDir = Paths.get("c:/path/to/target/" + artifactId);
-
-        try {
-            copySkeleton(skeletonDir, targetDir);
-            System.out.println("Skeleton copied successfully!");
-
-            // Exemplo de arquivo específico
-            Path sourceFile = skeletonDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
-            Path mainSpringFile = skeletonDir.resolve("src/main/java/br/com/bradesco/kit/srv/YourSpringBootApplication.java");
-
-            // Atualizar o pacote no arquivo copiado
-            List<String> updatedContent = updatePackageInFileContent(sourceFile, oldGroupId, newGroupId);
-            List<String> updatedMainContent = updatePackageInFileContent(mainSpringFile, oldGroupId, newGroupId);
-
-            // Aqui você pode salvar o conteúdo atualizado no destino desejado
-            Path targetFile = targetDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
-            Path targetMainFile = targetDir.resolve("src/main/java/br/com/bradesco/kit/srv/YourSpringBootApplication.java");
-
-            Files.createDirectories(targetFile.getParent()); // Certifique-se de que o diretório pai exista
-            Files.write(targetFile, updatedContent);
-            Files.write(targetMainFile, updatedMainContent);
-
-            System.out.println("Package names updated successfully!");
-        } catch (IOException e) {
-            System.err.println("Failed to copy skeleton: " + e.getMessage());
-        }
-    }
-
-    private static void copySkeleton(Path source, Path target) throws IOException {
-        try (Stream<Path> stream = Files.walk(source)) {
-            stream.forEach(sourcePath -> {
-                Path targetPath = target.resolve(source.relativize(sourcePath));
-                try {
-                    if (Files.isDirectory(sourcePath)) {
-                        Files.createDirectories(targetPath);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException("Error creating directory " + targetPath, e);
-                }
-            });
-        }
-    }
-
-    private static List<String> updatePackageInFileContent(Path sourceFile, String oldGroupId, String newGroupId) throws IOException {
+    public static List<String> updatePackageInFileContent(Path sourceFile, String oldGroupId, String newGroupId) throws IOException {
         List<String> lines = Files.readAllLines(sourceFile);
         return lines.stream()
             .map(line -> {
-                if (line.contains("package " + oldGroupId)) {
+                if (line.trim().startsWith("package " + oldGroupId)) {
                     return line.replace("package " + oldGroupId, "package " + newGroupId);
                 } else {
                     return line.replace(oldGroupId + ".", newGroupId + ".");
