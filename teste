@@ -1,9 +1,8 @@
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ProjectGenerator {
 
@@ -19,8 +18,14 @@ public class ProjectGenerator {
             System.out.println("Skeleton copied successfully!");
 
             // Exemplo de arquivo específico
-            Path javaFile = targetDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
-            updatePackageInFile(javaFile, oldGroupId, newGroupId);
+            Path sourceFile = skeletonDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
+            Path targetFile = targetDir.resolve("src/main/java/br/com/bradesco/kit/srv/adapter/Example.java");
+
+            // Copiar o arquivo para o novo local
+            copyFile(sourceFile, targetFile);
+
+            // Atualizar o pacote no arquivo copiado
+            updatePackageInFile(targetFile, oldGroupId, newGroupId);
 
             System.out.println("Package names updated successfully!");
         } catch (IOException e) {
@@ -43,6 +48,11 @@ public class ProjectGenerator {
                 }
             });
         }
+    }
+
+    private static void copyFile(Path sourceFile, Path targetFile) throws IOException {
+        Files.createDirectories(targetFile.getParent()); // Certifique-se de que o diretório pai exista
+        Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
     }
 
     private static void updatePackageInFile(Path file, String oldGroupId, String newGroupId) throws IOException {
