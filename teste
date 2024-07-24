@@ -1,13 +1,15 @@
-Map<String, Object> copy = new HashMap<>();
-        for (Map.Entry<String, Object> entry : original.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-
-            // Verifica se o valor é um Map e copia recursivamente
-            if (value instanceof Map) {
-                value = deepCopyMap((Map<String, Object>) value);
+public static void deleteDirectoryRecursively(Path path) throws IOException {
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
             }
-            // Se o valor for imutável ou primitivo, copia diretamente
-            copy.put(key, value);
-        }
-        return copy;
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
