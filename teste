@@ -6,11 +6,7 @@ Map<String, Object> copy = new HashMap<>();
             // Verifica se o valor é um Map e copia recursivamente
             if (value instanceof Map) {
                 value = deepCopyMap((Map<String, Object>) value);
-            } 
-            // Verifica se o valor é uma List e copia recursivamente
-            else if (value instanceof List) {
-                value = deepCopyList((List<Object>) value);
-            } 
+            }
             // Se o valor for imutável ou primitivo, copia diretamente
             copy.put(key, value);
         }
