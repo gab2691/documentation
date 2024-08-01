@@ -1,7 +1,24 @@
-jpa:
-    hibernate:
-      ddl-auto: create
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.SQLServerDialect
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class ConfigDTO {
+
+    private Map<String, Map<String, String>> configMap = new HashMap<>();
+
+    @JsonAnySetter
+    public void addConfig(String key, Map<String, String> value) {
+        configMap.put(key, value);
+    }
+
+    @JsonProperty("configMap")
+    public Map<String, Map<String, String>> getConfigMap() {
+        return configMap;
+    }
+
+    public void setConfigMap(Map<String, Map<String, String>> configMap) {
+        this.configMap = configMap;
+    }
+}
