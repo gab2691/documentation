@@ -1,22 +1,68 @@
-Map<String, Object> deployMap = (LinkedHashMap<String, Object>) configYamlMap.get("deploy");
-Map<String, Object> azureMap = (LinkedHashMap<String, Object>) deployMap.get("azurekv");
-List<Map<String, Object>> keyvaultsList = new ArrayList<>();
-if (azureMap != null) {
-    for (Map.Entry<String, KeyVaultData> options : projectRequest.getInfraConfig().getKeyVault().getKeyVault().entrySet()) {
-        Map<String, Object> keyVault = new LinkedHashMap<>();
-        List<Map<String, String>> objectList = new ArrayList<>();
+import java.util.ArrayList;
+import java.util.List;
 
-        keyVault.put("name", options.getValue().getName());
+public class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
 
-        for (String s : options.getValue().getSecrets()) {
-            Map<String, String> objectMap = new LinkedHashMap<>();
-            objectMap.put("name", s);
-            objectMap.put("type", "secret");
-            objectMap.put("version", "");
-            objectList.add(objectMap);
-        }
-        keyVault.put("objects", objectList);
-        keyvaultsList.add(keyVault);
+    TreeNode() {
     }
-    azureMap.put("key_vault", keyvaultsList);
+
+    TreeNode(int val) {
+        this.val = val;
+    }
+
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+
+    public static int getHeight(TreeNode root) {
+        if (root == null) {
+            return 0;
+        }
+        return Math.max(getHeight(root.left), getHeight(root.right)) + 1;
+    }
+
+    public static List<List<String>> printTree(TreeNode root) {
+        int height = getHeight(root);
+        int width = (int) Math.pow(2, height) - 1;
+        List<List<String>> res = new ArrayList<>();
+        for (int i = 0; i < height; i++) {
+            List<String> row = new ArrayList<>();
+            for (int j = 0; j < width; j++) {
+                row.add("");
+            }
+            res.add(row);
+        }
+        fill(res, root, 0, 0, width - 1);
+        return res;
+    }
+
+    private static void fill(List<List<String>> res, TreeNode root, int level, int left, int right) {
+        if (root == null) {
+            return;
+        }
+        int mid = (left + right) / 2;
+        res.get(level).set(mid, String.valueOf(root.val));
+        fill(res, root.left, level + 1, left, mid - 1);
+        fill(res, root.right, level + 1, mid + 1, right);
+    }
+
+    public static void printFormattedTree(TreeNode root) {
+        List<List<String>> lines = printTree(root);
+        for (List<String> line : lines) {
+            StringBuilder sb = new StringBuilder();
+            for (String val : line) {
+                if (val.isEmpty()) {
+                    sb.append("    ");
+                } else {
+                    sb.append(String.format("(%s)", val));
+                }
+            }
+            System.out.println(sb.toString());
+        }
+    }
 }
