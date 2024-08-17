@@ -1,5 +1,25 @@
-HttpHeaders headers = new HttpHeaders();
-        headers.setContentDisposition(ContentDisposition.attachment().filename("projects.zip").build());
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+public byte[] zipDirectory(Path directory) throws IOException {
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+         ZipOutputStream zos = new ZipOutputStream(baos)) {
 
-        return new ResponseEntity<>(zips, headers, HttpStatus.OK);
+        Files.walk(directory)
+                .filter(path -> !Files.isDirectory(path))
+                .forEach(path -> {
+                    try {
+                        System.out.println("Processing file: " + path);
+                        ZipEntry zipEntry = new ZipEntry(directory.relativize(path).toString());
+                        zos.putNextEntry(zipEntry);
+                        Files.copy(path, zos);
+                        zos.closeEntry();
+                    } catch (AccessDeniedException e) {
+                        System.err.println("Access denied: " + path);
+                    } catch (IOException e) {
+                        System.err.println("Error processing file: " + path);
+                        e.printStackTrace();
+                    }
+                });
+
+        zos.finish(); // Finalize o ZIP
+        return baos.toByteArray();
+    }
+}
