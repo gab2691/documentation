@@ -1,8 +1,6 @@
-Path javaPath = rootProjectPath.resolve(Paths.get("src", "main", "java", mainPackage.replaceAll("\\.", File.separator)));
+String javaSourcePath = Paths.get("src", "main", "java").toString();
+String staticSourcePath = Paths.get("static").toString();
 
-Map<String, Path> paths = new HashMap<>();
-paths.put("rootProjectPath", rootProjectPath);
-paths.put("mainDirectory", mainPath);
-paths.put("pomPath", rootProjectPath.resolve("pom.xml"));
-paths.put("yamlPath", rootProjectPath.resolve(Paths.get("src", "main", "resources", "application.yml")));
-
+if (sourcePath.toString().contains(javaSourcePath) || sourcePath.toString().contains(staticSourcePath)) {
+    return;
+}
