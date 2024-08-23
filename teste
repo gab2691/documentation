@@ -1,6 +1,36 @@
-String javaSourcePath = Paths.get("src", "main", "java").toString();
-String staticSourcePath = Paths.get("static").toString();
+@Getter
+@Component
+@DependsOn("gitService")
+public class Template {
 
-if (sourcePath.toString().contains(javaSourcePath) || sourcePath.toString().contains(staticSourcePath)) {
-    return;
+    @Value("${template.pom.path}")
+    private String pomFilePath;
+
+    @Value("${template.yml.sourcePath}")
+    private String ymlFilePath;
+
+    protected String name;
+    protected List<Dependency> dependencies;
+    protected Map<String, String> classPaths;
+    protected Map<String, Object> ymlConfigurations;
+    protected Document basePomDocument;
+    protected String ymlKey;
+    protected String keyMap;
+    protected String infraKey;
+    protected DependencyConfig dependencyConfig;
+
+    @Autowired
+    public Template(DependencyConfig dependencyConfig) {
+        this.dependencyConfig = dependencyConfig;
+        this.ymlConfigurations = new LinkedHashMap<>();
+    }
+
+    // Outro construtor para ser chamado manualmente
+    public Template(String name, Map<String, String> classPaths, List<Dependency> dependencies, Document pomDocument) {
+        this.name = name;
+        this.classPaths = classPaths;
+        this.dependencies = dependencies;
+        this.ymlConfigurations = new LinkedHashMap<>();
+        this.basePomDocument = pomDocument;
+    }
 }
