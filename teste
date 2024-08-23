@@ -19,18 +19,18 @@ public class Template {
     protected String infraKey;
     protected DependencyConfig dependencyConfig;
 
-    @Autowired
-    public Template(DependencyConfig dependencyConfig) {
-        this.dependencyConfig = dependencyConfig;
-        this.ymlConfigurations = new LinkedHashMap<>();
-    }
-
-    // Outro construtor para ser chamado manualmente
-    public Template(String name, Map<String, String> classPaths, List<Dependency> dependencies, Document pomDocument) {
+    public Template(String name, Map<String, String> classPaths, List<Dependency> dependencies,
+                    Document pomDocument, DependencyConfig dependencyConfig) {
         this.name = name;
         this.classPaths = classPaths;
         this.dependencies = dependencies;
         this.ymlConfigurations = new LinkedHashMap<>();
         this.basePomDocument = pomDocument;
+        this.dependencyConfig = dependencyConfig;
+    }
+
+    @Autowired
+    public void setDependencyConfig(DependencyConfig dependencyConfig) {
+        this.dependencyConfig = dependencyConfig;
     }
 }
