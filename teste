@@ -1,1 +1,8 @@
 Path javaPath = rootProjectPath.resolve(Paths.get("src", "main", "java", mainPackage.replaceAll("\\.", File.separator)));
+
+Map<String, Path> paths = new HashMap<>();
+paths.put("rootProjectPath", rootProjectPath);
+paths.put("mainDirectory", mainPath);
+paths.put("pomPath", rootProjectPath.resolve("pom.xml"));
+paths.put("yamlPath", rootProjectPath.resolve(Paths.get("src", "main", "resources", "application.yml")));
+
