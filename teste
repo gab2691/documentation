@@ -1,22 +1,44 @@
 @Repository
-public interface ItemRedisRepository {
-    // Salva um novo item no Redis
-    void criar(ItemRedisEntity itemRedisEntity);
+public class ItemRedisRepositoryImpl implements ItemRedisRepository {
 
-    // Obtém um item do Redis pelo id
-    ItemRedisEntity obter(Integer id);
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    // Atualiza um item existente no Redis
-    void atualizar(ItemRedisEntity itemRedisEntity);
+    public ItemRedisRepositoryImpl(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
-    // Pesquisa itens usando um filtro
-    Page<ItemRedisEntity> findAll(Pageable pageable);
+    @Override
+    public void criar(ItemRedisEntity itemRedisEntity) {
+        redisTemplate.opsForValue().set("item:" + itemRedisEntity.getId(), itemRedisEntity);
+    }
 
-    // Exclui um item pelo id
-    void deleteById(Integer id);
+    @Override
+    public ItemRedisEntity obter(Integer id) {
+        return (ItemRedisEntity) redisTemplate.opsForValue().get("item:" + id);
+    }
 
-    // Ativa um item específico
-    Optional<ItemRedisEntity> findById(Integer id);
+    @Override
+    public void atualizar(ItemRedisEntity itemRedisEntity) {
+        redisTemplate.opsForValue().set("item:" + itemRedisEntity.getId(), itemRedisEntity);
+    }
 
-    void save(ItemRedisEntity itemRedisEntity);
+    @Override
+    public void excluir(Integer id) {
+        redisTemplate.delete("item:" + id);
+    }
+
+    @Override
+    public Optional<ItemRedisEntity> findById(Integer id) {
+        return Optional.ofNullable((ItemRedisEntity) redisTemplate.opsForValue().get("item:" + id));
+    }
+
+    @Override
+    public Page<ItemRedisEntity> findAll(Pageable pageable) {
+        throw new UnsupportedOperationException("Método findAll não implementado para Redis.");
+    }
+
+    @Override
+    public void save(ItemRedisEntity itemRedisEntity) {
+        redisTemplate.opsForValue().set("item:" + itemRedisEntity.getId(), itemRedisEntity);
+    }
 }
