@@ -1,44 +1,48 @@
-@Repository
-public class ItemRedisRepositoryImpl implements ItemRedisRepository {
+@Service
+public class ItemWithRedisService implements ItemWithRedisUserCase {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final ItemRedisRepository itemRepository;
 
-    public ItemRedisRepositoryImpl(RedisTemplate<String, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
+    public ItemWithRedisService(ItemRedisRepository itemRepository) {
+        this.itemRepository = itemRepository;
     }
 
     @Override
-    public void criar(ItemRedisEntity itemRedisEntity) {
-        redisTemplate.opsForValue().set("item:" + itemRedisEntity.getId(), itemRedisEntity);
+    public ItemModel criar(ItemCriarModel itemCriarModel) {
+        ItemRedisEntity entity = new ItemRedisEntity();
+        entity.setId(itemCriarModel.getId());
+        entity.setDescricao(itemCriarModel.getDescricao());
+        entity.setQuantidade(itemCriarModel.getQuantidade());
+        entity.setPrecoUnitario(itemCriarModel.getPrecoUnitario());
+        entity.setAtivo(true);
+        entity.setDataCriacao(LocalDateTime.now());
+        itemRepository.save(entity);
+        return new ItemModel(entity.getId(), entity.getDescricao(), entity.getQuantidade(), entity.getPrecoUnitario(), entity.getAtivo(), entity.getDataCriacao());
     }
 
     @Override
-    public ItemRedisEntity obter(Integer id) {
-        return (ItemRedisEntity) redisTemplate.opsForValue().get("item:" + id);
+    @Cacheable(value = "item", key = "#id")
+    public ItemModel obter(Integer id) {
+        ItemRedisEntity entity = itemRepository.findById(id).orElseThrow(() -> new NotFoundException("Item not found"));
+        return new ItemModel(entity.getId(), entity.getDescricao(), entity.getQuantidade(), entity.getPrecoUnitario(), entity.getAtivo(), entity.getDataCriacao());
     }
 
     @Override
-    public void atualizar(ItemRedisEntity itemRedisEntity) {
-        redisTemplate.opsForValue().set("item:" + itemRedisEntity.getId(), itemRedisEntity);
+    @CachePut(value = "item", key = "#id")
+    public ItemModel atualizar(Integer id, ItemAtualizarModel itemAtualizarModel) {
+        ItemRedisEntity entity = new ItemRedisEntity();
+        entity.setId(id);
+        entity.setDescricao(itemAtualizarModel.getDescricao());
+        entity.setQuantidade(itemAtualizarModel.getQuantidade());
+        entity.setPrecoUnitario(itemAtualizarModel.getPrecoUnitario());
+        entity.setAtivo(true);
+        itemRepository.save(entity);
+        return new ItemModel(entity.getId(), entity.getDescricao(), entity.getQuantidade(), entity.getPrecoUnitario(), entity.getAtivo(), entity.getDataCriacao());
     }
 
     @Override
+    @CacheEvict(value = "item", key = "#id")
     public void excluir(Integer id) {
-        redisTemplate.delete("item:" + id);
-    }
-
-    @Override
-    public Optional<ItemRedisEntity> findById(Integer id) {
-        return Optional.ofNullable((ItemRedisEntity) redisTemplate.opsForValue().get("item:" + id));
-    }
-
-    @Override
-    public Page<ItemRedisEntity> findAll(Pageable pageable) {
-        throw new UnsupportedOperationException("Método findAll não implementado para Redis.");
-    }
-
-    @Override
-    public void save(ItemRedisEntity itemRedisEntity) {
-        redisTemplate.opsForValue().set("item:" + itemRedisEntity.getId(), itemRedisEntity);
+        itemRepository.deleteById(id);
     }
 }
