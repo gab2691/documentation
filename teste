@@ -1,1 +1,55 @@
-Path.of(rootProjectPath + \\src\\main\\java\\ + mainPackage.replaceAll([file://.]\\., "\\\\"));
+@Service
+public class ItemRedisServicePort implements ItemRedisPort {
+
+    private final ItemRedisRepository repository;
+    private final ItemRedisMapper itemRedisMapper;
+
+    public ItemRedisServicePort(ItemRedisRepository repository, ItemRedisMapper itemRedisMapper) {
+        this.repository = repository;
+        this.itemRedisMapper = itemRedisMapper;
+    }
+
+    @Override
+    public ItemModel criar(ItemCriarModel itemCriarModel) {
+        ItemRedisEntity ent = itemRedisMapper.toEntity(itemCriarModel);
+        ent.setDataCriacao(LocalDateTime.now());
+        repository.criar(itemRedisMapper.toRecord(ent)); // Corrigido para passar o registro correto ao criar
+        return itemRedisMapper.toRecord(ent);
+    }
+
+    @Override
+    public ItemModel obter(Integer id) {
+        return repository.obter(id); // Assumindo que retorna uma entidade e faz o mapeamento no mapper
+    }
+
+    @Override
+    public ItemModel atualizar(Integer id, ItemAtualizarModel itemAtualizarModel) {
+        ItemRedisEntity entity = itemRedisMapper.toEntity(itemAtualizarModel);
+        entity.setId(id);
+        repository.criar(itemRedisMapper.toRecord(entity)); // Use o método correto do repositório
+        return itemRedisMapper.toRecord(entity);
+    }
+
+    @Override
+    public PagedResult<ItemModel> pesquisar(BaseFilterItem filtro) {
+        Pageable page = PageRequest.of(filtro.page(), filtro.size());
+        Page<ItemRedisEntity> entidades = repository.findAll(page); // Assumindo que repository tem um método findAll
+
+        List<ItemModel> itemModels = entidades.getContent().stream().map(itemRedisMapper::toRecord).toList();
+
+        return new PagedResult<>(filtro.page(), filtro.size(), entidades.getTotalElements(), entidades.getTotalPages(), itemModels);
+    }
+
+    @Override
+    public void excluir(Integer id) {
+        repository.findById(id).orElseThrow(() -> new NotFoundException("Entity not found"));
+        repository.deleteById(id);
+    }
+
+    @Override
+    public void ativar(Integer id) {
+        ItemRedisEntity ent = repository.findById(id).orElseThrow(() -> new NotFoundException("Entity not found"));
+        ent.setAtivo(true);
+        repository.save(ent); // Certifique-se que repository tem o método save
+    }
+}
