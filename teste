@@ -1,2 +1,1 @@
-docker run -p 8081:8081 -p 10251:10251 -p 10252:10252 -p 10253:10253 -p 10254:10254 -m 3g --name=cosmosdb-emulator --cap-add SYS_ADMIN -e AZURE_COSMOS_EMULATOR_KEY=your_custom_key_here mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator
-
+docker pull mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator
