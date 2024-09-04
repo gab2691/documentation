@@ -1,2 +1,14 @@
-GIT_REPO_DIRECTORY: "/tmp/TemplateFromGIT" # Caminho para o repositório no /tmp
-    TEMPLATE_TARGET_PROJECT: "/tmp/projects/artifactId"
+git:
+  repo:
+    url: https://bitbucket.bradesco.com.br:8443/scm/escp/ensc-lib-software-template.git
+    branch: "feat/ENGSRV-1658"
+    directory: ${GIT_REPO_DIRECTORY}  # Usando variável de ambiente para o diretório
+
+template:
+  classPathSource: "${GIT_REPO_DIRECTORY}/scaffolder-templates/kit-srv-java/skeleton/src/main/java/br/com/bradesco/kit/srv"
+  rootPath: "${GIT_REPO_DIRECTORY}/scaffolder-templates/kit-srv-java/skeleton"
+  targetProjectGenerated: ${TEMPLATE_TARGET_PROJECT}  # Usando variável de ambiente para o projeto gerado
+  pom:
+    path: "${GIT_REPO_DIRECTORY}/scaffolder-templates/kit-srv-java/skeleton/src/main/resources/static/pom.xml"
+  yml:
+    sourcePath: "${GIT_REPO_DIRECTORY}/scaffolder-templates/kit-srv-java/skeleton/src/main/resources/static/application.yml"
