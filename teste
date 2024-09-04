@@ -1,14 +1,27 @@
-git:
-  repo:
-    url: https://bitbucket.bradesco.com.br:8443/scm/escp/ensc-lib-software-template.git
-    branch: "feat/ENGSRV-1658"
-    directory: ${GIT_REPO_DIRECTORY}  # Usando variável de ambiente para o diretório
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.jgit.transport.TransportConfigCallback;
+import org.eclipse.jgit.transport.URIish;
 
-template:
-  classPathSource: "${GIT_REPO_DIRECTORY}/scaffolder-templates/kit-srv-java/skeleton/src/main/java/br/com/bradesco/kit/srv"
-  rootPath: "${GIT_REPO_DIRECTORY}/scaffolder-templates/kit-srv-java/skeleton"
-  targetProjectGenerated: ${TEMPLATE_TARGET_PROJECT}  # Usando variável de ambiente para o projeto gerado
-  pom:
-    path: "${GIT_REPO_DIRECTORY}/scaffolder-templates/kit-srv-java/skeleton/src/main/resources/static/pom.xml"
-  yml:
-    sourcePath: "${GIT_REPO_DIRECTORY}/scaffolder-templates/kit-srv-java/skeleton/src/main/resources/static/application.yml"
+import java.io.File;
+
+public class GitClient {
+
+    public static void main(String[] args) throws Exception {
+        Git git = Git.cloneRepository()
+                .setURI("https://github.com/usuario/repositorio.git")
+                .setDirectory(new File("/tmp/myrepo"))
+                .setTransportConfigCallback(new TransportConfigCallback() {
+                    @Override
+                    public void configure(Transport transport) {
+                        if (transport instanceof TransportHttp) {
+                            // Configurações do proxy HTTP
+                            ((TransportHttp) transport).setProxy(new Proxy(Proxy.Type.HTTP,
+                                    new InetSocketAddress("10.215.80.105", 80)));
+                        }
+                    }
+                })
+                .call();
+    }
+}
