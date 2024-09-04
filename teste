@@ -1,27 +1,7 @@
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.transport.Transport;
-import org.eclipse.jgit.transport.TransportHttp;
-import org.eclipse.jgit.transport.TransportConfigCallback;
-import org.eclipse.jgit.transport.URIish;
+System.setProperty("http.proxyHost", "10.215.80.105");
+        System.setProperty("http.proxyPort", "80");
+        System.setProperty("https.proxyHost", "10.215.80.105");
+        System.setProperty("https.proxyPort", "80");
 
-import java.io.File;
-
-public class GitClient {
-
-    public static void main(String[] args) throws Exception {
-        Git git = Git.cloneRepository()
-                .setURI("https://github.com/usuario/repositorio.git")
-                .setDirectory(new File("/tmp/myrepo"))
-                .setTransportConfigCallback(new TransportConfigCallback() {
-                    @Override
-                    public void configure(Transport transport) {
-                        if (transport instanceof TransportHttp) {
-                            // Configurações do proxy HTTP
-                            ((TransportHttp) transport).setProxy(new Proxy(Proxy.Type.HTTP,
-                                    new InetSocketAddress("10.215.80.105", 80)));
-                        }
-                    }
-                })
-                .call();
-    }
-}
+        // Se você precisar de uma lista de hosts que não usam o proxy
+        System.setProperty("http.nonProxyHosts", "nexusrepository.bradesco.com.br");
