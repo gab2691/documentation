@@ -1,13 +1,24 @@
-private void copyFilesFromResource(ClassPathResource resource, Path targetPath) throws IOException {
+private void copyDirectoryFromClasspath(ClassPathResource resource, Path targetPath) throws IOException {
         // Cria o diretório se ele não existir
         if (!Files.exists(targetPath)) {
             Files.createDirectories(targetPath);
         }
 
-        // Copiar o conteúdo do recurso (no JAR) para o sistema de arquivos
-        try (InputStream inputStream = resource.getInputStream()) {
-            Path targetFile = targetPath.resolve("template-files");
-            Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
-            logger.info("Arquivo copiado para {}", targetFile);
+        try (Stream<Path> paths = Files.walk(resource.getFile().toPath())) {
+            paths.forEach(sourcePath -> {
+                try {
+                    Path resolvedTargetPath = targetPath.resolve(resource.getFile().toPath().relativize(sourcePath));
+
+                    if (Files.isDirectory(sourcePath)) {
+                        Files.createDirectories(resolvedTargetPath);
+                    } else {
+                        try (InputStream inputStream = Files.newInputStream(sourcePath)) {
+                            Files.copy(inputStream, resolvedTargetPath, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    }
+                } catch (IOException e) {
+                    logger.error("Error copying file {} to {}", sourcePath, targetPath, e);
+                }
+            });
         }
     }
