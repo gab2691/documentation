@@ -1,7 +1,13 @@
-System.setProperty("http.proxyHost", "10.215.80.105");
-        System.setProperty("http.proxyPort", "80");
-        System.setProperty("https.proxyHost", "10.215.80.105");
-        System.setProperty("https.proxyPort", "80");
+private void copyFilesFromResource(ClassPathResource resource, Path targetPath) throws IOException {
+        // Cria o diretório se ele não existir
+        if (!Files.exists(targetPath)) {
+            Files.createDirectories(targetPath);
+        }
 
-        // Se você precisar de uma lista de hosts que não usam o proxy
-        System.setProperty("http.nonProxyHosts", "nexusrepository.bradesco.com.br");
+        // Copiar o conteúdo do recurso (no JAR) para o sistema de arquivos
+        try (InputStream inputStream = resource.getInputStream()) {
+            Path targetFile = targetPath.resolve("template-files");
+            Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
+            logger.info("Arquivo copiado para {}", targetFile);
+        }
+    }
