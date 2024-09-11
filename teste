@@ -1,24 +1,15 @@
-private void copyDirectoryFromClasspath(ClassPathResource resource, Path targetPath) throws IOException {
-        // Cria o diretório se ele não existir
-        if (!Files.exists(targetPath)) {
-            Files.createDirectories(targetPath);
-        }
+public RestTemplate restTemplateWithProxy() {
+        // Definir o host e a porta do proxy
+        HttpHost proxy = new HttpHost("proxy.example.com", 8080);
 
-        try (Stream<Path> paths = Files.walk(resource.getFile().toPath())) {
-            paths.forEach(sourcePath -> {
-                try {
-                    Path resolvedTargetPath = targetPath.resolve(resource.getFile().toPath().relativize(sourcePath));
+        // Configurar o cliente HTTP com o proxy
+        CloseableHttpClient httpClient = HttpClientBuilder.create()
+                .setProxy(proxy)
+                .build();
 
-                    if (Files.isDirectory(sourcePath)) {
-                        Files.createDirectories(resolvedTargetPath);
-                    } else {
-                        try (InputStream inputStream = Files.newInputStream(sourcePath)) {
-                            Files.copy(inputStream, resolvedTargetPath, StandardCopyOption.REPLACE_EXISTING);
-                        }
-                    }
-                } catch (IOException e) {
-                    logger.error("Error copying file {} to {}", sourcePath, targetPath, e);
-                }
-            });
-        }
+        // Configurar o RequestFactory com o cliente HTTP que contém o proxy
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        // Criar o RestTemplate com a configuração do proxy
+        return new RestTemplate(factory);
     }
