@@ -1,15 +1,5 @@
-public RestTemplate restTemplateWithProxy() {
-        // Definir o host e a porta do proxy
-        HttpHost proxy = new HttpHost("proxy.example.com", 8080);
-
-        // Configurar o cliente HTTP com o proxy
-        CloseableHttpClient httpClient = HttpClientBuilder.create()
-                .setProxy(proxy)
-                .build();
-
-        // Configurar o RequestFactory com o cliente HTTP que contém o proxy
-        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
-
-        // Criar o RestTemplate com a configuração do proxy
-        return new RestTemplate(factory);
-    }
+<dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+    <version>4.5.13</version> <!-- Verifique a versão mais recente no Maven Central -->
+</dependency>
