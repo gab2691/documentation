@@ -1,28 +1,44 @@
 private void copyDirectoryFromClasspath(String resourcePath, Path targetPath) throws IOException {
     ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-    Resource[] resources = resolver.getResources("classpath:template/**");
+    Resource[] resources = resolver.getResources("classpath*:" + resourcePath + "/**");
 
     for (Resource resource : resources) {
         if (resource.isReadable()) {
-            String resourcePathInJar = resource.getURI().toString();
-            logger.info("Encontrado recurso: {}", resourcePathInJar);
+            // Extrai o caminho dentro do JAR
+            String pathInJar = resource.getURL().getPath();
 
-            if (resource.isFile()) {
-                // É um arquivo
-                Path relativePath = Paths.get("template").relativize(Paths.get(resource.getURI()));
-                Path targetFile = targetPath.resolve(relativePath.toString());
+            // Remove prefixos como "file:", "jar:" e "BOOT-INF/classes!"
+            if (pathInJar.contains("!")) {
+                pathInJar = pathInJar.substring(pathInJar.indexOf("!") + 1);
+            }
+
+            // Remove "/BOOT-INF/classes" se estiver presente
+            pathInJar = pathInJar.replace("/BOOT-INF/classes", "");
+
+            // Garante que o caminho comece com "/"
+            if (!pathInJar.startsWith("/")) {
+                pathInJar = "/" + pathInJar;
+            }
+
+            // Calcula o caminho relativo após o resourcePath
+            int startIndex = pathInJar.indexOf("/" + resourcePath) + resourcePath.length() + 1;
+            String relativePath = pathInJar.substring(startIndex);
+
+            Path targetFile = targetPath.resolve(relativePath);
+
+            if (resource.getURL().toString().endsWith("/")) {
+                // É um diretório; cria se não existir
+                Files.createDirectories(targetFile);
+            } else {
+                // É um arquivo; copia
                 Files.createDirectories(targetFile.getParent());
                 try (InputStream is = resource.getInputStream()) {
                     Files.copy(is, targetFile, StandardCopyOption.REPLACE_EXISTING);
                 }
-            } else if (resource instanceof org.springframework.core.io.UrlResource && resource.getURL().getProtocol().equals("jar")) {
-                // Tratamento para arquivos dentro do JAR
-                String path = resource.getURL().getPath();
-                String relativePathStr = path.substring(path.indexOf("!/") + 2);
-                Path relativePath = Paths.get(relativePathStr).subpath(1, Paths.get(relativePathStr).getNameCount());
-                Path targetDir = targetPath.resolve(relativePath);
-                Files.createDirectories(targetDir);
             }
+
+            // Log para verificar o caminho de destino
+            logger.info("Copiado recurso para: {}", targetFile);
         }
     }
 }
