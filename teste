@@ -1,14 +1,25 @@
-git:
-  repo:
-    url: https://github.com/Bradesco-Automation/ensc-lib-software-template.git
-    branch: "feature/itegracao-gerador"
-    directory: "src/main/resources/template"
+private void copyDirectoryFromClasspath(String resourcePath, Path targetPath) throws IOException {
+    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    Resource[] resources = resolver.getResources("classpath*:" + resourcePath + "/**");
 
-template:
-  classPathSource: "${git.repo.directory}/scaffolder-templates/kit-srv-java/skeleton/src/main/java/br/com/bradesco/kit/srv"
-  rootPath: "${git.repo.directory}"
-  targetProjectGenerated: "src/main/resources/artifactId"
-  pom:
-    path: "${git.repo.directory}/scaffolder-templates/kit-srv-java/skeleton/src/main/resources/static/pom.xml"
-  yml:
-    sourcePath: "${git.repo.directory}/scaffolder-templates/kit-srv-java/skeleton/src/main/resources/static/application.yml"
+    for (Resource resource : resources) {
+        if (resource.isReadable()) {
+            String relativePath = resource.getURL().getPath();
+            String[] parts = relativePath.split("!/");
+            String pathInsideJar = parts.length > 1 ? parts[1] : relativePath;
+
+            String resourceRelativePath = pathInsideJar.substring(resourcePath.length() + 1);
+            Path targetFile = targetPath.resolve(resourceRelativePath);
+
+            if (resource.getURL().toString().endsWith("/")) {
+                // É um diretório; cria se não existir
+                Files.createDirectories(targetFile);
+            } else {
+                // É um arquivo; copia
+                Files.createDirectories(targetFile.getParent());
+                try (InputStream is = resource.getInputStream()) {
+                    Files.copy(is, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
