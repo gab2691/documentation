@@ -24,6 +24,11 @@ private void copyDirectoryFromClasspath(String resourcePath, Path targetPath) th
             int startIndex = pathInJar.indexOf("/" + resourcePath) + resourcePath.length() + 1;
             String relativePath = pathInJar.substring(startIndex);
 
+            // **Remover o "/" inicial do relativePath, se existir**
+            if (relativePath.startsWith("/")) {
+                relativePath = relativePath.substring(1);
+            }
+
             Path targetFile = targetPath.resolve(relativePath);
 
             if (resource.getURL().toString().endsWith("/")) {
