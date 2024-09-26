@@ -1,25 +1,28 @@
 private void copyDirectoryFromClasspath(String resourcePath, Path targetPath) throws IOException {
-    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-    Resource[] resources = resolver.getResources("classpath*:" + resourcePath + "/**");
+    ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    Resource[] resources = resolver.getResources("classpath:template/**");
 
     for (Resource resource : resources) {
         if (resource.isReadable()) {
-            String relativePath = resource.getURL().getPath();
-            String[] parts = relativePath.split("!/");
-            String pathInsideJar = parts.length > 1 ? parts[1] : relativePath;
+            String resourcePathInJar = resource.getURI().toString();
+            logger.info("Encontrado recurso: {}", resourcePathInJar);
 
-            String resourceRelativePath = pathInsideJar.substring(resourcePath.length() + 1);
-            Path targetFile = targetPath.resolve(resourceRelativePath);
-
-            if (resource.getURL().toString().endsWith("/")) {
-                // É um diretório; cria se não existir
-                Files.createDirectories(targetFile);
-            } else {
-                // É um arquivo; copia
+            if (resource.isFile()) {
+                // É um arquivo
+                Path relativePath = Paths.get("template").relativize(Paths.get(resource.getURI()));
+                Path targetFile = targetPath.resolve(relativePath.toString());
                 Files.createDirectories(targetFile.getParent());
                 try (InputStream is = resource.getInputStream()) {
                     Files.copy(is, targetFile, StandardCopyOption.REPLACE_EXISTING);
                 }
+            } else if (resource instanceof org.springframework.core.io.UrlResource && resource.getURL().getProtocol().equals("jar")) {
+                // Tratamento para arquivos dentro do JAR
+                String path = resource.getURL().getPath();
+                String relativePathStr = path.substring(path.indexOf("!/") + 2);
+                Path relativePath = Paths.get(relativePathStr).subpath(1, Paths.get(relativePathStr).getNameCount());
+                Path targetDir = targetPath.resolve(relativePath);
+                Files.createDirectories(targetDir);
             }
         }
     }
+}
