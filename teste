@@ -1,49 +1,16 @@
-private void copyDirectoryFromClasspath(String resourcePath, Path targetPath) throws IOException {
-    ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-    Resource[] resources = resolver.getResources("classpath*:" + resourcePath + "/**");
-
-    for (Resource resource : resources) {
-        if (resource.isReadable()) {
-            // Extrai o caminho dentro do JAR
-            String pathInJar = resource.getURL().getPath();
-
-            // Remove prefixos como "file:", "jar:" e "BOOT-INF/classes!"
-            if (pathInJar.contains("!")) {
-                pathInJar = pathInJar.substring(pathInJar.indexOf("!") + 1);
-            }
-
-            // Remove "/BOOT-INF/classes" se estiver presente
-            pathInJar = pathInJar.replace("/BOOT-INF/classes", "");
-
-            // Garante que o caminho comece com "/"
-            if (!pathInJar.startsWith("/")) {
-                pathInJar = "/" + pathInJar;
-            }
-
-            // Calcula o caminho relativo após o resourcePath
-            int startIndex = pathInJar.indexOf("/" + resourcePath) + resourcePath.length() + 1;
-            String relativePath = pathInJar.substring(startIndex);
-
-            // **Remover o "/" inicial do relativePath, se existir**
-            if (relativePath.startsWith("/")) {
-                relativePath = relativePath.substring(1);
-            }
-
-            Path targetFile = targetPath.resolve(relativePath);
-
-            if (resource.getURL().toString().endsWith("/")) {
-                // É um diretório; cria se não existir
-                Files.createDirectories(targetFile);
-            } else {
-                // É um arquivo; copia
-                Files.createDirectories(targetFile.getParent());
-                try (InputStream is = resource.getInputStream()) {
-                    Files.copy(is, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                }
-            }
-
-            // Log para verificar o caminho de destino
-            logger.info("Copiado recurso para: {}", targetFile);
-        }
-    }
-}
+spring:
+  datasource:
+    url: jdbc:postgresql://psqlazudvbrabstg001.postgres.database.azure.com:5432/pgsenscdb001archflow?currentSchema=dbaprd1
+    username: dusrbdensc01_99
+    password: ds_dusrbdensc01_99
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+server:
+  error:
+    include-message: Always
