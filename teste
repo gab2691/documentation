@@ -1,16 +1,3 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://psqlazudvbrabstg001.postgres.database.azure.com:5432/pgsenscdb001archflow?currentSchema=dbaprd1
-    username: dusrbdensc01_99
-    password: ds_dusrbdensc01_99
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: create
-    properties:
-      hibernate:
-        format_sql: true
-server:
-  error:
-    include-message: Always
+echo ".github/workflows/cicd-sandbox.yaml" >> .gitignore
+git add .gitignore
+git commit -m "Adicionar cicd-sandbox.yaml ao .gitignore"
