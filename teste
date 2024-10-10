@@ -1,5 +1,8 @@
+git log --all --oneline -- .github/workflows
+
+
 git filter-branch --force --index-filter \
-"git rm --cached --ignore-unmatch .github/workflows/cicd-sandbox.yaml" \
+'git rm --cached --ignore-unmatch .github/workflows/*.yaml' \
 --prune-empty --tag-name-filter cat -- --all
 
 
@@ -9,14 +12,13 @@ git reflog expire --expire=now --all
 git gc --prune=now --aggressive
 
 
+git log --all --oneline -- .github/workflows
 
-git log --all --oneline -- .github/workflows/cicd-sandbox.yaml
 
+echo ".github/workflows/" >> .gitignore
+git add .gitignore
+git commit -m "Adicionar .github/workflows/ ao .gitignore"
 
 
 git push origin --force-with-lease --all
 git push origin --force-with-lease --tags
-
-
-git fetch origin
-git reset --hard origin/template
