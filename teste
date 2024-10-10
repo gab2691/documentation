@@ -1,3 +1,22 @@
-echo ".github/workflows/cicd-sandbox.yaml" >> .gitignore
-git add .gitignore
-git commit -m "Adicionar cicd-sandbox.yaml ao .gitignore"
+git filter-branch --force --index-filter \
+"git rm --cached --ignore-unmatch .github/workflows/cicd-sandbox.yaml" \
+--prune-empty --tag-name-filter cat -- --all
+
+
+
+rm -rf .git/refs/original/
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+
+
+
+git log --all --oneline -- .github/workflows/cicd-sandbox.yaml
+
+
+
+git push origin --force-with-lease --all
+git push origin --force-with-lease --tags
+
+
+git fetch origin
+git reset --hard origin/template
