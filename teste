@@ -17,12 +17,18 @@ class JourneyServiceTest {
     private JourneyService journeyService;
 
     @BeforeEach
-    void setUp() {
-        // Injetar valores para as propriedades anotadas com @Value
-        ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
-        ReflectionTestUtils.setField(journeyService, "journeyUrl", "http://test-journey-url.com");
-        ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
-    }
+void setUp() {
+    journeyService = new JourneyService(
+        demandaReservaService,
+        demandaReservaRepository,
+        conjuntoComponenteMapper,
+        restTemplate
+    );
+    ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
+    ReflectionTestUtils.setField(journeyService, "journeyUrl", "http://test-journey-url.com");
+    ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
+}
+
 
     @Test
     void shouldFetchJourneysInApiServiceNow() {
