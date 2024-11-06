@@ -11,135 +11,110 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class DemandaReservaServiceTest {
+class DominioServiceTest {
 
     @Mock
-    private DemandaReservaRepository demandaReservaRepository;
-
-    @Mock
-    private ConjuntoComponenteRepository conjuntoComponenteRepository;
-
-    @Mock
-    private DemandaReservaMapper demandaReservaMapper;
+    private DominioRepository dominioRepository;
 
     @InjectMocks
-    private DemandaReservaService demandaReservaService;
+    private DominioService dominioService;
 
-    private DemandaReservaDTO demandaReservaDTO;
-    private DemandaReserva demandaReserva;
-    private DemandaListDTO demandaListDTO;
+    private Dominio dominio;
 
     @BeforeEach
     void setUp() {
-        demandaReservaDTO = DemandaReservaDTO.builder()
-                .idJourney("journey123")
-                .environment(Ambiente.PRODUCAO)
-                .cc("12345")
-                .cpf("11111111111")
-                .arquetipos(List.of(UUID.randomUUID()))
-                .codFuncional("func123")
-                .status("Ativo")
-                .build();
-
-        demandaReserva = DemandaReserva.builder()
-                .idJourney("journey123")
-                .environment(Ambiente.PRODUCAO)
-                .cc("12345")
-                .cpf("11111111111")
-                .arquetipos(List.of(new ConjuntoComponente()))
-                .codFuncional("func123")
-                .status("Ativo")
-                .build();
-
-        demandaListDTO = new DemandaListDTO(1L, Ambiente.PRODUCAO, "journey123", "12345", "11111111111");
+        dominio = new Dominio();
+        dominio.setId(1);
+        dominio.setSigla("ABC");
+        dominio.setDescricao("Descrição de Teste");
     }
 
     @Test
-    void shouldCreateDemandaReserva() {
-        when(conjuntoComponenteRepository.findAllById(demandaReservaDTO.getArquetipos()))
-                .thenReturn(List.of(new ConjuntoComponente()));
-        when(demandaReservaRepository.save(any(DemandaReserva.class))).thenReturn(demandaReserva);
+    void shouldCreateDominio() {
+        when(dominioRepository.save(dominio)).thenReturn(dominio);
 
-        DemandaReserva result = demandaReservaService.create(demandaReservaDTO);
+        Dominio result = dominioService.create(dominio);
 
         assertNotNull(result);
-        assertEquals(demandaReservaDTO.getIdJourney(), result.getIdJourney());
-        verify(demandaReservaRepository, times(1)).save(any(DemandaReserva.class));
+        assertEquals(dominio.getId(), result.getId());
+        verify(dominioRepository, times(1)).save(dominio);
     }
 
     @Test
-    void shouldReadAllDemandaReservas() {
+    void shouldReadAllDominios() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<DemandaReserva> page = new PageImpl<>(List.of(demandaReserva));
-        when(demandaReservaRepository.findAll(pageable)).thenReturn(page);
-        when(demandaReservaMapper.convertToDTO(demandaReserva)).thenReturn(demandaListDTO);
+        Page<Dominio> page = new PageImpl<>(List.of(dominio));
+        when(dominioRepository.findAll(pageable)).thenReturn(page);
 
-        Page<DemandaListDTO> result = demandaReservaService.readAll(pageable);
+        Page<Dominio> result = dominioService.readAll(pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        verify(demandaReservaRepository, times(1)).findAll(pageable);
+        verify(dominioRepository, times(1)).findAll(pageable);
     }
 
     @Test
-    void shouldUpdateEnvironment() {
-        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.of(demandaReserva));
-        when(demandaReservaRepository.save(any(DemandaReserva.class))).thenReturn(demandaReserva);
+    void shouldReadByIdWhenFound() {
+        when(dominioRepository.findById(1)).thenReturn(Optional.of(dominio));
 
-        DemandaReserva result = demandaReservaService.updateEnvironment("journey123", Ambiente.TESTE);
+        Dominio result = dominioService.readById(1);
 
         assertNotNull(result);
-        assertEquals(Ambiente.TESTE, result.getEnvironment());
-        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
-        verify(demandaReservaRepository, times(1)).save(demandaReserva);
+        assertEquals(dominio.getId(), result.getId());
+        verify(dominioRepository, times(1)).findById(1);
     }
 
     @Test
-    void shouldThrowExceptionWhenUpdatingNonexistentJourney() {
-        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.empty());
+    void shouldThrowExceptionWhenReadByIdNotFound() {
+        when(dominioRepository.findById(1)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> demandaReservaService.updateEnvironment("journey123", Ambiente.TESTE));
+                () -> dominioService.readById(1));
 
-        assertEquals("Journey not found", exception.getMessage());
-        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
+        assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
+        verify(dominioRepository, times(1)).findById(1);
     }
 
     @Test
-    void shouldCheckIfJourneyExists() {
-        when(demandaReservaRepository.existsByIdJourney("journey123")).thenReturn(true);
+    void shouldUpdateDominioWhenFound() {
+        Dominio updatedDominio = new Dominio();
+        updatedDominio.setSigla("DEF");
+        updatedDominio.setDescricao("Descrição Atualizada");
 
-        ResourceAlreadyExistsException exception = assertThrows(ResourceAlreadyExistsException.class,
-                () -> demandaReservaService.checkIfJourneyExists("journey123"));
+        when(dominioRepository.findById(1)).thenReturn(Optional.of(dominio));
+        when(dominioRepository.save(any(Dominio.class))).thenReturn(updatedDominio);
 
-        assertEquals("Demanda já existe com idJourney: journey123", exception.getMessage());
-        verify(demandaReservaRepository, times(1)).existsByIdJourney("journey123");
+        Dominio result = dominioService.update(1, updatedDominio);
+
+        assertNotNull(result);
+        assertEquals("DEF", result.getSigla());
+        verify(dominioRepository, times(1)).findById(1);
+        verify(dominioRepository, times(1)).save(updatedDominio);
     }
 
     @Test
-    void shouldDeleteDemandaReservaWhenFound() {
-        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.of(demandaReserva));
+    void shouldDeleteDominioWhenFound() {
+        when(dominioRepository.findById(1)).thenReturn(Optional.of(dominio));
 
-        demandaReservaService.delete("journey123");
+        dominioService.delete(1);
 
-        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
-        verify(demandaReservaRepository, times(1)).delete(demandaReserva);
+        verify(dominioRepository, times(1)).findById(1);
+        verify(dominioRepository, times(1)).deleteById(1);
     }
 
     @Test
-    void shouldThrowExceptionWhenDeletingNonexistentJourney() {
-        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.empty());
+    void shouldThrowExceptionWhenDeleteDominioNotFound() {
+        when(dominioRepository.findById(1)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> demandaReservaService.delete("journey123"));
+                () -> dominioService.delete(1));
 
-        assertEquals("Journey not found", exception.getMessage());
-        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
+        assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
+        verify(dominioRepository, times(1)).findById(1);
     }
 }
