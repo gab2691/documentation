@@ -1,173 +1,120 @@
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.*;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+@Service
+public class JourneyService {
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+    private static final Logger logger = Logger.getLogger(JourneyService.class.getName());
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+    private static final String JOURNEY_NAO_ENCONTRADO = "Journey informado não foi encontrado.";
+    private static final String LISTA_DE_JOURNEYS_VAZIA = "Lista de Journeys vazia.";
 
-@ExtendWith(MockitoExtension.class)
-class JourneyServiceTest {
+    private final DemandaReservaService demandaReservaService;
+    private final DemandaReservaRepository demandaReservaRepository;
+    private final ConjuntoComponenteMapper conjuntoComponenteMapper;
+    private final RestTemplate restTemplate;
 
-    @Mock
-    private DemandaReservaService demandaReservaService;
+    @Value("${journey_authorization}")
+    private String journeyAuthorization;
 
-    @Mock
-    private DemandaReservaRepository demandaReservaRepository;
+    @Value("${journey_url}")
+    private String journeyUrl;
 
-    @Mock
-    private ConjuntoComponenteMapper conjuntoComponenteMapper;
+    @Value("${cost_center_url}")
+    private String costCenterUrl;
 
-    @Mock
-    private RestTemplate restTemplate;
-
-    @InjectMocks
-    private JourneyService journeyService;
-
-    private JourneyClientDTO journeyClientDTO;
-    private JourneyDTO journeyDTO;
-    private DemandaReserva demandaReserva;
-
-    @BeforeEach
-    void setUp() {
-        journeyClientDTO = JourneyClientDTO.builder()
-                .numeroDemanda("journey123")
-                .fase("Open")
-                .subfase("Active")
-                .centroDeCusto("CC001")
-                .cpf("12345678901")
-                .build();
-
-        journeyDTO = JourneyDTO.builder()
-                .id("journey123")
-                .cc("CC001")
-                .cpf("12345678901")
-                .fase("Open")
-                .subfase("Active")
-                .build();
-
-        demandaReserva = DemandaReserva.builder()
-                .idJourney("journey123")
-                .environment(Ambiente.PRODUCAO)
-                .cpf("12345678901")
-                .arquetipos(List.of(new ConjuntoComponente()))
-                .cc("CC001")
-                .build();
+    public JourneyService(
+            DemandaReservaService demandaReservaService,
+            DemandaReservaRepository demandaReservaRepository,
+            ConjuntoComponenteMapper conjuntoComponenteMapper,
+            RestTemplate restTemplate
+    ) {
+        this.demandaReservaService = demandaReservaService;
+        this.demandaReservaRepository = demandaReservaRepository;
+        this.conjuntoComponenteMapper = conjuntoComponenteMapper;
+        this.restTemplate = restTemplate;
     }
 
-    @Test
-    void shouldFetchJourneysInApiServiceNow() {
-        when(demandaReservaService.checkIfJourneyExists("journey123")).thenReturn(false);
+    public JourneyDTO fetchJourneysInApiServiceNow(String id) {
+        demandaReservaService.checkIfJourneyExists(id);
+
+        ResponseEntity<List<JourneyClientDTO>> response;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("User-Agent", "Mozilla/5.0");
-        headers.set("Authorization", "Basic token123");
+        headers.set("Authorization", journeyAuthorization.startsWith("Basic") ? journeyAuthorization : "Basic " + journeyAuthorization);
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<List<JourneyClientDTO>> response = new ResponseEntity<>(List.of(journeyClientDTO), HttpStatus.OK);
 
-        RestTemplate restTemplateJourney = mock(RestTemplate.class);
-        when(restTemplateJourney.exchange(
-                anyString(),
-                eq(HttpMethod.GET),
-                eq(entity),
-                any(ParameterizedTypeReference.class))
-        ).thenReturn(response);
+        try {
+            logger.info("Fetching journey from external API...");
+            response = restTemplate.exchange(
+                    journeyUrl + "/" + id,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<List<JourneyClientDTO>>() {
+                    }
+            );
+        } catch (HttpClientErrorException e) {
+            logger.warning("API returned an error: " + e.getMessage());
+            throw new ResourceNotFoundException(LISTA_DE_JOURNEYS_VAZIA);
+        }
 
-        JourneyDTO result = journeyService.fetchJourneysInApiServiceNow("journey123");
+        List<JourneyClientDTO> journeys = Optional.ofNullable(response.getBody())
+                .orElseThrow(() -> new ResourceNotFoundException(LISTA_DE_JOURNEYS_VAZIA));
 
-        assertNotNull(result);
-        assertEquals(journeyClientDTO.getNumeroDemanda(), result.getId());
-    }
+        JourneyClientDTO journey = journeys.stream()
+                .filter(j -> id.equals(j.getNumeroDemanda()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException(JOURNEY_NAO_ENCONTRADO + " idJourney: " + id));
 
-    @Test
-    void shouldThrowExceptionWhenJourneyNotFoundInApi() {
-        when(demandaReservaService.checkIfJourneyExists("journey123")).thenReturn(false);
+        String key = journey.getFase() + "|" + journey.getSubfase();
 
-        RestTemplate restTemplateJourney = mock(RestTemplate.class);
-        when(restTemplateJourney.exchange(
-                anyString(),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                any(ParameterizedTypeReference.class))
-        ).thenThrow(HttpClientErrorException.NotFound.class);
+        if ("Close|Cancelled".equals(key)) {
+            throw new JourneyConflictException("Journey foi cancelado. Informe um id válido!");
+        }
 
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> journeyService.fetchJourneysInApiServiceNow("journey123")
-        );
-
-        assertEquals("Lista de Journeys vazia.", exception.getMessage());
-    }
-
-    @Test
-    void shouldFetchJourneysTechLead() {
-        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.of(demandaReserva));
-
-        CostCenterTechLeadDTO costCenterTechLeadDTO = new CostCenterTechLeadDTO("CC001", "Cost Center Test");
-        when(journeyService.fetchCostCenter("CC001")).thenReturn(costCenterTechLeadDTO);
-
-        ArchetypeTechLeadDTO archetypeTechLeadDTO = ArchetypeTechLeadDTO.builder()
-                .id("1")
-                .title("Archetype Test")
+        return JourneyDTO.builder()
+                .id(journey.getNumeroDemanda())
+                .cc(journey.getCentroDeCusto())
+                .cpf(journey.getCpf())
+                .fase(journey.getFase())
+                .subfase(journey.getSubfase())
                 .build();
-        when(conjuntoComponenteMapper.convertToArchetypeDTO(any(ConjuntoComponente.class))).thenReturn(archetypeTechLeadDTO);
-
-        JourneyTechLeadDTO result = journeyService.fetchJourneysTechLead("journey123");
-
-        assertNotNull(result);
-        assertEquals("journey123", result.getId());
-        assertEquals("CC001", result.getCostcenter().getSigla());
-        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
     }
 
-    @Test
-    void shouldThrowExceptionWhenTechLeadJourneyNotFound() {
-        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.empty());
+    public JourneyTechLeadDTO fetchJourneysTechLead(String idJourney) {
+        DemandaReserva demandaReserva = demandaReservaRepository.findByIdJourney(idJourney)
+                .orElseThrow(() -> new ResourceNotFoundException("Journey not found"));
 
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> journeyService.fetchJourneysTechLead("journey123")
-        );
+        CostCenterTechLeadDTO costCenterTechLeadDTO = fetchCostCenter(demandaReserva.getCc());
 
-        assertEquals("Journey not found", exception.getMessage());
-        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
+        List<ArchetypeTechLeadDTO> archetypes = demandaReserva.getArquetipos().stream()
+                .map(conjuntoComponenteMapper::convertToArchetypeDTO)
+                .collect(Collectors.toList());
+
+        return JourneyTechLeadDTO.builder()
+                .id(demandaReserva.getIdJourney())
+                .enviroment(demandaReserva.getEnvironment())
+                .cpf(demandaReserva.getCpf())
+                .costcenter(costCenterTechLeadDTO)
+                .archetypes(archetypes)
+                .build();
     }
 
-    @Test
-    void shouldFetchCostCenter() {
-        CostCenterTechLeadDTO costCenterTechLeadDTO = new CostCenterTechLeadDTO("CC001", "Cost Center Test");
-        CostCenterTechLeadDTO[] costCenters = {costCenterTechLeadDTO};
+    private CostCenterTechLeadDTO fetchCostCenter(String ccSigla) {
+        try {
+            CostCenterTechLeadDTO[] costCenters = restTemplate.getForObject(costCenterUrl, CostCenterTechLeadDTO[].class);
 
-        when(restTemplate.getForObject(anyString(), eq(CostCenterTechLeadDTO[].class))).thenReturn(costCenters);
+            if (costCenters != null) {
+                return Arrays.stream(costCenters)
+                        .filter(costCenter -> ccSigla.equals(costCenter.getSigla()))
+                        .findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("Cost center not found for sigla: " + ccSigla));
+            }
 
-        CostCenterTechLeadDTO result = journeyService.fetchCostCenter("CC001");
-
-        assertNotNull(result);
-        assertEquals("CC001", result.getSigla());
-    }
-
-    @Test
-    void shouldThrowExceptionWhenCostCenterNotFound() {
-        CostCenterTechLeadDTO[] costCenters = {};
-        when(restTemplate.getForObject(anyString(), eq(CostCenterTechLeadDTO[].class))).thenReturn(costCenters);
-
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> journeyService.fetchCostCenter("CC001")
-        );
-
-        assertEquals("Cost center not found for sigla: CC001", exception.getMessage());
+            throw new ResourceNotFoundException("Cost center data is empty for sigla: " + ccSigla);
+        } catch (RestClientException e) {
+            throw new ResourceNotFoundException("Failed to fetch cost center data", e);
+        }
     }
 }
