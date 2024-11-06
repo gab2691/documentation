@@ -1,24 +1,3 @@
-@BeforeEach
-void setUp() {
-    journeyService = new JourneyService(
-            demandaReservaService,
-            demandaReservaRepository,
-            conjuntoComponenteMapper
-    );
-
-    // Configurar valores para campos anotados com @Value
-    ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
-    ReflectionTestUtils.setField(journeyService, "journeyurl", "http://test-journey-url.com");
-    ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
-
-    // Inicializar o MockedStatic
-    mockedFactory = Mockito.mockStatic(RestTemplateFactory.class);
-}
-@AfterEach
-void tearDown() {
-    mockedFactory.close();
-}
-
 @Test
 void shouldFetchJourneysTechLead() {
     // Arrange
@@ -41,28 +20,29 @@ void shouldFetchJourneysTechLead() {
     when(demandaReservaRepository.findByIdJourney(idJourney)).thenReturn(Optional.of(demandaReserva));
     when(conjuntoComponenteMapper.convertToArchetypeDTO(conjuntoComponente)).thenReturn(archetypeDTO);
 
-    // Mockar o RestTemplate
     RestTemplate mockRestTemplate = mock(RestTemplate.class);
 
-    // Configurar o MockedStatic para retornar o RestTemplate mockado
-    mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
+    // Envolver toda a chamada em um bloco try-with-resources
+    try (MockedStatic<RestTemplateFactory> mockedFactory = Mockito.mockStatic(RestTemplateFactory.class)) {
+        mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
 
-    CostCenterTechLeadDTO[] costCenters = { costCenterDTO };
-    when(mockRestTemplate.getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class)))
-            .thenReturn(costCenters);
+        CostCenterTechLeadDTO[] costCenters = { costCenterDTO };
+        when(mockRestTemplate.getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class)))
+                .thenReturn(costCenters);
 
-    // Act
-    JourneyTechLeadDTO result = journeyService.fetchJourneysTechLead(idJourney);
+        // Act
+        JourneyTechLeadDTO result = journeyService.fetchJourneysTechLead(idJourney);
 
-    // Assert
-    assertNotNull(result);
-    assertEquals(idJourney, result.getId());
-    assertEquals("dev", result.getEnviroment());
-    assertEquals("12345678901", result.getCpf());
-    assertEquals(costCenterDTO, result.getCostcenter());
-    assertEquals(List.of(archetypeDTO), result.getArchetypes());
+        // Assert
+        assertNotNull(result);
+        assertEquals(idJourney, result.getId());
+        assertEquals("dev", result.getEnviroment());
+        assertEquals("12345678901", result.getCpf());
+        assertEquals(costCenterDTO, result.getCostcenter());
+        assertEquals(List.of(archetypeDTO), result.getArchetypes());
 
-    verify(demandaReservaRepository, times(1)).findByIdJourney(idJourney);
-    verify(conjuntoComponenteMapper, times(1)).convertToArchetypeDTO(conjuntoComponente);
-    verify(mockRestTemplate, times(1)).getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class));
+        verify(demandaReservaRepository, times(1)).findByIdJourney(idJourney);
+        verify(conjuntoComponenteMapper, times(1)).convertToArchetypeDTO(conjuntoComponente);
+        verify(mockRestTemplate, times(1)).getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class));
+    }
 }
