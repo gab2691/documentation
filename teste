@@ -17,135 +17,129 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ConjuntoComponenteServiceTest {
+class DemandaReservaServiceTest {
+
+    @Mock
+    private DemandaReservaRepository demandaReservaRepository;
 
     @Mock
     private ConjuntoComponenteRepository conjuntoComponenteRepository;
 
     @Mock
-    private ComponenteRepository componenteRepository;
-
-    @Mock
-    private ConjuntoComponenteMapper conjuntoComponenteMapper;
+    private DemandaReservaMapper demandaReservaMapper;
 
     @InjectMocks
-    private ConjuntoComponenteService conjuntoComponenteService;
+    private DemandaReservaService demandaReservaService;
 
-    private ConjuntoComponenteDTO conjuntoComponenteDTO;
-    private ConjuntoComponente conjuntoComponente;
-    private UUID conjuntoId;
-    private Componente componente;
+    private DemandaReservaDTO demandaReservaDTO;
+    private DemandaReserva demandaReserva;
+    private DemandaListDTO demandaListDTO;
 
     @BeforeEach
     void setUp() {
-        conjuntoId = UUID.randomUUID();
-
-        conjuntoComponenteDTO = ConjuntoComponenteDTO.builder()
-                .id(conjuntoId)
-                .nome("Conjunto Teste")
-                .descricao("Descrição Teste")
-                .tipo("Tipo Teste")
-                .idComponentes(List.of(1))
+        demandaReservaDTO = DemandaReservaDTO.builder()
+                .idJourney("journey123")
+                .environment(Ambiente.PRODUCAO)
+                .cc("12345")
+                .cpf("11111111111")
+                .arquetipos(List.of(UUID.randomUUID()))
+                .codFuncional("func123")
+                .status("Ativo")
                 .build();
 
-        conjuntoComponente = ConjuntoComponente.builder()
-                .id(conjuntoId)
-                .nome("Conjunto Teste")
-                .descricao("Descrição Teste")
-                .tipo("Tipo Teste")
+        demandaReserva = DemandaReserva.builder()
+                .idJourney("journey123")
+                .environment(Ambiente.PRODUCAO)
+                .cc("12345")
+                .cpf("11111111111")
+                .arquetipos(List.of(new ConjuntoComponente()))
+                .codFuncional("func123")
+                .status("Ativo")
                 .build();
 
-        componente = new Componente();
-        componente.setId(1);
-        componente.setNome("Componente Teste");
+        demandaListDTO = new DemandaListDTO(1L, Ambiente.PRODUCAO, "journey123", "12345", "11111111111");
     }
 
     @Test
-    void shouldCreateConjuntoComponente() {
-        when(conjuntoComponenteMapper.convertToEntity(conjuntoComponenteDTO)).thenReturn(conjuntoComponente);
-        when(componenteRepository.existsById(1)).thenReturn(true);
-        when(componenteRepository.findAllById(conjuntoComponenteDTO.getIdComponentes())).thenReturn(List.of(componente));
-        when(conjuntoComponenteRepository.save(conjuntoComponente)).thenReturn(conjuntoComponente);
-        when(conjuntoComponenteMapper.convertToDTO(conjuntoComponente)).thenReturn(conjuntoComponenteDTO);
+    void shouldCreateDemandaReserva() {
+        when(conjuntoComponenteRepository.findAllById(demandaReservaDTO.getArquetipos()))
+                .thenReturn(List.of(new ConjuntoComponente()));
+        when(demandaReservaRepository.save(any(DemandaReserva.class))).thenReturn(demandaReserva);
 
-        ConjuntoComponenteDTO result = conjuntoComponenteService.create(conjuntoComponenteDTO);
+        DemandaReserva result = demandaReservaService.create(demandaReservaDTO);
 
         assertNotNull(result);
-        assertEquals(conjuntoComponenteDTO.getId(), result.getId());
-        verify(conjuntoComponenteRepository, times(1)).save(conjuntoComponente);
+        assertEquals(demandaReservaDTO.getIdJourney(), result.getIdJourney());
+        verify(demandaReservaRepository, times(1)).save(any(DemandaReserva.class));
     }
 
     @Test
-    void shouldReadAllConjuntos() {
+    void shouldReadAllDemandaReservas() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<ConjuntoComponente> page = new PageImpl<>(List.of(conjuntoComponente));
-        when(conjuntoComponenteRepository.findAll(pageable)).thenReturn(page);
-        when(conjuntoComponenteMapper.convertToDTO(conjuntoComponente)).thenReturn(conjuntoComponenteDTO);
+        Page<DemandaReserva> page = new PageImpl<>(List.of(demandaReserva));
+        when(demandaReservaRepository.findAll(pageable)).thenReturn(page);
+        when(demandaReservaMapper.convertToDTO(demandaReserva)).thenReturn(demandaListDTO);
 
-        Page<ConjuntoComponenteDTO> result = conjuntoComponenteService.readAll(pageable);
+        Page<DemandaListDTO> result = demandaReservaService.readAll(pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        verify(conjuntoComponenteRepository, times(1)).findAll(pageable);
+        verify(demandaReservaRepository, times(1)).findAll(pageable);
     }
 
     @Test
-    void shouldReadByIdWhenFound() {
-        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.of(conjuntoComponente));
-        when(conjuntoComponenteMapper.convertToDTO(conjuntoComponente)).thenReturn(conjuntoComponenteDTO);
+    void shouldUpdateEnvironment() {
+        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.of(demandaReserva));
+        when(demandaReservaRepository.save(any(DemandaReserva.class))).thenReturn(demandaReserva);
 
-        ConjuntoComponenteDTO result = conjuntoComponenteService.readById(conjuntoId);
+        DemandaReserva result = demandaReservaService.updateEnvironment("journey123", Ambiente.TESTE);
 
         assertNotNull(result);
-        assertEquals(conjuntoComponenteDTO.getId(), result.getId());
-        verify(conjuntoComponenteRepository, times(1)).findById(conjuntoId);
+        assertEquals(Ambiente.TESTE, result.getEnvironment());
+        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
+        verify(demandaReservaRepository, times(1)).save(demandaReserva);
     }
 
     @Test
-    void shouldThrowExceptionWhenReadByIdNotFound() {
-        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.empty());
+    void shouldThrowExceptionWhenUpdatingNonexistentJourney() {
+        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> conjuntoComponenteService.readById(conjuntoId));
+                () -> demandaReservaService.updateEnvironment("journey123", Ambiente.TESTE));
 
-        assertEquals("Arquétipo informado não encontrado. Id: " + conjuntoId, exception.getMessage());
-        verify(conjuntoComponenteRepository, times(1)).findById(conjuntoId);
+        assertEquals("Journey not found", exception.getMessage());
+        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
     }
 
     @Test
-    void shouldUpdateConjuntoComponente() {
-        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.of(conjuntoComponente));
-        when(conjuntoComponenteMapper.convertToEntity(conjuntoComponenteDTO)).thenReturn(conjuntoComponente);
-        when(componenteRepository.existsById(1)).thenReturn(true);
-        when(componenteRepository.findAllById(conjuntoComponenteDTO.getIdComponentes())).thenReturn(List.of(componente));
-        when(conjuntoComponenteRepository.save(conjuntoComponente)).thenReturn(conjuntoComponente);
-        when(conjuntoComponenteMapper.convertToDTO(conjuntoComponente)).thenReturn(conjuntoComponenteDTO);
+    void shouldCheckIfJourneyExists() {
+        when(demandaReservaRepository.existsByIdJourney("journey123")).thenReturn(true);
 
-        ConjuntoComponenteDTO result = conjuntoComponenteService.update(conjuntoId, conjuntoComponenteDTO);
+        ResourceAlreadyExistsException exception = assertThrows(ResourceAlreadyExistsException.class,
+                () -> demandaReservaService.checkIfJourneyExists("journey123"));
 
-        assertNotNull(result);
-        assertEquals(conjuntoComponenteDTO.getId(), result.getId());
-        verify(conjuntoComponenteRepository, times(1)).save(conjuntoComponente);
+        assertEquals("Demanda já existe com idJourney: journey123", exception.getMessage());
+        verify(demandaReservaRepository, times(1)).existsByIdJourney("journey123");
     }
 
     @Test
-    void shouldDeleteConjuntoComponenteWhenFound() {
-        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.of(conjuntoComponente));
+    void shouldDeleteDemandaReservaWhenFound() {
+        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.of(demandaReserva));
 
-        conjuntoComponenteService.delete(conjuntoId);
+        demandaReservaService.delete("journey123");
 
-        verify(conjuntoComponenteRepository, times(1)).findById(conjuntoId);
-        verify(conjuntoComponenteRepository, times(1)).deleteById(conjuntoId);
+        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
+        verify(demandaReservaRepository, times(1)).delete(demandaReserva);
     }
 
     @Test
-    void shouldThrowExceptionWhenDeleteConjuntoComponenteNotFound() {
-        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.empty());
+    void shouldThrowExceptionWhenDeletingNonexistentJourney() {
+        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> conjuntoComponenteService.delete(conjuntoId));
+                () -> demandaReservaService.delete("journey123"));
 
-        assertEquals("Arquétipo informado não encontrado. Id: " + conjuntoId, exception.getMessage());
-        verify(conjuntoComponenteRepository, times(1)).findById(conjuntoId);
+        assertEquals("Journey not found", exception.getMessage());
+        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
     }
 }
