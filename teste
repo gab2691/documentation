@@ -1,8 +1,3 @@
-@SpringBootTest(properties = {
-    "journey_url=http://test-journey-url.com",
-    "journey_authorization=Basic token123",
-    "cost_center_url=http://test-cost-center-url.com"
-})
 @ExtendWith(MockitoExtension.class)
 class JourneyServiceTest {
 
@@ -23,13 +18,10 @@ class JourneyServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Configura o objeto JourneyService com mocks
-        journeyService = new JourneyService(
-            demandaReservaService,
-            demandaReservaRepository,
-            conjuntoComponenteMapper,
-            restTemplate
-        );
+        // Configurar os valores das propriedades anotadas com @Value manualmente
+        ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
+        ReflectionTestUtils.setField(journeyService, "journeyUrl", "http://test-journey-url.com");
+        ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
     }
 
     @Test
