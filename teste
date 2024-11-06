@@ -1,8 +1,22 @@
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.*;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
+import java.util.List;
+
 @ExtendWith(MockitoExtension.class)
 class JourneyServiceTest {
 
-    @Mock
-    private RestTemplate restTemplate;
+    private JourneyService journeyService;
 
     @Mock
     private DemandaReservaService demandaReservaService;
@@ -13,28 +27,95 @@ class JourneyServiceTest {
     @Mock
     private ConjuntoComponenteMapper conjuntoComponenteMapper;
 
-    private JourneyService journeyService;
-
     @BeforeEach
     void setUp() {
-        // Mockamos o próprio JourneyService manualmente
-        journeyService = Mockito.mock(JourneyService.class);
+        journeyService = new JourneyService(
+                demandaReservaService,
+                demandaReservaRepository,
+                conjuntoComponenteMapper
+        );
 
-        // Configuramos o comportamento esperado para o método
-        doReturn(new JourneyDTO("journey123", "CC001", "12345678901", "Open", "Active"))
-                .when(journeyService).fetchJourneysInApiServiceNow("journey123");
+        // Configurar valores para campos anotados com @Value
+        ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
+        ReflectionTestUtils.setField(journeyService, "journeyurl", "http://test-journey-url.com");
+        ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
     }
 
     @Test
-    void shouldNotCallRealMethod() {
-        // Act
-        JourneyDTO result = journeyService.fetchJourneysInApiServiceNow("journey123");
+    void shouldFetchJourneysInApiServiceNow() {
+        // Arrange
+        String idJourney = "journey123";
+        List<JourneyClientDTO> journeyList = List.of(
+                JourneyClientDTO.builder()
+                        .numeroDemanda(idJourney)
+                        .fase("Open")
+                        .subfase("Active")
+                        .centroDeCusto("CC001")
+                        .cpf("12345678901")
+                        .build()
+        );
 
-        // Assert
-        assertNotNull(result);
-        assertEquals("journey123", result.getId());
+        ResponseEntity<List<JourneyClientDTO>> response = new ResponseEntity<>(journeyList, HttpStatus.OK);
 
-        // Verifica se o método foi chamado, mas apenas o mock
-        verify(journeyService, times(1)).fetchJourneysInApiServiceNow("journey123");
+        // Mockar o RestTemplate
+        RestTemplate mockRestTemplate = mock(RestTemplate.class);
+
+        // Mockar o método estático RestTemplateFactory.createRestTemplateMiddleware()
+        try (MockedStatic<RestTemplateFactory> mockedFactory = Mockito.mockStatic(RestTemplateFactory.class)) {
+            mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
+
+            // Configurar o comportamento do restTemplate mockado
+            when(demandaReservaService.checkIfJourneyExists(idJourney)).thenReturn(false);
+            when(mockRestTemplate.exchange(
+                    eq("http://test-journey-url.com/" + idJourney),
+                    eq(HttpMethod.GET),
+                    any(HttpEntity.class),
+                    any(ParameterizedTypeReference.class))
+            ).thenReturn(response);
+
+            // Act
+            JourneyDTO result = journeyService.fetchJourneysInApiServiceNow(idJourney);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(idJourney, result.getId());
+            verify(mockRestTemplate, times(1)).exchange(
+                    eq("http://test-journey-url.com/" + idJourney),
+                    eq(HttpMethod.GET),
+                    any(HttpEntity.class),
+                    any(ParameterizedTypeReference.class)
+            );
+        }
     }
+
+    @Test
+    void shouldThrowExceptionWhenJourneyNotFoundInApi() {
+        // Arrange
+        String idJourney = "journey123";
+
+        RestTemplate mockRestTemplate = mock(RestTemplate.class);
+
+        // Mockar o método estático
+        try (MockedStatic<RestTemplateFactory> mockedFactory = Mockito.mockStatic(RestTemplateFactory.class)) {
+            mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
+
+            when(demandaReservaService.checkIfJourneyExists(idJourney)).thenReturn(false);
+            when(mockRestTemplate.exchange(
+                    eq("http://test-journey-url.com/" + idJourney),
+                    eq(HttpMethod.GET),
+                    any(HttpEntity.class),
+                    any(ParameterizedTypeReference.class))
+            ).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+            // Act & Assert
+            ResourceNotFoundException exception = assertThrows(
+                    ResourceNotFoundException.class,
+                    () -> journeyService.fetchJourneysInApiServiceNow(idJourney)
+            );
+
+            assertEquals("Lista de Journeys vazia.", exception.getMessage());
+        }
+    }
+
+    // Outros testes...
 }
