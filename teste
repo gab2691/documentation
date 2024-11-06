@@ -1,3 +1,8 @@
+@SpringBootTest(properties = {
+    "journey_url=http://test-journey-url.com",
+    "journey_authorization=Basic token123",
+    "cost_center_url=http://test-cost-center-url.com"
+})
 @ExtendWith(MockitoExtension.class)
 class JourneyServiceTest {
 
@@ -17,31 +22,28 @@ class JourneyServiceTest {
     private JourneyService journeyService;
 
     @BeforeEach
-void setUp() {
-    journeyService = new JourneyService(
-        demandaReservaService,
-        demandaReservaRepository,
-        conjuntoComponenteMapper,
-        restTemplate
-    );
-    ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
-    ReflectionTestUtils.setField(journeyService, "journeyUrl", "http://test-journey-url.com");
-    ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
-}
-
+    void setUp() {
+        // Configura o objeto JourneyService com mocks
+        journeyService = new JourneyService(
+            demandaReservaService,
+            demandaReservaRepository,
+            conjuntoComponenteMapper,
+            restTemplate
+        );
+    }
 
     @Test
     void shouldFetchJourneysInApiServiceNow() {
         // Arrange
         String idJourney = "journey123";
         List<JourneyClientDTO> journeyList = List.of(
-                JourneyClientDTO.builder()
-                        .numeroDemanda(idJourney)
-                        .fase("Open")
-                        .subfase("Active")
-                        .centroDeCusto("CC001")
-                        .cpf("12345678901")
-                        .build()
+            JourneyClientDTO.builder()
+                    .numeroDemanda(idJourney)
+                    .fase("Open")
+                    .subfase("Active")
+                    .centroDeCusto("CC001")
+                    .cpf("12345678901")
+                    .build()
         );
 
         HttpHeaders headers = new HttpHeaders();
@@ -54,10 +56,10 @@ void setUp() {
 
         when(demandaReservaService.checkIfJourneyExists(idJourney)).thenReturn(false);
         when(restTemplate.exchange(
-                eq("http://test-journey-url.com/" + idJourney),
-                eq(HttpMethod.GET),
-                eq(entity),
-                any(ParameterizedTypeReference.class))
+            eq("http://test-journey-url.com/" + idJourney),
+            eq(HttpMethod.GET),
+            eq(entity),
+            any(ParameterizedTypeReference.class))
         ).thenReturn(response);
 
         // Act
@@ -67,10 +69,10 @@ void setUp() {
         assertNotNull(result);
         assertEquals(idJourney, result.getId());
         verify(restTemplate, times(1)).exchange(
-                eq("http://test-journey-url.com/" + idJourney),
-                eq(HttpMethod.GET),
-                eq(entity),
-                any(ParameterizedTypeReference.class)
+            eq("http://test-journey-url.com/" + idJourney),
+            eq(HttpMethod.GET),
+            eq(entity),
+            any(ParameterizedTypeReference.class)
         );
     }
 
@@ -88,24 +90,24 @@ void setUp() {
 
         when(demandaReservaService.checkIfJourneyExists(idJourney)).thenReturn(false);
         when(restTemplate.exchange(
-                eq("http://test-journey-url.com/" + idJourney),
-                eq(HttpMethod.GET),
-                eq(entity),
-                any(ParameterizedTypeReference.class))
+            eq("http://test-journey-url.com/" + idJourney),
+            eq(HttpMethod.GET),
+            eq(entity),
+            any(ParameterizedTypeReference.class))
         ).thenThrow(HttpClientErrorException.NotFound.class);
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> journeyService.fetchJourneysInApiServiceNow(idJourney)
+            ResourceNotFoundException.class,
+            () -> journeyService.fetchJourneysInApiServiceNow(idJourney)
         );
 
         assertEquals("Lista de Journeys vazia.", exception.getMessage());
         verify(restTemplate, times(1)).exchange(
-                eq("http://test-journey-url.com/" + idJourney),
-                eq(HttpMethod.GET),
-                eq(entity),
-                any(ParameterizedTypeReference.class)
+            eq("http://test-journey-url.com/" + idJourney),
+            eq(HttpMethod.GET),
+            eq(entity),
+            any(ParameterizedTypeReference.class)
         );
     }
 
@@ -137,8 +139,8 @@ void setUp() {
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> journeyService.fetchCostCenter(ccSigla)
+            ResourceNotFoundException.class,
+            () -> journeyService.fetchCostCenter(ccSigla)
         );
 
         assertEquals("Cost center not found for sigla: CC001", exception.getMessage());
