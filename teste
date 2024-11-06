@@ -1,92 +1,116 @@
-List<Integer> numbers = Arrays.asList(5, 12, 8, 21, 30);
-List<Integer> result = new ArrayList<>();
-for (Integer number : numbers) {
-    if (number > 10) {
-        result.add(number);
+@ExtendWith(MockitoExtension.class)
+class ComponenteServiceTest {
+
+    @Mock
+    private ComponenteRepository componenteRepository;
+
+    @InjectMocks
+    private ComponenteService componenteService;
+
+    private Componente componente;
+
+    @BeforeEach
+    void setUp() {
+        componente = new Componente();
+        componente.setId(1);
+        componente.setNome("Teste");
+    }
+
+    @Test
+    void shouldCreateComponente() {
+        // Arrange
+        when(componenteRepository.save(componente)).thenReturn(componente);
+
+        // Act
+        Componente result = componenteService.create(componente);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(componente.getId(), result.getId());
+        verify(componenteRepository, times(1)).save(componente);
+    }
+
+    @Test
+    void shouldReadAllComponentes() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Componente> page = new PageImpl<>(List.of(componente));
+        when(componenteRepository.findAll(pageable)).thenReturn(page);
+
+        // Act
+        Page<Componente> result = componenteService.readAll(pageable);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(componenteRepository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    void shouldReadByIdWhenFound() {
+        // Arrange
+        when(componenteRepository.findById(1)).thenReturn(Optional.of(componente));
+
+        // Act
+        Componente result = componenteService.readById(1);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(componente.getId(), result.getId());
+        verify(componenteRepository, times(1)).findById(1);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenReadByIdNotFound() {
+        // Arrange
+        when(componenteRepository.findById(1)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> componenteService.readById(1));
+        assertEquals("Componente informado não encontrado. Id: 1", exception.getMessage());
+        verify(componenteRepository, times(1)).findById(1);
+    }
+
+    @Test
+    void shouldUpdateComponenteWhenFound() {
+        // Arrange
+        Componente updatedComponente = new Componente();
+        updatedComponente.setNome("Atualizado");
+
+        when(componenteRepository.findById(1)).thenReturn(Optional.of(componente));
+        when(componenteRepository.save(any(Componente.class))).thenReturn(updatedComponente);
+
+        // Act
+        Componente result = componenteService.update(1, updatedComponente);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("Atualizado", result.getNome());
+        verify(componenteRepository, times(1)).findById(1);
+        verify(componenteRepository, times(1)).save(updatedComponente);
+    }
+
+    @Test
+    void shouldDeleteComponenteWhenFound() {
+        // Arrange
+        when(componenteRepository.findById(1)).thenReturn(Optional.of(componente));
+
+        // Act
+        componenteService.delete(1);
+
+        // Assert
+        verify(componenteRepository, times(1)).findById(1);
+        verify(componenteRepository, times(1)).deleteById(1);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeleteComponenteNotFound() {
+        // Arrange
+        when(componenteRepository.findById(1)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> componenteService.delete(1));
+        assertEquals("Componente informado não encontrado. Id: 1", exception.getMessage());
+        verify(componenteRepository, times(1)).findById(1);
     }
 }
-System.out.println(result);
-
-
-List<String> words = Arrays.asList("apple", "banana", "cherry");
-List<String> upperCaseWords = new ArrayList<>();
-for (String word : words) {
-    upperCaseWords.add(word.toUpperCase());
-}
-System.out.println(upperCaseWords);
-
-
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-int sum = 0;
-for (Integer number : numbers) {
-    sum += number;
-}
-System.out.println(sum);
-
-
-List<String> names = Arrays.asList("Tom", "Jerry", "Sam", "Sue");
-List<String> longNames = new ArrayList<>();
-for (String name : names) {
-    if (name.length() > 3) {
-        longNames.add(name);
-    }
-}
-System.out.println(longNames);
-
-
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6);
-List<Integer> firstThreeNumbers = new ArrayList<>();
-for (int i = 0; i < 3; i++) {
-    firstThreeNumbers.add(numbers.get(i));
-}
-System.out.println(firstThreeNumbers);
-
-
-List<Integer> numbers = Arrays.asList(1, -2, 3, 4, 5);
-boolean allPositive = true;
-for (Integer number : numbers) {
-    if (number <= 0) {
-        allPositive = false;
-        break;
-    }
-}
-System.out.println(allPositive);
-
-
-List<String> words = Arrays.asList("apple", "banana", "cherry");
-StringBuilder result = new StringBuilder();
-for (String word : words) {
-    if (result.length() > 0) {
-        result.append(", ");
-    }
-    result.append(word);
-}
-System.out.println(result.toString());
-
-
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-List<Integer> squares = new ArrayList<>();
-for (Integer number : numbers) {
-    squares.add(number * number);
-}
-System.out.println(squares);
-
-
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6);
-int count = 0;
-for (Integer number : numbers) {
-    if (number % 2 == 0) {
-        count++;
-    }
-}
-System.out.println(count);
-
-
-List<Integer> numbers = Arrays.asList(3, 7, 1, 9, 2);
-int max = numbers.get(0);
-for (Integer number : numbers) {
-    if (number > max) {
-        max = number;
-    }
-}
-System.out.println(max);
