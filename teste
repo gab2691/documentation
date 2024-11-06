@@ -1,48 +1,302 @@
-@Test
-void shouldFetchJourneysTechLead() {
-    // Arrange
-    String idJourney = "journey123";
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-    DemandaReserva demandaReserva = new DemandaReserva();
-    demandaReserva.setIdJourney(idJourney);
-    demandaReserva.setEnvironment("dev");
-    demandaReserva.setCpf("12345678901");
-    demandaReserva.setCc("CC001");
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-    ConjuntoComponente conjuntoComponente = new ConjuntoComponente();
-    List<ConjuntoComponente> arquetipos = List.of(conjuntoComponente);
-    demandaReserva.setArquetipos(arquetipos);
+import java.util.*;
 
-    ArchetypeTechLeadDTO archetypeDTO = new ArchetypeTechLeadDTO();
-    CostCenterTechLeadDTO costCenterDTO = new CostCenterTechLeadDTO("CC001", "Cost Center Name");
+@ExtendWith(MockitoExtension.class)
+class PavimentacaoDominioServiceTest {
 
-    // Mockando o comportamento
-    when(demandaReservaRepository.findByIdJourney(idJourney)).thenReturn(Optional.of(demandaReserva));
-    when(conjuntoComponenteMapper.convertToArchetypeDTO(conjuntoComponente)).thenReturn(archetypeDTO);
+    @InjectMocks
+    private PavimentacaoDominioService pavimentacaoDominioService;
 
-    RestTemplate mockRestTemplate = mock(RestTemplate.class);
+    @Mock
+    private PavimentacaoDominioRepository pavimentacaoDominioRepository;
 
-    // Envolver toda a chamada em um bloco try-with-resources
-    try (MockedStatic<RestTemplateFactory> mockedFactory = Mockito.mockStatic(RestTemplateFactory.class)) {
-        mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
+    @Mock
+    private DominioRepository dominioRepository;
 
-        CostCenterTechLeadDTO[] costCenters = { costCenterDTO };
-        when(mockRestTemplate.getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class)))
-                .thenReturn(costCenters);
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void testCreate_Success() {
+        // Arrange
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+        Dominio dominio = new Dominio();
+        dominio.setId(1);
+        pavimentacaoDominio.setDominio(dominio);
+
+        when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.of(dominio));
+        when(pavimentacaoDominioRepository.save(pavimentacaoDominio)).thenReturn(pavimentacaoDominio);
 
         // Act
-        JourneyTechLeadDTO result = journeyService.fetchJourneysTechLead(idJourney);
+        PavimentacaoDominio result = pavimentacaoDominioService.create(pavimentacaoDominio);
 
         // Assert
         assertNotNull(result);
-        assertEquals(idJourney, result.getId());
-        assertEquals("dev", result.getEnviroment());
-        assertEquals("12345678901", result.getCpf());
-        assertEquals(costCenterDTO, result.getCostcenter());
-        assertEquals(List.of(archetypeDTO), result.getArchetypes());
+        assertEquals(pavimentacaoDominio, result);
+        verify(dominioRepository, times(1)).findById(dominio.getId());
+        verify(pavimentacaoDominioRepository, times(1)).save(pavimentacaoDominio);
+    }
 
-        verify(demandaReservaRepository, times(1)).findByIdJourney(idJourney);
-        verify(conjuntoComponenteMapper, times(1)).convertToArchetypeDTO(conjuntoComponente);
-        verify(mockRestTemplate, times(1)).getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class));
+    @Test
+    void testCreate_DominioNotFound() {
+        // Arrange
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+        Dominio dominio = new Dominio();
+        dominio.setId(1);
+        pavimentacaoDominio.setDominio(dominio);
+
+        when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> pavimentacaoDominioService.create(pavimentacaoDominio)
+        );
+
+        assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
+        verify(dominioRepository, times(1)).findById(dominio.getId());
+        verifyNoInteractions(pavimentacaoDominioRepository);
+    }
+
+    @Test
+    void testReadAll() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        PavimentacaoDominio pav1 = new PavimentacaoDominio();
+        PavimentacaoDominio pav2 = new PavimentacaoDominio();
+        Page<PavimentacaoDominio> page = new PageImpl<>(Arrays.asList(pav1, pav2));
+
+        when(pavimentacaoDominioRepository.findAll(pageable)).thenReturn(page);
+
+        // Act
+        Page<PavimentacaoDominio> result = pavimentacaoDominioService.readAll(pageable);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getTotalElements());
+        verify(pavimentacaoDominioRepository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    void testFindByDomonioAndEnviroment_Success() {
+        // Arrange
+        String sigla = "DOM1";
+        Ambiente environment = Ambiente.DEV;
+
+        Dominio dominio = new Dominio();
+        dominio.setId(1);
+        dominio.setSigla(sigla);
+
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+        pavimentacaoDominio.setDominio(dominio);
+        pavimentacaoDominio.setEnvironment(environment);
+
+        when(dominioRepository.findBySigla(sigla)).thenReturn(Optional.of(dominio));
+        when(pavimentacaoDominioRepository.findByDominioAndEnvironment(dominio, environment))
+                .thenReturn(Optional.of(pavimentacaoDominio));
+
+        // Act
+        PavimentacaoDominio result = pavimentacaoDominioService.findByDomonioAndEnviroment(sigla, environment);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(pavimentacaoDominio, result);
+        verify(dominioRepository, times(1)).findBySigla(sigla);
+        verify(pavimentacaoDominioRepository, times(1)).findByDominioAndEnvironment(dominio, environment);
+    }
+
+    @Test
+    void testFindByDomonioAndEnviroment_DominioNotFound() {
+        // Arrange
+        String sigla = "DOM1";
+        Ambiente environment = Ambiente.DEV;
+
+        when(dominioRepository.findBySigla(sigla)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> pavimentacaoDominioService.findByDomonioAndEnviroment(sigla, environment)
+        );
+
+        assertEquals("Dominio informado não encontrado. Id: DOM1", exception.getMessage());
+        verify(dominioRepository, times(1)).findBySigla(sigla);
+        verifyNoInteractions(pavimentacaoDominioRepository);
+    }
+
+    @Test
+    void testFindByDomonioAndEnviroment_PavimentacaoNotFound() {
+        // Arrange
+        String sigla = "DOM1";
+        Ambiente environment = Ambiente.DEV;
+
+        Dominio dominio = new Dominio();
+        dominio.setId(1);
+        dominio.setSigla(sigla);
+
+        when(dominioRepository.findBySigla(sigla)).thenReturn(Optional.of(dominio));
+        when(pavimentacaoDominioRepository.findByDominioAndEnvironment(dominio, environment))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> pavimentacaoDominioService.findByDomonioAndEnviroment(sigla, environment)
+        );
+
+        assertEquals("Pavimento de dominios informada não encontrada. Id: DOM1", exception.getMessage());
+        verify(dominioRepository, times(1)).findBySigla(sigla);
+        verify(pavimentacaoDominioRepository, times(1)).findByDominioAndEnvironment(dominio, environment);
+    }
+
+    @Test
+    void testReadById_Success() {
+        // Arrange
+        Integer id = 1;
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+        pavimentacaoDominio.setId(id);
+
+        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(pavimentacaoDominio));
+
+        // Act
+        PavimentacaoDominio result = pavimentacaoDominioService.readById(id);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(pavimentacaoDominio, result);
+        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+    }
+
+    @Test
+    void testReadById_NotFound() {
+        // Arrange
+        Integer id = 1;
+
+        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> pavimentacaoDominioService.readById(id)
+        );
+
+        assertEquals("Pavimento de dominios informada não encontrada. Id: 1", exception.getMessage());
+        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+    }
+
+    @Test
+    void testUpdate_Success() {
+        // Arrange
+        Integer id = 1;
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+        Dominio dominio = new Dominio();
+        dominio.setId(1);
+        pavimentacaoDominio.setDominio(dominio);
+
+        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(pavimentacaoDominio));
+        when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.of(dominio));
+        when(pavimentacaoDominioRepository.save(pavimentacaoDominio)).thenReturn(pavimentacaoDominio);
+
+        // Act
+        PavimentacaoDominio result = pavimentacaoDominioService.update(id, pavimentacaoDominio);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(id, result.getId());
+        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+        verify(dominioRepository, times(1)).findById(dominio.getId());
+        verify(pavimentacaoDominioRepository, times(1)).save(pavimentacaoDominio);
+    }
+
+    @Test
+    void testUpdate_PavimentacaoNotFound() {
+        // Arrange
+        Integer id = 1;
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+
+        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> pavimentacaoDominioService.update(id, pavimentacaoDominio)
+        );
+
+        assertEquals("Pavimento de dominios informada não encontrada. Id: 1", exception.getMessage());
+        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+        verifyNoInteractions(dominioRepository);
+        verify(pavimentacaoDominioRepository, never()).save(any());
+    }
+
+    @Test
+    void testUpdate_DominioNotFound() {
+        // Arrange
+        Integer id = 1;
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+        Dominio dominio = new Dominio();
+        dominio.setId(1);
+        pavimentacaoDominio.setDominio(dominio);
+
+        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(new PavimentacaoDominio()));
+        when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> pavimentacaoDominioService.update(id, pavimentacaoDominio)
+        );
+
+        assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
+        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+        verify(dominioRepository, times(1)).findById(dominio.getId());
+        verify(pavimentacaoDominioRepository, never()).save(any());
+    }
+
+    @Test
+    void testDelete_Success() {
+        // Arrange
+        Integer id = 1;
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+        pavimentacaoDominio.setId(id);
+
+        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(pavimentacaoDominio));
+        doNothing().when(pavimentacaoDominioRepository).deleteById(id);
+
+        // Act
+        pavimentacaoDominioService.delete(id);
+
+        // Assert
+        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+        verify(pavimentacaoDominioRepository, times(1)).deleteById(id);
+    }
+
+    @Test
+    void testDelete_NotFound() {
+        // Arrange
+        Integer id = 1;
+
+        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> pavimentacaoDominioService.delete(id)
+        );
+
+        assertEquals("Pavimento de dominios informada não encontrada. Id: 1", exception.getMessage());
+        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+        verify(pavimentacaoDominioRepository, never()).deleteById(any());
     }
 }
