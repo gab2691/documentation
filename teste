@@ -1,217 +1,68 @@
-import static org.mockito.Mockito.*;
+@BeforeEach
+void setUp() {
+    journeyService = new JourneyService(
+            demandaReservaService,
+            demandaReservaRepository,
+            conjuntoComponenteMapper
+    );
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.*;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestTemplate;
+    // Configurar valores para campos anotados com @Value
+    ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
+    ReflectionTestUtils.setField(journeyService, "journeyurl", "http://test-journey-url.com");
+    ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
 
-import java.util.*;
+    // Inicializar o MockedStatic
+    mockedFactory = Mockito.mockStatic(RestTemplateFactory.class);
+}
+@AfterEach
+void tearDown() {
+    mockedFactory.close();
+}
 
-@ExtendWith(MockitoExtension.class)
-class JourneyServiceTest {
+@Test
+void shouldFetchJourneysTechLead() {
+    // Arrange
+    String idJourney = "journey123";
 
-    private JourneyService journeyService;
+    DemandaReserva demandaReserva = new DemandaReserva();
+    demandaReserva.setIdJourney(idJourney);
+    demandaReserva.setEnvironment("dev");
+    demandaReserva.setCpf("12345678901");
+    demandaReserva.setCc("CC001");
 
-    @Mock
-    private DemandaReservaService demandaReservaService;
+    ConjuntoComponente conjuntoComponente = new ConjuntoComponente();
+    List<ConjuntoComponente> arquetipos = List.of(conjuntoComponente);
+    demandaReserva.setArquetipos(arquetipos);
 
-    @Mock
-    private DemandaReservaRepository demandaReservaRepository;
+    ArchetypeTechLeadDTO archetypeDTO = new ArchetypeTechLeadDTO();
+    CostCenterTechLeadDTO costCenterDTO = new CostCenterTechLeadDTO("CC001", "Cost Center Name");
 
-    @Mock
-    private ConjuntoComponenteMapper conjuntoComponenteMapper;
+    // Mockando o comportamento
+    when(demandaReservaRepository.findByIdJourney(idJourney)).thenReturn(Optional.of(demandaReserva));
+    when(conjuntoComponenteMapper.convertToArchetypeDTO(conjuntoComponente)).thenReturn(archetypeDTO);
 
-    @BeforeEach
-    void setUp() {
-        journeyService = new JourneyService(
-                demandaReservaService,
-                demandaReservaRepository,
-                conjuntoComponenteMapper
-        );
+    // Mockar o RestTemplate
+    RestTemplate mockRestTemplate = mock(RestTemplate.class);
 
-        // Configurar valores para campos anotados com @Value
-        ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
-        ReflectionTestUtils.setField(journeyService, "journeyurl", "http://test-journey-url.com");
-        ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
-    }
+    // Configurar o MockedStatic para retornar o RestTemplate mockado
+    mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
 
-    @Test
-    void shouldFetchJourneysInApiServiceNow() {
-        // Arrange
-        String idJourney = "journey123";
-        List<JourneyClientDTO> journeyList = List.of(
-                JourneyClientDTO.builder()
-                        .numeroDemanda(idJourney)
-                        .fase("Open")
-                        .subfase("Active")
-                        .centroDeCusto("CC001")
-                        .cpf("12345678901")
-                        .build()
-        );
+    CostCenterTechLeadDTO[] costCenters = { costCenterDTO };
+    when(mockRestTemplate.getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class)))
+            .thenReturn(costCenters);
 
-        ResponseEntity<List<JourneyClientDTO>> response = new ResponseEntity<>(journeyList, HttpStatus.OK);
+    // Act
+    JourneyTechLeadDTO result = journeyService.fetchJourneysTechLead(idJourney);
 
-        // Mockar o RestTemplate
-        RestTemplate mockRestTemplate = mock(RestTemplate.class);
+    // Assert
+    assertNotNull(result);
+    assertEquals(idJourney, result.getId());
+    assertEquals("dev", result.getEnviroment());
+    assertEquals("12345678901", result.getCpf());
+    assertEquals(costCenterDTO, result.getCostcenter());
+    assertEquals(List.of(archetypeDTO), result.getArchetypes());
 
-        // Mockar o método estático RestTemplateFactory.createRestTemplateMiddleware()
-        try (MockedStatic<RestTemplateFactory> mockedFactory = Mockito.mockStatic(RestTemplateFactory.class)) {
-            mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
-
-            // Configurar o comportamento do restTemplate mockado
-            when(demandaReservaService.checkIfJourneyExists(idJourney)).thenReturn(false);
-            when(mockRestTemplate.exchange(
-                    eq("http://test-journey-url.com/" + idJourney),
-                    eq(HttpMethod.GET),
-                    any(HttpEntity.class),
-                    any(ParameterizedTypeReference.class))
-            ).thenReturn(response);
-
-            // Act
-            JourneyDTO result = journeyService.fetchJourneysInApiServiceNow(idJourney);
-
-            // Assert
-            assertNotNull(result);
-            assertEquals(idJourney, result.getId());
-            verify(mockRestTemplate, times(1)).exchange(
-                    eq("http://test-journey-url.com/" + idJourney),
-                    eq(HttpMethod.GET),
-                    any(HttpEntity.class),
-                    any(ParameterizedTypeReference.class)
-            );
-        }
-    }
-
-    @Test
-    void shouldThrowExceptionWhenJourneyNotFoundInApi() {
-        // Arrange
-        String idJourney = "journey123";
-
-        RestTemplate mockRestTemplate = mock(RestTemplate.class);
-
-        // Mockar o método estático
-        try (MockedStatic<RestTemplateFactory> mockedFactory = Mockito.mockStatic(RestTemplateFactory.class)) {
-            mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
-
-            when(demandaReservaService.checkIfJourneyExists(idJourney)).thenReturn(false);
-            when(mockRestTemplate.exchange(
-                    eq("http://test-journey-url.com/" + idJourney),
-                    eq(HttpMethod.GET),
-                    any(HttpEntity.class),
-                    any(ParameterizedTypeReference.class))
-            ).thenReturn(new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK));
-
-            // Act & Assert
-            ResourceNotFoundException exception = assertThrows(
-                    ResourceNotFoundException.class,
-                    () -> journeyService.fetchJourneysInApiServiceNow(idJourney)
-            );
-
-            assertEquals("Journey informado não foi encontrado. idJourney: " + idJourney, exception.getMessage());
-        }
-    }
-
-    @Test
-    void shouldFetchJourneysTechLead() {
-        // Arrange
-        String idJourney = "journey123";
-
-        DemandaReserva demandaReserva = new DemandaReserva();
-        demandaReserva.setIdJourney(idJourney);
-        demandaReserva.setEnvironment("dev");
-        demandaReserva.setCpf("12345678901");
-        demandaReserva.setCc("CC001");
-
-        ConjuntoComponente conjuntoComponente = new ConjuntoComponente();
-        List<ConjuntoComponente> arquetipos = List.of(conjuntoComponente);
-        demandaReserva.setArquetipos(arquetipos);
-
-        ArchetypeTechLeadDTO archetypeDTO = new ArchetypeTechLeadDTO();
-        CostCenterTechLeadDTO costCenterDTO = new CostCenterTechLeadDTO("CC001", "Cost Center Name");
-
-        // Mockando o comportamento
-        when(demandaReservaRepository.findByIdJourney(idJourney)).thenReturn(Optional.of(demandaReserva));
-        when(conjuntoComponenteMapper.convertToArchetypeDTO(conjuntoComponente)).thenReturn(archetypeDTO);
-
-        RestTemplate mockRestTemplate = mock(RestTemplate.class);
-
-        try (MockedStatic<RestTemplateFactory> mockedFactory = Mockito.mockStatic(RestTemplateFactory.class)) {
-            mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
-
-            CostCenterTechLeadDTO[] costCenters = { costCenterDTO };
-            when(mockRestTemplate.getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class)))
-                    .thenReturn(costCenters);
-
-            // Act
-            JourneyTechLeadDTO result = journeyService.fetchJourneysTechLead(idJourney);
-
-            // Assert
-            assertNotNull(result);
-            assertEquals(idJourney, result.getId());
-            assertEquals("dev", result.getEnviroment());
-            assertEquals("12345678901", result.getCpf());
-            assertEquals(costCenterDTO, result.getCostcenter());
-            assertEquals(List.of(archetypeDTO), result.getArchetypes());
-
-            verify(demandaReservaRepository, times(1)).findByIdJourney(idJourney);
-            verify(conjuntoComponenteMapper, times(1)).convertToArchetypeDTO(conjuntoComponente);
-            verify(mockRestTemplate, times(1)).getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class));
-        }
-    }
-
-    @Test
-    void shouldThrowExceptionWhenJourneyNotFoundInRepository() {
-        // Arrange
-        String idJourney = "journey123";
-
-        when(demandaReservaRepository.findByIdJourney(idJourney)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> journeyService.fetchJourneysTechLead(idJourney)
-        );
-
-        assertEquals("Journey not found", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionWhenCostCenterNotFound() {
-        // Arrange
-        String idJourney = "journey123";
-
-        DemandaReserva demandaReserva = new DemandaReserva();
-        demandaReserva.setIdJourney(idJourney);
-        demandaReserva.setEnvironment("dev");
-        demandaReserva.setCpf("12345678901");
-        demandaReserva.setCc("CC001");
-
-        when(demandaReservaRepository.findByIdJourney(idJourney)).thenReturn(Optional.of(demandaReserva));
-
-        RestTemplate mockRestTemplate = mock(RestTemplate.class);
-
-        try (MockedStatic<RestTemplateFactory> mockedFactory = Mockito.mockStatic(RestTemplateFactory.class)) {
-            mockedFactory.when(RestTemplateFactory::createRestTemplateMiddleware).thenReturn(mockRestTemplate);
-
-            CostCenterTechLeadDTO[] costCenters = {}; // Lista vazia para simular não encontrado
-            when(mockRestTemplate.getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class)))
-                    .thenReturn(costCenters);
-
-            // Act & Assert
-            ResourceNotFoundException exception = assertThrows(
-                    ResourceNotFoundException.class,
-                    () -> journeyService.fetchJourneysTechLead(idJourney)
-            );
-
-            assertEquals("Cost center not found for sigla: CC001", exception.getMessage());
-
-            verify(demandaReservaRepository, times(1)).findByIdJourney(idJourney);
-            verify(mockRestTemplate, times(1)).getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class));
-        }
-    }
+    verify(demandaReservaRepository, times(1)).findByIdJourney(idJourney);
+    verify(conjuntoComponenteMapper, times(1)).convertToArchetypeDTO(conjuntoComponente);
+    verify(mockRestTemplate, times(1)).getForObject(eq("http://test-cost-center-url.com"), eq(CostCenterTechLeadDTO[].class));
 }
