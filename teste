@@ -1,116 +1,151 @@
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
-class ComponenteServiceTest {
+class ConjuntoComponenteServiceTest {
+
+    @Mock
+    private ConjuntoComponenteRepository conjuntoComponenteRepository;
 
     @Mock
     private ComponenteRepository componenteRepository;
 
-    @InjectMocks
-    private ComponenteService componenteService;
+    @Mock
+    private ConjuntoComponenteMapper conjuntoComponenteMapper;
 
+    @InjectMocks
+    private ConjuntoComponenteService conjuntoComponenteService;
+
+    private ConjuntoComponenteDTO conjuntoComponenteDTO;
+    private ConjuntoComponente conjuntoComponente;
+    private UUID conjuntoId;
     private Componente componente;
 
     @BeforeEach
     void setUp() {
+        conjuntoId = UUID.randomUUID();
+
+        conjuntoComponenteDTO = ConjuntoComponenteDTO.builder()
+                .id(conjuntoId)
+                .nome("Conjunto Teste")
+                .descricao("Descrição Teste")
+                .tipo("Tipo Teste")
+                .idComponentes(List.of(1))
+                .build();
+
+        conjuntoComponente = ConjuntoComponente.builder()
+                .id(conjuntoId)
+                .nome("Conjunto Teste")
+                .descricao("Descrição Teste")
+                .tipo("Tipo Teste")
+                .build();
+
         componente = new Componente();
         componente.setId(1);
-        componente.setNome("Teste");
+        componente.setNome("Componente Teste");
     }
 
     @Test
-    void shouldCreateComponente() {
-        // Arrange
-        when(componenteRepository.save(componente)).thenReturn(componente);
+    void shouldCreateConjuntoComponente() {
+        when(conjuntoComponenteMapper.convertToEntity(conjuntoComponenteDTO)).thenReturn(conjuntoComponente);
+        when(componenteRepository.existsById(1)).thenReturn(true);
+        when(componenteRepository.findAllById(conjuntoComponenteDTO.getIdComponentes())).thenReturn(List.of(componente));
+        when(conjuntoComponenteRepository.save(conjuntoComponente)).thenReturn(conjuntoComponente);
+        when(conjuntoComponenteMapper.convertToDTO(conjuntoComponente)).thenReturn(conjuntoComponenteDTO);
 
-        // Act
-        Componente result = componenteService.create(componente);
+        ConjuntoComponenteDTO result = conjuntoComponenteService.create(conjuntoComponenteDTO);
 
-        // Assert
         assertNotNull(result);
-        assertEquals(componente.getId(), result.getId());
-        verify(componenteRepository, times(1)).save(componente);
+        assertEquals(conjuntoComponenteDTO.getId(), result.getId());
+        verify(conjuntoComponenteRepository, times(1)).save(conjuntoComponente);
     }
 
     @Test
-    void shouldReadAllComponentes() {
-        // Arrange
+    void shouldReadAllConjuntos() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Componente> page = new PageImpl<>(List.of(componente));
-        when(componenteRepository.findAll(pageable)).thenReturn(page);
+        Page<ConjuntoComponente> page = new PageImpl<>(List.of(conjuntoComponente));
+        when(conjuntoComponenteRepository.findAll(pageable)).thenReturn(page);
+        when(conjuntoComponenteMapper.convertToDTO(conjuntoComponente)).thenReturn(conjuntoComponenteDTO);
 
-        // Act
-        Page<Componente> result = componenteService.readAll(pageable);
+        Page<ConjuntoComponenteDTO> result = conjuntoComponenteService.readAll(pageable);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        verify(componenteRepository, times(1)).findAll(pageable);
+        verify(conjuntoComponenteRepository, times(1)).findAll(pageable);
     }
 
     @Test
     void shouldReadByIdWhenFound() {
-        // Arrange
-        when(componenteRepository.findById(1)).thenReturn(Optional.of(componente));
+        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.of(conjuntoComponente));
+        when(conjuntoComponenteMapper.convertToDTO(conjuntoComponente)).thenReturn(conjuntoComponenteDTO);
 
-        // Act
-        Componente result = componenteService.readById(1);
+        ConjuntoComponenteDTO result = conjuntoComponenteService.readById(conjuntoId);
 
-        // Assert
         assertNotNull(result);
-        assertEquals(componente.getId(), result.getId());
-        verify(componenteRepository, times(1)).findById(1);
+        assertEquals(conjuntoComponenteDTO.getId(), result.getId());
+        verify(conjuntoComponenteRepository, times(1)).findById(conjuntoId);
     }
 
     @Test
     void shouldThrowExceptionWhenReadByIdNotFound() {
-        // Arrange
-        when(componenteRepository.findById(1)).thenReturn(Optional.empty());
+        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> componenteService.readById(1));
-        assertEquals("Componente informado não encontrado. Id: 1", exception.getMessage());
-        verify(componenteRepository, times(1)).findById(1);
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> conjuntoComponenteService.readById(conjuntoId));
+
+        assertEquals("Arquétipo informado não encontrado. Id: " + conjuntoId, exception.getMessage());
+        verify(conjuntoComponenteRepository, times(1)).findById(conjuntoId);
     }
 
     @Test
-    void shouldUpdateComponenteWhenFound() {
-        // Arrange
-        Componente updatedComponente = new Componente();
-        updatedComponente.setNome("Atualizado");
+    void shouldUpdateConjuntoComponente() {
+        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.of(conjuntoComponente));
+        when(conjuntoComponenteMapper.convertToEntity(conjuntoComponenteDTO)).thenReturn(conjuntoComponente);
+        when(componenteRepository.existsById(1)).thenReturn(true);
+        when(componenteRepository.findAllById(conjuntoComponenteDTO.getIdComponentes())).thenReturn(List.of(componente));
+        when(conjuntoComponenteRepository.save(conjuntoComponente)).thenReturn(conjuntoComponente);
+        when(conjuntoComponenteMapper.convertToDTO(conjuntoComponente)).thenReturn(conjuntoComponenteDTO);
 
-        when(componenteRepository.findById(1)).thenReturn(Optional.of(componente));
-        when(componenteRepository.save(any(Componente.class))).thenReturn(updatedComponente);
+        ConjuntoComponenteDTO result = conjuntoComponenteService.update(conjuntoId, conjuntoComponenteDTO);
 
-        // Act
-        Componente result = componenteService.update(1, updatedComponente);
-
-        // Assert
         assertNotNull(result);
-        assertEquals("Atualizado", result.getNome());
-        verify(componenteRepository, times(1)).findById(1);
-        verify(componenteRepository, times(1)).save(updatedComponente);
+        assertEquals(conjuntoComponenteDTO.getId(), result.getId());
+        verify(conjuntoComponenteRepository, times(1)).save(conjuntoComponente);
     }
 
     @Test
-    void shouldDeleteComponenteWhenFound() {
-        // Arrange
-        when(componenteRepository.findById(1)).thenReturn(Optional.of(componente));
+    void shouldDeleteConjuntoComponenteWhenFound() {
+        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.of(conjuntoComponente));
 
-        // Act
-        componenteService.delete(1);
+        conjuntoComponenteService.delete(conjuntoId);
 
-        // Assert
-        verify(componenteRepository, times(1)).findById(1);
-        verify(componenteRepository, times(1)).deleteById(1);
+        verify(conjuntoComponenteRepository, times(1)).findById(conjuntoId);
+        verify(conjuntoComponenteRepository, times(1)).deleteById(conjuntoId);
     }
 
     @Test
-    void shouldThrowExceptionWhenDeleteComponenteNotFound() {
-        // Arrange
-        when(componenteRepository.findById(1)).thenReturn(Optional.empty());
+    void shouldThrowExceptionWhenDeleteConjuntoComponenteNotFound() {
+        when(conjuntoComponenteRepository.findById(conjuntoId)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> componenteService.delete(1));
-        assertEquals("Componente informado não encontrado. Id: 1", exception.getMessage());
-        verify(componenteRepository, times(1)).findById(1);
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> conjuntoComponenteService.delete(conjuntoId));
+
+        assertEquals("Arquétipo informado não encontrado. Id: " + conjuntoId, exception.getMessage());
+        verify(conjuntoComponenteRepository, times(1)).findById(conjuntoId);
     }
 }
