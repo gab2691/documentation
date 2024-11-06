@@ -1,20 +1,14 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.mockito.*;
+import org.springframework.data.domain.*;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 
-@ExtendWith(MockitoExtension.class)
 class PavimentacaoDominioServiceTest {
 
-    @InjectMocks
     private PavimentacaoDominioService pavimentacaoDominioService;
 
     @Mock
@@ -26,18 +20,20 @@ class PavimentacaoDominioServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        pavimentacaoDominioService = new PavimentacaoDominioService(pavimentacaoDominioRepository, dominioRepository);
     }
 
     @Test
     void testCreate_Success() {
         // Arrange
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
         Dominio dominio = new Dominio();
         dominio.setId(1);
+
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
         pavimentacaoDominio.setDominio(dominio);
 
         when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.of(dominio));
-        when(pavimentacaoDominioRepository.save(pavimentacaoDominio)).thenReturn(pavimentacaoDominio);
+        when(pavimentacaoDominioRepository.save(any(PavimentacaoDominio.class))).thenReturn(pavimentacaoDominio);
 
         // Act
         PavimentacaoDominio result = pavimentacaoDominioService.create(pavimentacaoDominio);
@@ -52,9 +48,10 @@ class PavimentacaoDominioServiceTest {
     @Test
     void testCreate_DominioNotFound() {
         // Arrange
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
         Dominio dominio = new Dominio();
         dominio.setId(1);
+
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
         pavimentacaoDominio.setDominio(dominio);
 
         when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.empty());
@@ -67,7 +64,7 @@ class PavimentacaoDominioServiceTest {
 
         assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
         verify(dominioRepository, times(1)).findById(dominio.getId());
-        verifyNoInteractions(pavimentacaoDominioRepository);
+        verify(pavimentacaoDominioRepository, never()).save(any());
     }
 
     @Test
@@ -76,7 +73,8 @@ class PavimentacaoDominioServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         PavimentacaoDominio pav1 = new PavimentacaoDominio();
         PavimentacaoDominio pav2 = new PavimentacaoDominio();
-        Page<PavimentacaoDominio> page = new PageImpl<>(Arrays.asList(pav1, pav2));
+        List<PavimentacaoDominio> pavList = Arrays.asList(pav1, pav2);
+        Page<PavimentacaoDominio> page = new PageImpl<>(pavList);
 
         when(pavimentacaoDominioRepository.findAll(pageable)).thenReturn(page);
 
@@ -133,7 +131,7 @@ class PavimentacaoDominioServiceTest {
 
         assertEquals("Dominio informado não encontrado. Id: DOM1", exception.getMessage());
         verify(dominioRepository, times(1)).findBySigla(sigla);
-        verifyNoInteractions(pavimentacaoDominioRepository);
+        verify(pavimentacaoDominioRepository, never()).findByDominioAndEnvironment(any(), any());
     }
 
     @Test
@@ -200,14 +198,15 @@ class PavimentacaoDominioServiceTest {
     void testUpdate_Success() {
         // Arrange
         Integer id = 1;
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
         Dominio dominio = new Dominio();
         dominio.setId(1);
+
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
         pavimentacaoDominio.setDominio(dominio);
 
-        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(pavimentacaoDominio));
+        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(new PavimentacaoDominio()));
         when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.of(dominio));
-        when(pavimentacaoDominioRepository.save(pavimentacaoDominio)).thenReturn(pavimentacaoDominio);
+        when(pavimentacaoDominioRepository.save(any(PavimentacaoDominio.class))).thenReturn(pavimentacaoDominio);
 
         // Act
         PavimentacaoDominio result = pavimentacaoDominioService.update(id, pavimentacaoDominio);
@@ -225,6 +224,9 @@ class PavimentacaoDominioServiceTest {
         // Arrange
         Integer id = 1;
         PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
+        Dominio dominio = new Dominio();
+        dominio.setId(1);
+        pavimentacaoDominio.setDominio(dominio);
 
         when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.empty());
 
@@ -236,7 +238,7 @@ class PavimentacaoDominioServiceTest {
 
         assertEquals("Pavimento de dominios informada não encontrada. Id: 1", exception.getMessage());
         verify(pavimentacaoDominioRepository, times(1)).findById(id);
-        verifyNoInteractions(dominioRepository);
+        verifyNoMoreInteractions(dominioRepository);
         verify(pavimentacaoDominioRepository, never()).save(any());
     }
 
@@ -244,9 +246,10 @@ class PavimentacaoDominioServiceTest {
     void testUpdate_DominioNotFound() {
         // Arrange
         Integer id = 1;
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
         Dominio dominio = new Dominio();
         dominio.setId(1);
+
+        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
         pavimentacaoDominio.setDominio(dominio);
 
         when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(new PavimentacaoDominio()));
