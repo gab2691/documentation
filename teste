@@ -7,174 +7,148 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 
-class PavimentacaoDominioServiceTest {
+class TamanhoComponenteServiceTest {
 
-    private PavimentacaoDominioService pavimentacaoDominioService;
-
-    @Mock
-    private PavimentacaoDominioRepository pavimentacaoDominioRepository;
+    private TamanhoComponenteService tamanhoComponenteService;
 
     @Mock
-    private DominioRepository dominioRepository;
+    private TamanhoComponenteRepository tamanhoComponenteRepository;
+
+    @Mock
+    private MedidaComponenteRepository medidaComponenteRepository;
+
+    @Mock
+    private ComponenteRepository componenteRepository;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        pavimentacaoDominioService = new PavimentacaoDominioService(pavimentacaoDominioRepository, dominioRepository);
+        tamanhoComponenteService = new TamanhoComponenteService(
+                tamanhoComponenteRepository,
+                medidaComponenteRepository,
+                componenteRepository
+        );
     }
 
     @Test
     void testCreate_Success() {
         // Arrange
-        Dominio dominio = new Dominio();
-        dominio.setId(1);
+        Componente componente = new Componente();
+        componente.setId(1);
 
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
-        pavimentacaoDominio.setDominio(dominio);
+        MedidaComponente medida = new MedidaComponente();
+        medida.setId(1);
 
-        when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.of(dominio));
-        when(pavimentacaoDominioRepository.save(any(PavimentacaoDominio.class))).thenReturn(pavimentacaoDominio);
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
+        tamanhoComponente.setComponente(componente);
+        tamanhoComponente.setMedida(medida);
+
+        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.of(componente));
+        when(medidaComponenteRepository.findById(medida.getId())).thenReturn(Optional.of(medida));
+        when(tamanhoComponenteRepository.save(any(TamanhoComponente.class))).thenReturn(tamanhoComponente);
 
         // Act
-        PavimentacaoDominio result = pavimentacaoDominioService.create(pavimentacaoDominio);
+        TamanhoComponente result = tamanhoComponenteService.create(tamanhoComponente);
 
         // Assert
         assertNotNull(result);
-        assertEquals(pavimentacaoDominio, result);
-        verify(dominioRepository, times(1)).findById(dominio.getId());
-        verify(pavimentacaoDominioRepository, times(1)).save(pavimentacaoDominio);
+        assertEquals(tamanhoComponente, result);
+        verify(componenteRepository, times(1)).findById(componente.getId());
+        verify(medidaComponenteRepository, times(1)).findById(medida.getId());
+        verify(tamanhoComponenteRepository, times(1)).save(tamanhoComponente);
     }
 
     @Test
-    void testCreate_DominioNotFound() {
+    void testCreate_ComponenteNotFound() {
         // Arrange
-        Dominio dominio = new Dominio();
-        dominio.setId(1);
+        Componente componente = new Componente();
+        componente.setId(1);
 
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
-        pavimentacaoDominio.setDominio(dominio);
+        MedidaComponente medida = new MedidaComponente();
+        medida.setId(1);
 
-        when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.empty());
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
+        tamanhoComponente.setComponente(componente);
+        tamanhoComponente.setMedida(medida);
+
+        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.empty());
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> pavimentacaoDominioService.create(pavimentacaoDominio)
+                () -> tamanhoComponenteService.create(tamanhoComponente)
         );
 
-        assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
-        verify(dominioRepository, times(1)).findById(dominio.getId());
-        verify(pavimentacaoDominioRepository, never()).save(any());
+        assertEquals("Componente informado não encontrado. Id: 1", exception.getMessage());
+        verify(componenteRepository, times(1)).findById(componente.getId());
+        verify(medidaComponenteRepository, never()).findById(any());
+        verify(tamanhoComponenteRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreate_MedidaNotFound() {
+        // Arrange
+        Componente componente = new Componente();
+        componente.setId(1);
+
+        MedidaComponente medida = new MedidaComponente();
+        medida.setId(1);
+
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
+        tamanhoComponente.setComponente(componente);
+        tamanhoComponente.setMedida(medida);
+
+        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.of(componente));
+        when(medidaComponenteRepository.findById(medida.getId())).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> tamanhoComponenteService.create(tamanhoComponente)
+        );
+
+        assertEquals("Medida informada não encontrada. Id: 1", exception.getMessage());
+        verify(componenteRepository, times(1)).findById(componente.getId());
+        verify(medidaComponenteRepository, times(1)).findById(medida.getId());
+        verify(tamanhoComponenteRepository, never()).save(any());
     }
 
     @Test
     void testReadAll() {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
-        PavimentacaoDominio pav1 = new PavimentacaoDominio();
-        PavimentacaoDominio pav2 = new PavimentacaoDominio();
-        List<PavimentacaoDominio> pavList = Arrays.asList(pav1, pav2);
-        Page<PavimentacaoDominio> page = new PageImpl<>(pavList);
+        TamanhoComponente tamanho1 = new TamanhoComponente();
+        TamanhoComponente tamanho2 = new TamanhoComponente();
+        List<TamanhoComponente> tamanhoList = Arrays.asList(tamanho1, tamanho2);
+        Page<TamanhoComponente> page = new PageImpl<>(tamanhoList);
 
-        when(pavimentacaoDominioRepository.findAll(pageable)).thenReturn(page);
+        when(tamanhoComponenteRepository.findAll(pageable)).thenReturn(page);
 
         // Act
-        Page<PavimentacaoDominio> result = pavimentacaoDominioService.readAll(pageable);
+        Page<TamanhoComponente> result = tamanhoComponenteService.readAll(pageable);
 
         // Assert
         assertNotNull(result);
         assertEquals(2, result.getTotalElements());
-        verify(pavimentacaoDominioRepository, times(1)).findAll(pageable);
-    }
-
-    @Test
-    void testFindByDomonioAndEnviroment_Success() {
-        // Arrange
-        String sigla = "DOM1";
-        Ambiente environment = Ambiente.DEV;
-
-        Dominio dominio = new Dominio();
-        dominio.setId(1);
-        dominio.setSigla(sigla);
-
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
-        pavimentacaoDominio.setDominio(dominio);
-        pavimentacaoDominio.setEnvironment(environment);
-
-        when(dominioRepository.findBySigla(sigla)).thenReturn(Optional.of(dominio));
-        when(pavimentacaoDominioRepository.findByDominioAndEnvironment(dominio, environment))
-                .thenReturn(Optional.of(pavimentacaoDominio));
-
-        // Act
-        PavimentacaoDominio result = pavimentacaoDominioService.findByDomonioAndEnviroment(sigla, environment);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(pavimentacaoDominio, result);
-        verify(dominioRepository, times(1)).findBySigla(sigla);
-        verify(pavimentacaoDominioRepository, times(1)).findByDominioAndEnvironment(dominio, environment);
-    }
-
-    @Test
-    void testFindByDomonioAndEnviroment_DominioNotFound() {
-        // Arrange
-        String sigla = "DOM1";
-        Ambiente environment = Ambiente.DEV;
-
-        when(dominioRepository.findBySigla(sigla)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> pavimentacaoDominioService.findByDomonioAndEnviroment(sigla, environment)
-        );
-
-        assertEquals("Dominio informado não encontrado. Id: DOM1", exception.getMessage());
-        verify(dominioRepository, times(1)).findBySigla(sigla);
-        verify(pavimentacaoDominioRepository, never()).findByDominioAndEnvironment(any(), any());
-    }
-
-    @Test
-    void testFindByDomonioAndEnviroment_PavimentacaoNotFound() {
-        // Arrange
-        String sigla = "DOM1";
-        Ambiente environment = Ambiente.DEV;
-
-        Dominio dominio = new Dominio();
-        dominio.setId(1);
-        dominio.setSigla(sigla);
-
-        when(dominioRepository.findBySigla(sigla)).thenReturn(Optional.of(dominio));
-        when(pavimentacaoDominioRepository.findByDominioAndEnvironment(dominio, environment))
-                .thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> pavimentacaoDominioService.findByDomonioAndEnviroment(sigla, environment)
-        );
-
-        assertEquals("Pavimento de dominios informada não encontrada. Id: DOM1", exception.getMessage());
-        verify(dominioRepository, times(1)).findBySigla(sigla);
-        verify(pavimentacaoDominioRepository, times(1)).findByDominioAndEnvironment(dominio, environment);
+        verify(tamanhoComponenteRepository, times(1)).findAll(pageable);
     }
 
     @Test
     void testReadById_Success() {
         // Arrange
         Integer id = 1;
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
-        pavimentacaoDominio.setId(id);
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
+        tamanhoComponente.setId(id);
 
-        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(pavimentacaoDominio));
+        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(tamanhoComponente));
 
         // Act
-        PavimentacaoDominio result = pavimentacaoDominioService.readById(id);
+        TamanhoComponente result = tamanhoComponenteService.readById(id);
 
         // Assert
         assertNotNull(result);
-        assertEquals(pavimentacaoDominio, result);
-        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+        assertEquals(tamanhoComponente, result);
+        verify(tamanhoComponenteRepository, times(1)).findById(id);
     }
 
     @Test
@@ -182,107 +156,150 @@ class PavimentacaoDominioServiceTest {
         // Arrange
         Integer id = 1;
 
-        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.empty());
+        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.empty());
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> pavimentacaoDominioService.readById(id)
+                () -> tamanhoComponenteService.readById(id)
         );
 
-        assertEquals("Pavimento de dominios informada não encontrada. Id: 1", exception.getMessage());
-        verify(pavimentacaoDominioRepository, times(1)).findById(id);
+        assertEquals("Tamanho de componente informada não encontrada. Id: 1", exception.getMessage());
+        verify(tamanhoComponenteRepository, times(1)).findById(id);
     }
 
     @Test
     void testUpdate_Success() {
         // Arrange
         Integer id = 1;
-        Dominio dominio = new Dominio();
-        dominio.setId(1);
 
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
-        pavimentacaoDominio.setDominio(dominio);
+        Componente componente = new Componente();
+        componente.setId(1);
 
-        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(new PavimentacaoDominio()));
-        when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.of(dominio));
-        when(pavimentacaoDominioRepository.save(any(PavimentacaoDominio.class))).thenReturn(pavimentacaoDominio);
+        MedidaComponente medida = new MedidaComponente();
+        medida.setId(1);
+
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
+        tamanhoComponente.setComponente(componente);
+        tamanhoComponente.setMedida(medida);
+
+        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(new TamanhoComponente()));
+        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.of(componente));
+        when(medidaComponenteRepository.findById(medida.getId())).thenReturn(Optional.of(medida));
+        when(tamanhoComponenteRepository.save(any(TamanhoComponente.class))).thenReturn(tamanhoComponente);
 
         // Act
-        PavimentacaoDominio result = pavimentacaoDominioService.update(id, pavimentacaoDominio);
+        TamanhoComponente result = tamanhoComponenteService.update(id, tamanhoComponente);
 
         // Assert
         assertNotNull(result);
         assertEquals(id, result.getId());
-        verify(pavimentacaoDominioRepository, times(1)).findById(id);
-        verify(dominioRepository, times(1)).findById(dominio.getId());
-        verify(pavimentacaoDominioRepository, times(1)).save(pavimentacaoDominio);
+        verify(tamanhoComponenteRepository, times(1)).findById(id);
+        verify(componenteRepository, times(1)).findById(componente.getId());
+        verify(medidaComponenteRepository, times(1)).findById(medida.getId());
+        verify(tamanhoComponenteRepository, times(1)).save(tamanhoComponente);
     }
 
     @Test
-    void testUpdate_PavimentacaoNotFound() {
+    void testUpdate_TamanhoNotFound() {
         // Arrange
         Integer id = 1;
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
-        Dominio dominio = new Dominio();
-        dominio.setId(1);
-        pavimentacaoDominio.setDominio(dominio);
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
 
-        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.empty());
+        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.empty());
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> pavimentacaoDominioService.update(id, pavimentacaoDominio)
+                () -> tamanhoComponenteService.update(id, tamanhoComponente)
         );
 
-        assertEquals("Pavimento de dominios informada não encontrada. Id: 1", exception.getMessage());
-        verify(pavimentacaoDominioRepository, times(1)).findById(id);
-        verifyNoMoreInteractions(dominioRepository);
-        verify(pavimentacaoDominioRepository, never()).save(any());
+        assertEquals("Tamanho de componente informada não encontrada. Id: 1", exception.getMessage());
+        verify(tamanhoComponenteRepository, times(1)).findById(id);
+        verifyNoMoreInteractions(componenteRepository);
+        verifyNoMoreInteractions(medidaComponenteRepository);
+        verify(tamanhoComponenteRepository, never()).save(any());
     }
 
     @Test
-    void testUpdate_DominioNotFound() {
+    void testUpdate_ComponenteNotFound() {
         // Arrange
         Integer id = 1;
-        Dominio dominio = new Dominio();
-        dominio.setId(1);
 
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
-        pavimentacaoDominio.setDominio(dominio);
+        Componente componente = new Componente();
+        componente.setId(1);
 
-        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(new PavimentacaoDominio()));
-        when(dominioRepository.findById(dominio.getId())).thenReturn(Optional.empty());
+        MedidaComponente medida = new MedidaComponente();
+        medida.setId(1);
+
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
+        tamanhoComponente.setComponente(componente);
+        tamanhoComponente.setMedida(medida);
+
+        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(new TamanhoComponente()));
+        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.empty());
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> pavimentacaoDominioService.update(id, pavimentacaoDominio)
+                () -> tamanhoComponenteService.update(id, tamanhoComponente)
         );
 
-        assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
-        verify(pavimentacaoDominioRepository, times(1)).findById(id);
-        verify(dominioRepository, times(1)).findById(dominio.getId());
-        verify(pavimentacaoDominioRepository, never()).save(any());
+        assertEquals("Componente informado não encontrado. Id: 1", exception.getMessage());
+        verify(tamanhoComponenteRepository, times(1)).findById(id);
+        verify(componenteRepository, times(1)).findById(componente.getId());
+        verify(medidaComponenteRepository, never()).findById(any());
+        verify(tamanhoComponenteRepository, never()).save(any());
+    }
+
+    @Test
+    void testUpdate_MedidaNotFound() {
+        // Arrange
+        Integer id = 1;
+
+        Componente componente = new Componente();
+        componente.setId(1);
+
+        MedidaComponente medida = new MedidaComponente();
+        medida.setId(1);
+
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
+        tamanhoComponente.setComponente(componente);
+        tamanhoComponente.setMedida(medida);
+
+        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(new TamanhoComponente()));
+        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.of(componente));
+        when(medidaComponenteRepository.findById(medida.getId())).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> tamanhoComponenteService.update(id, tamanhoComponente)
+        );
+
+        assertEquals("Medida informada não encontrada. Id: 1", exception.getMessage());
+        verify(tamanhoComponenteRepository, times(1)).findById(id);
+        verify(componenteRepository, times(1)).findById(componente.getId());
+        verify(medidaComponenteRepository, times(1)).findById(medida.getId());
+        verify(tamanhoComponenteRepository, never()).save(any());
     }
 
     @Test
     void testDelete_Success() {
         // Arrange
         Integer id = 1;
-        PavimentacaoDominio pavimentacaoDominio = new PavimentacaoDominio();
-        pavimentacaoDominio.setId(id);
+        TamanhoComponente tamanhoComponente = new TamanhoComponente();
+        tamanhoComponente.setId(id);
 
-        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.of(pavimentacaoDominio));
-        doNothing().when(pavimentacaoDominioRepository).deleteById(id);
+        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(tamanhoComponente));
+        doNothing().when(tamanhoComponenteRepository).deleteById(id);
 
         // Act
-        pavimentacaoDominioService.delete(id);
+        tamanhoComponenteService.delete(id);
 
         // Assert
-        verify(pavimentacaoDominioRepository, times(1)).findById(id);
-        verify(pavimentacaoDominioRepository, times(1)).deleteById(id);
+        verify(tamanhoComponenteRepository, times(1)).findById(id);
+        verify(tamanhoComponenteRepository, times(1)).deleteById(id);
     }
 
     @Test
@@ -290,16 +307,16 @@ class PavimentacaoDominioServiceTest {
         // Arrange
         Integer id = 1;
 
-        when(pavimentacaoDominioRepository.findById(id)).thenReturn(Optional.empty());
+        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.empty());
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> pavimentacaoDominioService.delete(id)
+                () -> tamanhoComponenteService.delete(id)
         );
 
-        assertEquals("Pavimento de dominios informada não encontrada. Id: 1", exception.getMessage());
-        verify(pavimentacaoDominioRepository, times(1)).findById(id);
-        verify(pavimentacaoDominioRepository, never()).deleteById(any());
+        assertEquals("Tamanho de componente informada não encontrada. Id: 1", exception.getMessage());
+        verify(tamanhoComponenteRepository, times(1)).findById(id);
+        verify(tamanhoComponenteRepository, never()).deleteById(any());
     }
 }
