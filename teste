@@ -4,11 +4,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,105 +16,158 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class DominioServiceTest {
+class JourneyServiceTest {
 
     @Mock
-    private DominioRepository dominioRepository;
+    private DemandaReservaService demandaReservaService;
+
+    @Mock
+    private DemandaReservaRepository demandaReservaRepository;
+
+    @Mock
+    private ConjuntoComponenteMapper conjuntoComponenteMapper;
+
+    @Mock
+    private RestTemplate restTemplate;
 
     @InjectMocks
-    private DominioService dominioService;
+    private JourneyService journeyService;
 
-    private Dominio dominio;
+    private JourneyClientDTO journeyClientDTO;
+    private JourneyDTO journeyDTO;
+    private DemandaReserva demandaReserva;
 
     @BeforeEach
     void setUp() {
-        dominio = new Dominio();
-        dominio.setId(1);
-        dominio.setSigla("ABC");
-        dominio.setDescricao("Descrição de Teste");
+        journeyClientDTO = JourneyClientDTO.builder()
+                .numeroDemanda("journey123")
+                .fase("Open")
+                .subfase("Active")
+                .centroDeCusto("CC001")
+                .cpf("12345678901")
+                .build();
+
+        journeyDTO = JourneyDTO.builder()
+                .id("journey123")
+                .cc("CC001")
+                .cpf("12345678901")
+                .fase("Open")
+                .subfase("Active")
+                .build();
+
+        demandaReserva = DemandaReserva.builder()
+                .idJourney("journey123")
+                .environment(Ambiente.PRODUCAO)
+                .cpf("12345678901")
+                .arquetipos(List.of(new ConjuntoComponente()))
+                .cc("CC001")
+                .build();
     }
 
     @Test
-    void shouldCreateDominio() {
-        when(dominioRepository.save(dominio)).thenReturn(dominio);
+    void shouldFetchJourneysInApiServiceNow() {
+        when(demandaReservaService.checkIfJourneyExists("journey123")).thenReturn(false);
 
-        Dominio result = dominioService.create(dominio);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("User-Agent", "Mozilla/5.0");
+        headers.set("Authorization", "Basic token123");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<List<JourneyClientDTO>> response = new ResponseEntity<>(List.of(journeyClientDTO), HttpStatus.OK);
+
+        RestTemplate restTemplateJourney = mock(RestTemplate.class);
+        when(restTemplateJourney.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                eq(entity),
+                any(ParameterizedTypeReference.class))
+        ).thenReturn(response);
+
+        JourneyDTO result = journeyService.fetchJourneysInApiServiceNow("journey123");
 
         assertNotNull(result);
-        assertEquals(dominio.getId(), result.getId());
-        verify(dominioRepository, times(1)).save(dominio);
+        assertEquals(journeyClientDTO.getNumeroDemanda(), result.getId());
     }
 
     @Test
-    void shouldReadAllDominios() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Dominio> page = new PageImpl<>(List.of(dominio));
-        when(dominioRepository.findAll(pageable)).thenReturn(page);
+    void shouldThrowExceptionWhenJourneyNotFoundInApi() {
+        when(demandaReservaService.checkIfJourneyExists("journey123")).thenReturn(false);
 
-        Page<Dominio> result = dominioService.readAll(pageable);
+        RestTemplate restTemplateJourney = mock(RestTemplate.class);
+        when(restTemplateJourney.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class))
+        ).thenThrow(HttpClientErrorException.NotFound.class);
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> journeyService.fetchJourneysInApiServiceNow("journey123")
+        );
+
+        assertEquals("Lista de Journeys vazia.", exception.getMessage());
+    }
+
+    @Test
+    void shouldFetchJourneysTechLead() {
+        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.of(demandaReserva));
+
+        CostCenterTechLeadDTO costCenterTechLeadDTO = new CostCenterTechLeadDTO("CC001", "Cost Center Test");
+        when(journeyService.fetchCostCenter("CC001")).thenReturn(costCenterTechLeadDTO);
+
+        ArchetypeTechLeadDTO archetypeTechLeadDTO = ArchetypeTechLeadDTO.builder()
+                .id("1")
+                .title("Archetype Test")
+                .build();
+        when(conjuntoComponenteMapper.convertToArchetypeDTO(any(ConjuntoComponente.class))).thenReturn(archetypeTechLeadDTO);
+
+        JourneyTechLeadDTO result = journeyService.fetchJourneysTechLead("journey123");
 
         assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(dominioRepository, times(1)).findAll(pageable);
+        assertEquals("journey123", result.getId());
+        assertEquals("CC001", result.getCostcenter().getSigla());
+        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
     }
 
     @Test
-    void shouldReadByIdWhenFound() {
-        when(dominioRepository.findById(1)).thenReturn(Optional.of(dominio));
+    void shouldThrowExceptionWhenTechLeadJourneyNotFound() {
+        when(demandaReservaRepository.findByIdJourney("journey123")).thenReturn(Optional.empty());
 
-        Dominio result = dominioService.readById(1);
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> journeyService.fetchJourneysTechLead("journey123")
+        );
+
+        assertEquals("Journey not found", exception.getMessage());
+        verify(demandaReservaRepository, times(1)).findByIdJourney("journey123");
+    }
+
+    @Test
+    void shouldFetchCostCenter() {
+        CostCenterTechLeadDTO costCenterTechLeadDTO = new CostCenterTechLeadDTO("CC001", "Cost Center Test");
+        CostCenterTechLeadDTO[] costCenters = {costCenterTechLeadDTO};
+
+        when(restTemplate.getForObject(anyString(), eq(CostCenterTechLeadDTO[].class))).thenReturn(costCenters);
+
+        CostCenterTechLeadDTO result = journeyService.fetchCostCenter("CC001");
 
         assertNotNull(result);
-        assertEquals(dominio.getId(), result.getId());
-        verify(dominioRepository, times(1)).findById(1);
+        assertEquals("CC001", result.getSigla());
     }
 
     @Test
-    void shouldThrowExceptionWhenReadByIdNotFound() {
-        when(dominioRepository.findById(1)).thenReturn(Optional.empty());
+    void shouldThrowExceptionWhenCostCenterNotFound() {
+        CostCenterTechLeadDTO[] costCenters = {};
+        when(restTemplate.getForObject(anyString(), eq(CostCenterTechLeadDTO[].class))).thenReturn(costCenters);
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> dominioService.readById(1));
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> journeyService.fetchCostCenter("CC001")
+        );
 
-        assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
-        verify(dominioRepository, times(1)).findById(1);
-    }
-
-    @Test
-    void shouldUpdateDominioWhenFound() {
-        Dominio updatedDominio = new Dominio();
-        updatedDominio.setSigla("DEF");
-        updatedDominio.setDescricao("Descrição Atualizada");
-
-        when(dominioRepository.findById(1)).thenReturn(Optional.of(dominio));
-        when(dominioRepository.save(any(Dominio.class))).thenReturn(updatedDominio);
-
-        Dominio result = dominioService.update(1, updatedDominio);
-
-        assertNotNull(result);
-        assertEquals("DEF", result.getSigla());
-        verify(dominioRepository, times(1)).findById(1);
-        verify(dominioRepository, times(1)).save(updatedDominio);
-    }
-
-    @Test
-    void shouldDeleteDominioWhenFound() {
-        when(dominioRepository.findById(1)).thenReturn(Optional.of(dominio));
-
-        dominioService.delete(1);
-
-        verify(dominioRepository, times(1)).findById(1);
-        verify(dominioRepository, times(1)).deleteById(1);
-    }
-
-    @Test
-    void shouldThrowExceptionWhenDeleteDominioNotFound() {
-        when(dominioRepository.findById(1)).thenReturn(Optional.empty());
-
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> dominioService.delete(1));
-
-        assertEquals("Dominio informado não encontrado. Id: 1", exception.getMessage());
-        verify(dominioRepository, times(1)).findById(1);
+        assertEquals("Cost center not found for sigla: CC001", exception.getMessage());
     }
 }
