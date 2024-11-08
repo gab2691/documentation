@@ -1,322 +1,80 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.springframework.data.domain.*;
+import org.springframework.test.util.ReflectionTestUtils;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 
-class TamanhoComponenteServiceTest {
+class JourneyServiceTest {
 
-    private TamanhoComponenteService tamanhoComponenteService;
-
-    @Mock
-    private TamanhoComponenteRepository tamanhoComponenteRepository;
+    @InjectMocks
+    private JourneyService journeyService;
 
     @Mock
-    private MedidaComponenteRepository medidaComponenteRepository;
+    private DemandaReservaService demandaReservaService;
 
     @Mock
-    private ComponenteRepository componenteRepository;
+    private DemandaReservaRepository demandaReservaRepository;
+
+    @Mock
+    private ConjuntoComponenteMapper conjuntoComponenteMapper;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        tamanhoComponenteService = new TamanhoComponenteService(
-                tamanhoComponenteRepository,
-                medidaComponenteRepository,
-                componenteRepository
-        );
+
+        // Set the @Value fields
+        ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
+        ReflectionTestUtils.setField(journeyService, "journeyurl", "http://test-journey-url.com");
+        ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
     }
 
     @Test
-    void testCreate_Success() {
+    void shouldFetchJourneysTechLead() {
         // Arrange
-        Componente componente = new Componente();
-        componente.setId(1);
+        String idJourney = "journey123";
 
-        MedidaComponente medida = new MedidaComponente();
-        medida.setId(1);
+        DemandaReserva demandaReserva = new DemandaReserva();
+        demandaReserva.setIdJourney(idJourney);
+        demandaReserva.setEnvironment(Ambiente.dv);
+        demandaReserva.setCpf("12345678901");
+        demandaReserva.setCc("CC001");
 
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-        tamanhoComponente.setComponente(componente);
-        tamanhoComponente.setMedida(medida);
+        ConjuntoComponente conjuntoComponente = new ConjuntoComponente();
+        List<ConjuntoComponente> arquetipos = List.of(conjuntoComponente);
+        demandaReserva.setArquetipos(arquetipos);
 
-        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.of(componente));
-        when(medidaComponenteRepository.findById(medida.getId())).thenReturn(Optional.of(medida));
-        when(tamanhoComponenteRepository.save(any(TamanhoComponente.class))).thenReturn(tamanhoComponente);
+        ArchetypeTechLeadDTO archetypeDTO = new ArchetypeTechLeadDTO();
+        CostCenterTechLeadDTO costCenterDTO = new CostCenterTechLeadDTO();
+        costCenterDTO.setSigla("CC001");
+        costCenterDTO.setName("Cost Center Name");
+
+        // Mocking the behavior
+        when(demandaReservaRepository.findByIdJourney(idJourney)).thenReturn(Optional.of(demandaReserva));
+        when(conjuntoComponenteMapper.convertToArchetypeDTO(conjuntoComponente)).thenReturn(archetypeDTO);
+
+        // Create a spy of journeyService inside the test method
+        JourneyService journeyServiceSpy = Mockito.spy(journeyService);
+
+        // Mock fetchCostCenter method on the spy
+        doReturn(costCenterDTO).when(journeyServiceSpy).fetchCostCenter(demandaReserva.getCc());
 
         // Act
-        TamanhoComponente result = tamanhoComponenteService.create(tamanhoComponente);
+        JourneyTechLeadDTO result = journeyServiceSpy.fetchJourneysTechLead(idJourney);
 
         // Assert
         assertNotNull(result);
-        assertEquals(tamanhoComponente, result);
-        verify(componenteRepository, times(1)).findById(componente.getId());
-        verify(medidaComponenteRepository, times(1)).findById(medida.getId());
-        verify(tamanhoComponenteRepository, times(1)).save(tamanhoComponente);
-    }
+        assertEquals(idJourney, result.getId());
+        assertEquals(Ambiente.dv, result.getEnviroment());
+        assertEquals("12345678901", result.getCpf());
+        assertEquals(costCenterDTO, result.getCostcenter());
+        assertEquals(List.of(archetypeDTO), result.getArchetypes());
 
-    @Test
-    void testCreate_ComponenteNotFound() {
-        // Arrange
-        Componente componente = new Componente();
-        componente.setId(1);
-
-        MedidaComponente medida = new MedidaComponente();
-        medida.setId(1);
-
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-        tamanhoComponente.setComponente(componente);
-        tamanhoComponente.setMedida(medida);
-
-        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> tamanhoComponenteService.create(tamanhoComponente)
-        );
-
-        assertEquals("Componente informado não encontrado. Id: 1", exception.getMessage());
-        verify(componenteRepository, times(1)).findById(componente.getId());
-        verify(medidaComponenteRepository, never()).findById(any());
-        verify(tamanhoComponenteRepository, never()).save(any());
-    }
-
-    @Test
-    void testCreate_MedidaNotFound() {
-        // Arrange
-        Componente componente = new Componente();
-        componente.setId(1);
-
-        MedidaComponente medida = new MedidaComponente();
-        medida.setId(1);
-
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-        tamanhoComponente.setComponente(componente);
-        tamanhoComponente.setMedida(medida);
-
-        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.of(componente));
-        when(medidaComponenteRepository.findById(medida.getId())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> tamanhoComponenteService.create(tamanhoComponente)
-        );
-
-        assertEquals("Medida informada não encontrada. Id: 1", exception.getMessage());
-        verify(componenteRepository, times(1)).findById(componente.getId());
-        verify(medidaComponenteRepository, times(1)).findById(medida.getId());
-        verify(tamanhoComponenteRepository, never()).save(any());
-    }
-
-    @Test
-    void testReadAll() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        TamanhoComponente tamanho1 = new TamanhoComponente();
-        TamanhoComponente tamanho2 = new TamanhoComponente();
-        List<TamanhoComponente> tamanhoList = Arrays.asList(tamanho1, tamanho2);
-        Page<TamanhoComponente> page = new PageImpl<>(tamanhoList);
-
-        when(tamanhoComponenteRepository.findAll(pageable)).thenReturn(page);
-
-        // Act
-        Page<TamanhoComponente> result = tamanhoComponenteService.readAll(pageable);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(2, result.getTotalElements());
-        verify(tamanhoComponenteRepository, times(1)).findAll(pageable);
-    }
-
-    @Test
-    void testReadById_Success() {
-        // Arrange
-        Integer id = 1;
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-        tamanhoComponente.setId(id);
-
-        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(tamanhoComponente));
-
-        // Act
-        TamanhoComponente result = tamanhoComponenteService.readById(id);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(tamanhoComponente, result);
-        verify(tamanhoComponenteRepository, times(1)).findById(id);
-    }
-
-    @Test
-    void testReadById_NotFound() {
-        // Arrange
-        Integer id = 1;
-
-        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> tamanhoComponenteService.readById(id)
-        );
-
-        assertEquals("Tamanho de componente informada não encontrada. Id: 1", exception.getMessage());
-        verify(tamanhoComponenteRepository, times(1)).findById(id);
-    }
-
-    @Test
-    void testUpdate_Success() {
-        // Arrange
-        Integer id = 1;
-
-        Componente componente = new Componente();
-        componente.setId(1);
-
-        MedidaComponente medida = new MedidaComponente();
-        medida.setId(1);
-
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-        tamanhoComponente.setComponente(componente);
-        tamanhoComponente.setMedida(medida);
-
-        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(new TamanhoComponente()));
-        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.of(componente));
-        when(medidaComponenteRepository.findById(medida.getId())).thenReturn(Optional.of(medida));
-        when(tamanhoComponenteRepository.save(any(TamanhoComponente.class))).thenReturn(tamanhoComponente);
-
-        // Act
-        TamanhoComponente result = tamanhoComponenteService.update(id, tamanhoComponente);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(id, result.getId());
-        verify(tamanhoComponenteRepository, times(1)).findById(id);
-        verify(componenteRepository, times(1)).findById(componente.getId());
-        verify(medidaComponenteRepository, times(1)).findById(medida.getId());
-        verify(tamanhoComponenteRepository, times(1)).save(tamanhoComponente);
-    }
-
-    @Test
-    void testUpdate_TamanhoNotFound() {
-        // Arrange
-        Integer id = 1;
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-
-        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> tamanhoComponenteService.update(id, tamanhoComponente)
-        );
-
-        assertEquals("Tamanho de componente informada não encontrada. Id: 1", exception.getMessage());
-        verify(tamanhoComponenteRepository, times(1)).findById(id);
-        verifyNoMoreInteractions(componenteRepository);
-        verifyNoMoreInteractions(medidaComponenteRepository);
-        verify(tamanhoComponenteRepository, never()).save(any());
-    }
-
-    @Test
-    void testUpdate_ComponenteNotFound() {
-        // Arrange
-        Integer id = 1;
-
-        Componente componente = new Componente();
-        componente.setId(1);
-
-        MedidaComponente medida = new MedidaComponente();
-        medida.setId(1);
-
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-        tamanhoComponente.setComponente(componente);
-        tamanhoComponente.setMedida(medida);
-
-        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(new TamanhoComponente()));
-        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> tamanhoComponenteService.update(id, tamanhoComponente)
-        );
-
-        assertEquals("Componente informado não encontrado. Id: 1", exception.getMessage());
-        verify(tamanhoComponenteRepository, times(1)).findById(id);
-        verify(componenteRepository, times(1)).findById(componente.getId());
-        verify(medidaComponenteRepository, never()).findById(any());
-        verify(tamanhoComponenteRepository, never()).save(any());
-    }
-
-    @Test
-    void testUpdate_MedidaNotFound() {
-        // Arrange
-        Integer id = 1;
-
-        Componente componente = new Componente();
-        componente.setId(1);
-
-        MedidaComponente medida = new MedidaComponente();
-        medida.setId(1);
-
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-        tamanhoComponente.setComponente(componente);
-        tamanhoComponente.setMedida(medida);
-
-        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(new TamanhoComponente()));
-        when(componenteRepository.findById(componente.getId())).thenReturn(Optional.of(componente));
-        when(medidaComponenteRepository.findById(medida.getId())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> tamanhoComponenteService.update(id, tamanhoComponente)
-        );
-
-        assertEquals("Medida informada não encontrada. Id: 1", exception.getMessage());
-        verify(tamanhoComponenteRepository, times(1)).findById(id);
-        verify(componenteRepository, times(1)).findById(componente.getId());
-        verify(medidaComponenteRepository, times(1)).findById(medida.getId());
-        verify(tamanhoComponenteRepository, never()).save(any());
-    }
-
-    @Test
-    void testDelete_Success() {
-        // Arrange
-        Integer id = 1;
-        TamanhoComponente tamanhoComponente = new TamanhoComponente();
-        tamanhoComponente.setId(id);
-
-        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.of(tamanhoComponente));
-        doNothing().when(tamanhoComponenteRepository).deleteById(id);
-
-        // Act
-        tamanhoComponenteService.delete(id);
-
-        // Assert
-        verify(tamanhoComponenteRepository, times(1)).findById(id);
-        verify(tamanhoComponenteRepository, times(1)).deleteById(id);
-    }
-
-    @Test
-    void testDelete_NotFound() {
-        // Arrange
-        Integer id = 1;
-
-        when(tamanhoComponenteRepository.findById(id)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> tamanhoComponenteService.delete(id)
-        );
-
-        assertEquals("Tamanho de componente informada não encontrada. Id: 1", exception.getMessage());
-        verify(tamanhoComponenteRepository, times(1)).findById(id);
-        verify(tamanhoComponenteRepository, never()).deleteById(any());
+        // Verify interactions
+        verify(demandaReservaRepository, times(1)).findByIdJourney(idJourney);
+        verify(conjuntoComponenteMapper, times(1)).convertToArchetypeDTO(conjuntoComponente);
+        verify(journeyServiceSpy, times(1)).fetchCostCenter(demandaReserva.getCc());
     }
 }
