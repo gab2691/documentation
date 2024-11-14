@@ -1,80 +1,21 @@
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.*;
-import org.springframework.test.util.ReflectionTestUtils;
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
+CREATE TABLE IF NOT EXISTS `customer` (
+    `customer_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(100) NOT NULL,
+    `email` VARCHAR(100) NOT NULL,
+    `mobile_number` VARCHAR(20) NOT NULL,
+    `created_at` DATE NOT NULL,
+    `created_by` VARCHAR(20) NOT NULL,
+    `updated_at` DATE DEFAULT NULL,
+    `updated_by` VARCHAR(20) DEFAULT NULL
+);
 
-import java.util.*;
-
-class JourneyServiceTest {
-
-    @InjectMocks
-    private JourneyService journeyService;
-
-    @Mock
-    private DemandaReservaService demandaReservaService;
-
-    @Mock
-    private DemandaReservaRepository demandaReservaRepository;
-
-    @Mock
-    private ConjuntoComponenteMapper conjuntoComponenteMapper;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        // Set the @Value fields
-        ReflectionTestUtils.setField(journeyService, "journeyAuthorization", "Basic token123");
-        ReflectionTestUtils.setField(journeyService, "journeyurl", "http://test-journey-url.com");
-        ReflectionTestUtils.setField(journeyService, "costCenterUrl", "http://test-cost-center-url.com");
-    }
-
-    @Test
-    void shouldFetchJourneysTechLead() {
-        // Arrange
-        String idJourney = "journey123";
-
-        DemandaReserva demandaReserva = new DemandaReserva();
-        demandaReserva.setIdJourney(idJourney);
-        demandaReserva.setEnvironment(Ambiente.dv);
-        demandaReserva.setCpf("12345678901");
-        demandaReserva.setCc("CC001");
-
-        ConjuntoComponente conjuntoComponente = new ConjuntoComponente();
-        List<ConjuntoComponente> arquetipos = List.of(conjuntoComponente);
-        demandaReserva.setArquetipos(arquetipos);
-
-        ArchetypeTechLeadDTO archetypeDTO = new ArchetypeTechLeadDTO();
-        CostCenterTechLeadDTO costCenterDTO = new CostCenterTechLeadDTO();
-        costCenterDTO.setSigla("CC001");
-        costCenterDTO.setName("Cost Center Name");
-
-        // Mocking the behavior
-        when(demandaReservaRepository.findByIdJourney(idJourney)).thenReturn(Optional.of(demandaReserva));
-        when(conjuntoComponenteMapper.convertToArchetypeDTO(conjuntoComponente)).thenReturn(archetypeDTO);
-
-        // Create a spy of journeyService inside the test method
-        JourneyService journeyServiceSpy = Mockito.spy(journeyService);
-
-        // Mock fetchCostCenter method on the spy
-        doReturn(costCenterDTO).when(journeyServiceSpy).fetchCostCenter(demandaReserva.getCc());
-
-        // Act
-        JourneyTechLeadDTO result = journeyServiceSpy.fetchJourneysTechLead(idJourney);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(idJourney, result.getId());
-        assertEquals(Ambiente.dv, result.getEnviroment());
-        assertEquals("12345678901", result.getCpf());
-        assertEquals(costCenterDTO, result.getCostcenter());
-        assertEquals(List.of(archetypeDTO), result.getArchetypes());
-
-        // Verify interactions
-        verify(demandaReservaRepository, times(1)).findByIdJourney(idJourney);
-        verify(conjuntoComponenteMapper, times(1)).convertToArchetypeDTO(conjuntoComponente);
-        verify(journeyServiceSpy, times(1)).fetchCostCenter(demandaReserva.getCc());
-    }
-}
+CREATE TABLE IF NOT EXISTS `accounts` (
+    `customer_id` INT NOT NULL,
+    `account_number` INT AUTO_INCREMENT PRIMARY KEY,
+    `account_type` VARCHAR(100) NOT NULL,
+    `branch_address` VARCHAR(200) NOT NULL,
+    `created_at` DATE NOT NULL,
+    `created_by` VARCHAR(20) NOT NULL,
+    `updated_at` DATE DEFAULT NULL,
+    `updated_by` VARCHAR(20) DEFAULT NULL
+);
