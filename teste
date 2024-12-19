@@ -1,1 +1,22 @@
-http://localhost:8080/api/v1/relatorio/2024-01-01T00:00:00/2024-12-31T23:59:59
+private void buildByYaml(Map<String, Map<String, Object>> map, TaxonomiaRequestDTO taxonomiaRequestDTO) {
+    // Convert the outer map into a generic map for traversal
+    Map<String, Object> genericMap = (Map<String, Object>) (Map<?, ?>) map;
+
+    // Use the getNestedValue method to traverse
+    Object vnetResourceGroupName = getNestedValue(genericMap, "virtual_network", 
+        taxonomiaRequestDTO.getEnvironment(), taxonomiaRequestDTO.getDomain(), "resource_group");
+
+    response.getNetWorkDomain().setVnetresourcegroupname(vnetResourceGroupName.toString());
+    System.out.println(response);
+}
+private Object getNestedValue(Map<String, Object> map, String... keys) {
+    Object current = map;
+    for (String key : keys) {
+        if (current instanceof Map) {
+            current = ((Map<String, Object>) current).get(key);
+        } else {
+            throw new IllegalArgumentException("Key path is invalid: " + String.join(".", keys));
+        }
+    }
+    return current;
+}
