@@ -1,24 +1,8 @@
-private void buildByYaml(Map<String, Map<String, Object>> map, TaxonomiaRequestDTO taxonomiaRequestDTO) {
-    // Convert the outer map into a generic map for traversal
-    Map<String, Object> genericMap = (Map<String, Object>) (Map<?, ?>) map;
-
-    // Use the getNestedValue method to traverse
-    Object vnetResourceGroupName = getNestedValue(genericMap, "virtual_network", 
-        taxonomiaRequestDTO.getEnvironment(), taxonomiaRequestDTO.getDomain(), "resource_group");
-
-    response.getNetWorkDomain().setVnetresourcegroupname(vnetResourceGroupName.toString());
-    System.out.println(response);
+# Prevent the computer from going idle by moving the mouse cursor every 5 seconds
+while ($true) {
+    [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(0, 0)
+    Start-Sleep -Seconds 1
+    [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(10, 10)
+    Start-Sleep -Seconds 5
 }
-private Object getNestedValue(Map<String, Object> map, String... keys) {
-    Object current = map;
-    for (String key : keys) {
-        if (current instanceof Map) {
-            current = ((Map<String, Object>) current).get(key);
-        } else {
-            throw new IllegalArgumentException("Key path is invalid: " + String.join(".", keys));
-        }
-    }
-    return current;
-}
-
-lokojoko#@1991
+powershell -ExecutionPolicy Bypass -File KeepTeamsOnline.ps1
