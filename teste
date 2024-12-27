@@ -1,8 +1,20 @@
-# Prevent the computer from going idle by moving the mouse cursor every 5 seconds
-while ($true) {
-    [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(0, 0)
-    Start-Sleep -Seconds 1
-    [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(10, 10)
-    Start-Sleep -Seconds 5
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AsyncService {
+
+    @Async
+    public void fastFowardLocalBranch(Git git) {
+        try {
+            git.fetch().setRemote("origin").call();
+            git.reset()
+               .setMode(ResetCommand.ResetType.HARD)
+               .setRef("refs/remotes/origin/" + "branch-name")
+               .call();
+            System.out.println("Fast-forward completed successfully.");
+        } catch (Exception e) {
+            throw new RuntimeException("Error in fast-forwarding local branch", e);
+        }
+    }
 }
-powershell -ExecutionPolicy Bypass -File KeepTeamsOnline.ps1
