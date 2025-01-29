@@ -1,20 +1,7 @@
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-
-@Service
-public class AsyncService {
-
-    @Async
-    public void fastFowardLocalBranch(Git git) {
-        try {
-            git.fetch().setRemote("origin").call();
-            git.reset()
-               .setMode(ResetCommand.ResetType.HARD)
-               .setRef("refs/remotes/origin/" + "branch-name")
-               .call();
-            System.out.println("Fast-forward completed successfully.");
-        } catch (Exception e) {
-            throw new RuntimeException("Error in fast-forwarding local branch", e);
-        }
-    }
-}
+List<UUID> componentIds = conjuntos
+    .map(list -> list.stream()
+        .flatMap(conjunto -> conjunto.getComponentes().stream()) // Extract components
+        .map(Componente::getId) // Get only the component IDs
+        .collect(Collectors.toList())
+    )
+    .orElse(Collections.emptyList()); // Handle the case where no conjuntos are found
