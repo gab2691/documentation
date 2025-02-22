@@ -1,43 +1,49 @@
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.web.client.RestTemplate;
-import javax.net.ssl.*;
-import java.security.cert.X509Certificate;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.SignatureAlgorithm;
+import java.io.File;
+import java.io.FileReader;
+import java.security.KeyPair;
+import java.security.Security;
+import java.security.interfaces.RSAPrivateKey;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.PEMKeyPair;
 
-public class RestTemplateConfig {
+public class GitHubAppAuth {
+    private static final long APP_ID = 1152168; // Ensure it's a number
+    private static final String PRIVATE_KEY_PATH = "cert/bex-gerador-codigo.pem"; // Update path
 
-    public static RestTemplate createUnsecuredRestTemplate() {
-        try {
-            // Create a trust manager that does not validate certificate chains
-            TrustManager[] trustAllCertificates = new TrustManager[]{
-                new X509TrustManager() {
-                    public X509Certificate[] getAcceptedIssuers() { return null; }
-                    public void checkClientTrusted(X509Certificate[] certs, String authType) { }
-                    public void checkServerTrusted(X509Certificate[] certs, String authType) { }
-                }
-            };
+    public static String generateToken() throws Exception {
+        RSAPrivateKey privateKey = readPrivateKey(new File(PRIVATE_KEY_PATH));
 
-            // Install the all-trusting trust manager
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustAllCertificates, new java.security.SecureRandom());
+        return Jwts.builder()
+                .issuer(String.valueOf(APP_ID)) // ✅ Must be a string of the App ID
+                .issuedAt(Date.from(Instant.now().minus(60L, ChronoUnit.SECONDS)))
+                .expiration(Date.from(Instant.now().plus(10L, ChronoUnit.MINUTES)))
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact();
+    }
 
-            // Create an SSL socket factory
-            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+    private static RSAPrivateKey readPrivateKey(File file) throws Exception {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
 
-            // Create an HttpClient that ignores SSL certificate issues
-            SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, 
-                    NoopHostnameVerifier.INSTANCE);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                    .setSSLSocketFactory(socketFactory)
-                    .build();
+        try (PEMParser pemParser = new PEMParser(new FileReader(file))) {
+            Object parsedObject = pemParser.readObject();
+            if (!(parsedObject instanceof PEMKeyPair)) {
+                throw new IllegalArgumentException("Invalid private key format.");
+            }
 
-            // Create a RestTemplate that uses the custom HttpClient
-            HttpComponentsClientHttpRequestFactory factory =
-                    new HttpComponentsClientHttpRequestFactory(httpClient);
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+            converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            KeyPair keyPair = converter.getKeyPair((PEMKeyPair) parsedObject);
 
-            return new RestTemplate(factory);
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create an unsecured RestTemplate", e);
+            return (RSAPrivateKey) keyPair.getPrivate();
         }
     }
 }
