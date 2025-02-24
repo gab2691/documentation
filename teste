@@ -1,49 +1,64 @@
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.SignatureAlgorithm;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import java.io.File;
-import java.io.FileReader;
-import java.security.KeyPair;
-import java.security.Security;
-import java.security.interfaces.RSAPrivateKey;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.PEMKeyPair;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
-public class GitHubAppAuth {
-    private static final long APP_ID = 1152168; // Ensure it's a number
-    private static final String PRIVATE_KEY_PATH = "cert/bex-gerador-codigo.pem"; // Update path
+public class JGitCommitPush {
+    public static void main(String[] args) {
+        String remoteRepoUrl = "https://github.com/your-org/your-repo.git";
+        String branch = "main";
+        String commitMessage = "Added workflow files via GitHub App";
+        String githubToken = "your_github_token"; // GitHub App installation token
 
-    public static String generateToken() throws Exception {
-        RSAPrivateKey privateKey = readPrivateKey(new File(PRIVATE_KEY_PATH));
+        try {
+            // Temporary directory for cloning
+            File tempDir = Files.createTempDirectory("repo").toFile();
 
-        return Jwts.builder()
-                .issuer(String.valueOf(APP_ID)) // ✅ Must be a string of the App ID
-                .issuedAt(Date.from(Instant.now().minus(60L, ChronoUnit.SECONDS)))
-                .expiration(Date.from(Instant.now().plus(10L, ChronoUnit.MINUTES)))
-                .signWith(privateKey, Jwts.SIG.RS256)
-                .compact();
-    }
+            // Clone the repository (shallow for performance)
+            Git git = Git.cloneRepository()
+                    .setURI(remoteRepoUrl)
+                    .setBranch(branch)
+                    .setDirectory(tempDir)
+                    .setDepth(1)
+                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider("x-access-token", githubToken))
+                    .call();
 
-    private static RSAPrivateKey readPrivateKey(File file) throws Exception {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-
-        try (PEMParser pemParser = new PEMParser(new FileReader(file))) {
-            Object parsedObject = pemParser.readObject();
-            if (!(parsedObject instanceof PEMKeyPair)) {
-                throw new IllegalArgumentException("Invalid private key format.");
+            // Ensure the .github/workflows/ directory exists
+            File workflowsDir = new File(tempDir, ".github/workflows/");
+            if (!workflowsDir.exists()) {
+                workflowsDir.mkdirs(); // Create if missing
             }
 
-            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
-            KeyPair keyPair = converter.getKeyPair((PEMKeyPair) parsedObject);
+            // Copy your workflow files from inside the application to the cloned repo
+            File sourceFile = new File("/path/to/your/application/.github/workflows/your-file.yml"); // Replace with your actual file
+            File targetFile = new File(tempDir, ".github/workflows/your-file.yml");
 
-            return (RSAPrivateKey) keyPair.getPrivate();
+            Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+            // Stage the files explicitly
+            git.add().addFilepattern(".github/workflows/").call();
+
+            // Check if changes exist before committing
+            if (!git.status().call().hasUncommittedChanges()) {
+                System.out.println("No changes to commit. Exiting...");
+                return;
+            }
+
+            // Commit the changes
+            git.commit().setMessage(commitMessage).call();
+
+            // Push changes
+            git.push()
+                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider("x-access-token", githubToken))
+                    .call();
+
+            System.out.println("Files committed and pushed successfully!");
+
+        } catch (GitAPIException | IOException e) {
+            e.printStackTrace();
         }
     }
 }
