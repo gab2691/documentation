@@ -1,58 +1,15 @@
-GUILHERME OLIVEIRA MOURA
-Moura7guilherme@gmail.com · (11)95943-9692 · São Paulo, SP
-FORMAÇÃO
-UNIVERSIDADE CRUZEIRO DO SUL
-Graduação em Engenharia de Produção
-São Paulo, SP
-2022
-FATEC
-Tecnólogo em Automação Industrial
-São Paulo, SP
-2017
-EXPERIÊNCIA
-ITALTERM
-Product Owner, Projetos
-• PO responsável por conduzir o desenvolvimento de automação no setor de climatização.
-• Gestão da equipe de desenvolvimento, aplicação de metodologias ágeis para garantir entregas rápidas e de
-qualidade, definição de requisitos e acompanhamento pós execução, com foco em atender às necessidades do
-cliente e aos objetivos estratégicos da empresa.
-• Organizei, priorizei e mantive o backlog do produto, garantindo que funcionalidades e melhorias fossem
-desenvolvidas com base em feedback de clientes, tendências do mercado e requisitos técnicos. Além de
-Definição e acompanhamento de KPIs específicos, como o desempenho dos sistemas instalados, satisfação do
-cliente e tempo de resposta para manutenção, para garantir a melhoria contínua do serviço.
-São Paulo,SP
-2024
-ITAÚ UNIBANCO
-Analista de Middle Office, Middle Office PJ Agro
-• Assinatura Digital/Eletrônica: Acompanhamento da experiência do cliente e da taxa de conversão para assinatura
-digital e eletrônica (DocuSign, Certisign), apresentando dados e gerando insights para melhoria do SLA e NPS.
-Melhorias resultaram em um impacto de 70% no SLA do fluxo total.
-• Mia Chatbot IA: Adaptação da Inteligência Artificial Mia para auxiliar na disseminação de conhecimento
-padronizado das atividades e novidades relacionadas a alteração de fluxos ou criação de novas esteiras de
-atendimento.
-• App Bankline: Atuação com áreas parceiras para melhorias no fluxo de atendimento digital pelo app Bankline com
-foco em IRPF e Investimentos.
-• Melhoria Contínua: Participação e desenvolvimento de frameworks para uso interno de analistas, com foco na
-qualidade do trabalho de atendimento ao cliente, diminuição do SLA, visualização de dados em tempo real,
-aumento do NPS e redução de retrabalho.
-Estagiário de Engenharia, Middle Office PJ Agro
-• Desenvolvedor de assinatura Digital/Eletrônica: Acompanhamento da taxa de conversão de clientes para
-assinatura digital e eletrônica.
-• Retrabalho: Desenvolvimento do sistema de captura da quantidade de retrabalho por área e participação na
-implementação de melhorias de processos tendo em vista retrabalhos acumulados que se tornam ofensores ao
-fluxo. Redução de 40% após implementação de medidas.
-• Carteira: Acompanhamento através de dados e apresentações a evolução de carteira dos analistas.
-• Banco de dados: Atuação com áreas parceiras no desenvolvimento do novo banco de dados de cartões de
-assinaturas dos clientes.
-São Paulo,SP
-2020 –2023
-MARTINS COMERCIO E SERVIÇO DE DISTRIBIÇÃO
-Gestor Comercial
-• Gestor da equipe de promotores e representante comercial do canal farma no território central de São Paulo.
-• Atendimento de clientes in loco, coordenação da equipe de promotores da região, estudo e planejamento de propostas comerciais, apresentação de resultados em reuniões.
-• Especialista e disseminador de estudos de gerenciamento de categoria para novos colaboradores.
-INFORMAÇÕES ADICIONAIS
-Habilidades: Scrum PSMI®, Kanban, Waterfall, Power BI, Python, C, C++, C#, Metodologia Lean Trained, SQL, Tableau,
-Excel avançado + VBA, Desenvolvimento de produto, GoldMine CRM, Melhoria de Processos, Planejamento de Processos, Canal
-Digital, Banco de Dados, Gestão de Dados, Analise de Dados de Risco, Liderança de Equipe Multifuncional, Automação.
-Idiomas: Inglês/Espanhol avançado.
+CREATE TABLE photos (
+id SERIAL PRIMARY KEY,
+url VARCHAR(200),
+user_id INTEGER REFERENCES users(id)
+);
+ 
+INSERT INTO photos (url, user_id)
+VALUES
+('http:/one.jpg', 4),
+('http:/two.jpg', 1),
+('http:/25.jpg', 1),
+('http:/36.jpg', 1),
+('http:/754.jpg', 2),
+('http:/35.jpg', 3),
+('http:/256.jpg', 4);
