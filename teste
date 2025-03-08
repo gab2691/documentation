@@ -1,3 +1,4 @@
-edit b556d1b adicionando commit na branch default com os arquivos de workflow
-edit 5db6f21 adicionando commit na branch default com os arquivos de workflow
-edit aa8e0c2 adicionando commit na branch default com os arquivos de workflow
+git rm --cached src/test/skeleton/.env
+git rm --cached src/main/resources/template/scaffolder-templates/kit-srv-java/skeleton/.env
+git rm --cached config/DEV/deployment/ca.crt
+git rm --cached config/HOM/deployment/ca.crt
