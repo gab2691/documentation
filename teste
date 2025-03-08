@@ -1,4 +1,3 @@
-git rm --cached src/test/skeleton/.env
-git rm --cached src/main/resources/template/scaffolder-templates/kit-srv-java/skeleton/.env
-git rm --cached config/DEV/deployment/ca.crt
-git rm --cached config/HOM/deployment/ca.crt
+git rm --cached **/*.env
+git rm --cached **/*.crt
+
