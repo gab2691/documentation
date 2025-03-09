@@ -21,6 +21,7 @@ Este projeto é ideal para desenvolvedores que precisam iniciar rapidamente novo
 - Spring Boot 3.1.11
 - Docker (opcional para testes com Kafka e Postgres)
 - Maven
+- GitHub Personal Access Token (caso necessário)
 
 ### Passos:
 1. Clone o repositório:
@@ -31,11 +32,25 @@ Este projeto é ideal para desenvolvedores que precisam iniciar rapidamente novo
    ```sh
    cd gerador-de-codigos
    ```
-3. Compile e instale as dependências:
+3. Configure uma pasta onde o template será armazenado. Escolha um local adequado e exporte a variável `GIT_REPO_DIRECTORY`:
+   ```sh
+   export GIT_REPO_DIRECTORY="$HOME/gerador-template"
+   mkdir -p "$GIT_REPO_DIRECTORY"
+   ```
+4. Configure a pasta onde os projetos gerados serão salvos:
+   ```sh
+   export TEMPLATE_TARGET_PROJECT="$HOME/projetos-gerados"
+   mkdir -p "$TEMPLATE_TARGET_PROJECT"
+   ```
+5. Defina as variáveis necessárias no ambiente:
+   ```sh
+   export GITHUBISSUER="seu-issuer"
+   ```
+6. Compile e instale as dependências:
    ```sh
    mvn clean install
    ```
-4. Execute o projeto:
+7. Execute o projeto:
    ```sh
    mvn spring-boot:run
    ```
@@ -47,9 +62,40 @@ O Gerador de Códigos permite criar novos projetos a partir de templates pré-de
 - **Apache Kafka**: Exemplo de produção e consumo de mensagens.
 - **Azure Key Vault**: Integração para gestão de segredos e credenciais.
 
-Para gerar um novo projeto, envie um JSON com as configurações desejadas via API:
+### Criando um projeto com template
+Para gerar um novo projeto baseado em um template, envie um JSON com as configurações desejadas via API:
 ```sh
-curl -X POST "http://localhost:8080/api/gerar" -H "Content-Type: application/json" -d '{"nome":"meu-projeto", "tipo":"spring-boot"}'
+curl -X POST "http://localhost:8080/api/gerar" -H "Content-Type: application/json" -d '{
+    "owner": "Bradesco-Core",
+    "dispatchId": "create-67179d476bdfbf042c48604b",
+    "language": "java",
+    "projectname": "brai-srv-piloto-07102024-1020",
+    "groupId": "br.com.bradesco.engenharia",
+    "costcenter": "brai",
+    "valuestream": "brainc",
+    "namespace": "brainc-qjmfss",
+    "clustersName": "adqemp",
+    "apiRepo": "https://github.com/Bradesco-Core/pcac-iac-azu-autditi-gitops-piloto-11120-07022025.git",
+    "keyVaultName": null,
+    "templates": ["SqlServerTemplate"],
+    "infraConfig": {
+        "configMap": {
+            "mssql": {
+                "host": "mssqlazudvbraqjmfss001.database.windows.net",
+                "port": "1433",
+                "server": "sqlserver",
+                "database": "sqlqjmfss001",
+                "user": "userappqjmfss001"
+            }
+        },
+        "keyVault": {
+            "mssql": {
+                "name": "kvazudvbraqjmfss001",
+                "secrets": ["userappmssqlazudvbraqjmfss001"]
+            }
+        }
+    }
+}'
 ```
 
 ## Contribuição
@@ -87,3 +133,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## Status do Projeto
 
 🚀 Em desenvolvimento - Versão 1.0 em progresso com funcionalidades sendo adicionadas regularmente.
+
