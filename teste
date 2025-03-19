@@ -1,33 +1,31 @@
-@Table(name = "tDmandProvs")
-public class DemandaReservaProvisionada {
+@Table(name = "tCompoProvs")
+public class ComponenteProvisionado {
 
     @Id
-    @Column(name = "cDmandProvs")
+    @Column(name = "cCompoProvs")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "cSist", columnDefinition = "CHAR(4)")
-    private String codSistema;
+    @Column(name = "cCompoSit", nullable = false)
+    private Boolean situacaoComponente;
 
-    @Column(name = "iSglDomnoVila", length = 10)
-    private String siglaDominioVila;
+    @ManyToOne
+    @JoinColumn(name = "cCompoEstrt", nullable = false)
+    private Componente componente;
 
-    @Column(name = "iNomeProj", length = 50)
-    private String nomeProjeto;
-
-    @Column(name = "iVlrFluxo", length = 50)
-    private String valorFluxo;
-
-    @Column(name = "cEmailUsuar", columnDefinition = "VARCHAR(150)")
-    private String emailUsuario;
+    @ManyToOne
+    @JoinColumn(name = "cDmandReserEstrtProvs", nullable = false)
+    private DemandaReservaProvisionada demandaReservaProvisionada;
 
     @Column(name = "hDataHoraProvs")
     private LocalDateTime dataHoraProvisionamento;
 
-    @ManyToOne
-    @JoinColumn(name = "cDmandReserEstrt", nullable = false)
-    private DemandaReserva demanda;
+    @Column(name = "cEmailUsuar", columnDefinition = "VARCHAR(150)")
+    private String emailUsuario;
 
     @Column(name = "cUsuarManut", columnDefinition = "CHAR(9)")
     private String codFuncional;
+
+    @Column(name = "cIdConjCompo")
+    private UUID idConjuntoComponente;
 }
