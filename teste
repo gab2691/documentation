@@ -1,136 +1,33 @@
-# Gerador de Códigos
+@Table(name = "tDmandProvs")
+public class DemandaReservaProvisionada {
 
-O **Gerador de Códigos** é um projeto que facilita a criação de novos serviços Java baseados em um template padrão. Ele inclui diversas funcionalidades prontas para uso, como conexão com bancos de dados, integração com Apache Kafka, acesso ao Azure Key Vault e muito mais. 
+    @Id
+    @Column(name = "cDmandProvs")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-Este projeto é ideal para desenvolvedores que precisam iniciar rapidamente novos projetos Java com padrões bem definidos e tecnologias modernas. 
+    @Column(name = "cSist", columnDefinition = "CHAR(4)")
+    private String codSistema;
 
-## Índice
+    @Column(name = "iSglDomnoVila", length = 10)
+    private String siglaDominioVila;
 
-- [Instalação](#instalação)
-- [Uso](#uso)
-- [Contribuição](#contribuição)
-- [Licença](#licença)
-- [Autores](#autores)
-- [Referências e Recursos](#referências-e-recursos)
-- [Status do Projeto](#status-do-projeto)
+    @Column(name = "iNomeProj", length = 50)
+    private String nomeProjeto;
 
-## Instalação
+    @Column(name = "iVlrFluxo", length = 50)
+    private String valorFluxo;
 
-### Requisitos:
-- Java 17
-- Spring Boot 3.1.11
-- Docker (opcional para testes com Kafka e Postgres)
-- Maven
-- GitHub Personal Access Token (caso necessário)
+    @Column(name = "cEmailUsuar", columnDefinition = "VARCHAR(150)")
+    private String emailUsuario;
 
-### Passos:
-1. Clone o repositório:
-   ```sh
-   git clone https://github.com/seu-usuario/gerador-de-codigos.git
-   ```
-2. Acesse o diretório do projeto:
-   ```sh
-   cd gerador-de-codigos
-   ```
-3. Configure uma pasta onde o template será armazenado. Escolha um local adequado e exporte a variável `GIT_REPO_DIRECTORY`:
-   ```sh
-   export GIT_REPO_DIRECTORY="$HOME/gerador-template"
-   mkdir -p "$GIT_REPO_DIRECTORY"
-   ```
-4. Configure a pasta onde os projetos gerados serão salvos:
-   ```sh
-   export TEMPLATE_TARGET_PROJECT="$HOME/projetos-gerados"
-   mkdir -p "$TEMPLATE_TARGET_PROJECT"
-   ```
-5. Defina as variáveis necessárias no ambiente:
-   ```sh
-   export GITHUBISSUER="seu-issuer"
-   ```
-6. Compile e instale as dependências:
-   ```sh
-   mvn clean install
-   ```
-7. Execute o projeto:
-   ```sh
-   mvn spring-boot:run
-   ```
+    @Column(name = "hDataHoraProvs")
+    private LocalDateTime dataHoraProvisionamento;
 
-## Uso
+    @ManyToOne
+    @JoinColumn(name = "cDmandReserEstrt", nullable = false)
+    private DemandaReserva demanda;
 
-O Gerador de Códigos permite criar novos projetos a partir de templates pré-definidos. Ele suporta:
-- **Conexão com PostgreSQL**: Exemplo de configuração no `application.yml`.
-- **Apache Kafka**: Exemplo de produção e consumo de mensagens.
-- **Azure Key Vault**: Integração para gestão de segredos e credenciais.
-
-### Criando um projeto com template
-Para gerar um novo projeto baseado em um template, envie um JSON com as configurações desejadas via API:
-```sh
-curl -X POST "http://localhost:8080/api/gerar" -H "Content-Type: application/json" -d '{
-    "owner": "Bradesco-Core",
-    "dispatchId": "create-67179d476bdfbf042c48604b",
-    "language": "java",
-    "projectname": "brai-srv-piloto-07102024-1020",
-    "groupId": "br.com.bradesco.engenharia",
-    "costcenter": "brai",
-    "valuestream": "brainc",
-    "namespace": "brainc-qjmfss",
-    "clustersName": "adqemp",
-    "apiRepo": "https://github.com/Bradesco-Core/pcac-iac-azu-autditi-gitops-piloto-11120-07022025.git",
-    "keyVaultName": null,
-    "templates": ["SqlServerTemplate"],
-    "infraConfig": {
-        "configMap": {
-            "mssql": {
-                "host": "mssqlazudvbraqjmfss001.database.windows.net",
-                "port": "1433",
-                "server": "sqlserver",
-                "database": "sqlqjmfss001",
-                "user": "userappqjmfss001"
-            }
-        },
-        "keyVault": {
-            "mssql": {
-                "name": "kvazudvbraqjmfss001",
-                "secrets": ["userappmssqlazudvbraqjmfss001"]
-            }
-        }
-    }
-}'
-```
-
-## Contribuição
-
-1. Fork o repositório
-2. Crie uma branch para a funcionalidade:
-   ```sh
-   git checkout -b minha-feature
-   ```
-3. Implemente e commit suas mudanças:
-   ```sh
-   git commit -m "Adicionando nova funcionalidade"
-   ```
-4. Envie para o repositório remoto:
-   ```sh
-   git push origin minha-feature
-   ```
-5. Abra um Pull Request
-
-## Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## Autores
-
-- [Seu Nome](https://github.com/seu-usuario)
-
-## Referências e Recursos
-
-- [Documentação do Spring Boot](https://spring.io/projects/spring-boot)
-- [Apache Kafka](https://kafka.apache.org/documentation/)
-- [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/)
-- [PostgreSQL](https://www.postgresql.org/docs/)
-
-## Status do Projeto
-
-🚀 Em desenvolvimento - Versão 1.0 em progresso com funcionalidades sendo adicionadas regularmente.
-
+    @Column(name = "cUsuarManut", columnDefinition = "CHAR(9)")
+    private String codFuncional;
+}
