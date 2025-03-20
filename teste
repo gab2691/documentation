@@ -1,50 +1,14 @@
-# Hello IDP
+### Passos:
 
-O **Hello IDP** é um projeto que gerencia identidades e permissões dentro de um ambiente de desenvolvimento. Ele permite integração com GitHub, geração de código e configuração de infraestrutura automatizada. Este projeto é ideal para desenvolvedores que precisam configurar e gerenciar identidades de forma eficiente e automatizada.
-
-## Índice
-
-- [Instalação](#instalação)
-- [Uso](#uso)
-- [Contribuição](#contribuição)
-- [Licença](#licença)
-- [Autores](#autores)
-- [Referências e Recursos](#referências-e-recursos)
-- [Status do Projeto](#status-do-projeto)
-
-## Instalação
-
-### Requisitos:
-
-Java 17, Spring Boot 3.1.11, Docker (opcional para testes locais), Maven e um GitHub App com permissões adequadas.
-
-### Configuração:
-
-Clone o repositório com `git clone https://github.com/seu-org/hello-idp.git`, acesse o diretório do projeto com `cd hello-idp` e configure as variáveis de ambiente necessárias com `export GITHUBISSUER="id-do-github-app"`, `export URL_GERADOR="url-do-gerador-de-codigo"`, `export TOGGLE_PROXY="true"` (use 'true' para rodar localmente), `export BRANCH_DEFAULT_IAC="main"` e `export BRANCH_CODE_GENERATOR="feature-branch"`. Crie um arquivo chamado `middleware.pem` com a chave do GitHub App **middleware-backstage** e coloque-o dentro da pasta `cert/`. Compile e instale as dependências com `mvn clean install` e execute o projeto com `mvn spring-boot:run`.
-
-## Uso
-
-O **Hello IDP** permite gerenciar identidades e permissões dentro de um ambiente automatizado. Ele oferece integração com repositórios GitHub e ferramentas de infraestrutura. Após iniciar o serviço, acesse o Swagger para explorar os endpoints disponíveis na URL `http://localhost:8080/api/swagger-ui/index.html`.
-
-## Contribuição
-
-Fork o repositório, crie uma branch para a funcionalidade com `git checkout -b minha-feature`, implemente as alterações e faça commit com `git commit -m "Adicionando nova funcionalidade"`, envie para o repositório remoto com `git push origin minha-feature` e abra um Pull Request.
-
-## Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## Autores
-
-- [Nome do Autor 1](email1@empresa.com)  
-- [Nome do Autor 2](email2@empresa.com)
-
-## Referências e Recursos
-
-- [Documentação do Spring Boot](https://spring.io/projects/spring-boot)  
-- [Swagger UI](https://swagger.io/tools/swagger-ui/)  
-- [GitHub Apps](https://docs.github.com/en/developers/apps)
-
-## Status do Projeto
-
-🚀 Em desenvolvimento - Versão 1.0 em progresso com melhorias contínuas.
+```sh
+git clone https://github.com/seu-org/hello-idp.git
+cd hello-idp
+export GITHUBISSUER="id-do-github-app"
+export URL_GERADOR="url-do-gerador-de-codigo"
+export TOGGLE_PROXY="true"  # Use 'true' para rodar localmente
+export BRANCH_DEFAULT_IAC="main"  # Altere se quiser modificar a branch do repositório de IAC
+export BRANCH_CODE_GENERATOR="feature-branch"  # Nome da branch que será criada no repositório de código
+mkdir -p cert
+echo "SUA_CHAVE_PRIVADA" > cert/middleware.pem
+mvn clean install
+mvn spring-boot:run
