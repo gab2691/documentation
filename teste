@@ -1,1 +1,2 @@
-& "C:\Program Files\PostgreSQL\10\bin\psql.exe" -U postgres -d instagram -f "C:\Path\To\instagram_data_only.sql"
+ALTER TABLE users ADD COLUMN created_at timestamp;
+ALTER TABLE users ADD COLUMN updated_at timestamp;
