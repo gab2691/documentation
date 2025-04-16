@@ -1,1 +1,1 @@
-& "C:\Program Files\PostgreSQL\10\bin\psql.exe" -h localhost -p 5432 -U postgres -d instagram -f "C:\Users\i446231\Downloads\ig.sql"
+& "C:\Program Files\PostgreSQL\10\bin\pg_restore.exe" -h localhost -p 5432 -U postgres -d instagram --verbose "C:\Users\i446231\Downloads\ig.sql"
