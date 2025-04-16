@@ -1,1 +1,1 @@
-& "C:\Program Files\PostgreSQL\10\bin\pg_dump.exe" -U postgres -d your_database -f "C:\Users\i446231\Documents\backup.sql"
+& "C:\Program Files\PostgreSQL\10\bin\pg_dump.exe" -h localhost -p 5432 -U postgres -d instagram --schema-only -f "C:\Users\i446231\Documents\instagram_schema.sql"
