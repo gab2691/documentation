@@ -1,1 +1,1 @@
-& "C:\Program Files\PostgreSQL\10\bin\pg_dump.exe" -h localhost -p 5432 -U postgres -d instagram --schema-only -f "C:\Users\i446231\Documents\instagram_schema.sql"
+& "C:\Program Files\PostgreSQL\10\bin\psql.exe" -U postgres -d instagram -f "C:\Path\To\instagram_data_only.sql"
