@@ -8,10 +8,7 @@ BEGIN
       FROM pg_tables
      WHERE schemaname = 'dbaprd1'
   LOOP
-    EXECUTE format(
-      'DROP TABLE IF EXISTS dbaprd1.%I CASCADE',
-      r.tablename
-    );
+    EXECUTE format('DROP TABLE dbaprd1.%I CASCADE', r.tablename);
   END LOOP;
 END
 $$;
