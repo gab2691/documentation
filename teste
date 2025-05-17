@@ -1,14 +1,3 @@
-DO
-$$
-DECLARE
-  r RECORD;
-BEGIN
-  FOR r IN
-    SELECT tablename
-      FROM pg_tables
-     WHERE schemaname = 'dbaprd1'
-  LOOP
-    EXECUTE format('DROP TABLE dbaprd1.%I CASCADE', r.tablename);
-  END LOOP;
-END
-$$;
+Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name "SystemManufacturer" -Value "Dell Inc."
+Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name "SystemProductName" -Value "Latitude 5500"
+Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name "BIOSVendor" -Value "American Megatrends"
