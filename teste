@@ -1,28 +1,28 @@
-public class NameWrapper {
-    private String name;
+public class GenericItemDTO {
+    private String key;
+    private String value;
 
-    public String getName() {
-        return name;
+    public GenericItemDTO() {
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public GenericItemDTO(String key, String value) {
+        this.key = key;
+        this.value = value;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 }
-
-public class ResponseWrapper {
-    private List<NameWrapper> result;
-
-    public List<NameWrapper> getResult() {
-        return result;
-    }
-
-    public void setResult(List<NameWrapper> result) {
-        this.result = result;
-    }
-}
-
-
-List<GenericItemDTO> dtos = IntStream.range(0, response.getBody().getResult().size())
-    .mapToObj(i -> new GenericItemDTO("item" + (i + 1), response.getBody().getResult().get(i).getName()))
-    .toList();
