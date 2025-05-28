@@ -1,3 +1,28 @@
-Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name "SystemManufacturer" -Value "Dell Inc."
-Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name "SystemProductName" -Value "Latitude 5500"
-Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name "BIOSVendor" -Value "American Megatrends"
+public class NameWrapper {
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+public class ResponseWrapper {
+    private List<NameWrapper> result;
+
+    public List<NameWrapper> getResult() {
+        return result;
+    }
+
+    public void setResult(List<NameWrapper> result) {
+        this.result = result;
+    }
+}
+
+
+List<GenericItemDTO> dtos = IntStream.range(0, response.getBody().getResult().size())
+    .mapToObj(i -> new GenericItemDTO("item" + (i + 1), response.getBody().getResult().get(i).getName()))
+    .toList();
