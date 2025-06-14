@@ -1,13 +1,24 @@
-import { fetch } from 'undici';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { fetch, ProxyAgent } from 'undici';
 
-const proxyAgent = new HttpsProxyAgent('http://proxybl.net.bradesco.com.br:80');
+export class ServicenowService {
 
-const response = await fetch(url, {
-  dispatcher: proxyAgent,
-  method: 'GET',
-  headers: {
-    Accept: 'application/json',
-    Authorization: this.autorizationGetToken,
-  },
-});
+  async getDataFromServiceNow(path: string, limit: number, offset: number, filter: string | undefined): Promise<any> {
+    // ✅ Use Undici's ProxyAgent instead
+    const proxyAgent = new ProxyAgent('http://proxybl.net.bradesco.com.br:80');
+
+    const response = await fetch(this.constructUrl(path, limit, offset, filter), {
+      dispatcher: proxyAgent,   // ✅ correct for undici
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': this.autorizationGetToken,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`ServiceNow call error: ${response.status}`);
+    }
+
+    return response.json();
+  }
+}
