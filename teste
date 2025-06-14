@@ -6,7 +6,9 @@
       "request": "attach",
       "name": "Attach to Backstage backend",
       "processId": "${command:PickProcess}",
-      "restart": true
+      "restart": true,
+      "protocol": "inspector",
+      "skipFiles": ["<node_internals>/**"]
     }
   ]
 }
