@@ -1,1 +1,1 @@
-BACKSTAGE_BACKEND_NUM_WORKERS=1 npx ts-node --inspect packages/backend/src/index.ts
+BACKSTAGE_BACKEND_NUM_WORKERS=1 node --inspect node_modules/.bin/backstage-cli backend:start
