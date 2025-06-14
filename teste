@@ -1,2 +1,1 @@
-unset NODE_OPTIONS && BACKSTAGE_BACKEND_NUM_WORKERS=1 npx ts-node --project tsconfig.json --inspect=9230 packages/backend/src/index.ts
-
+dispatcher: proxyAgent,
