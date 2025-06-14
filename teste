@@ -1,1 +1,1 @@
-BACKSTAGE_BACKEND_NUM_WORKERS=1 node --inspect node_modules/@backstage/cli/bin/backstage-cli backend:start
+BACKSTAGE_BACKEND_NUM_WORKERS=1 node --inspect node_modules/@backstage/cli/bin/backstage-cli backend:dev
