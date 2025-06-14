@@ -1,1 +1,1 @@
-export NODE_OPTIONS="--inspect" && yarn dev
+export NODE_OPTIONS="--inspect" BACKSTAGE_BACKEND_NUM_WORKERS=1 && yarn start-backend
