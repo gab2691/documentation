@@ -1,1 +1,1 @@
-export NODE_OPTIONS="--inspect" BACKSTAGE_BACKEND_NUM_WORKERS=1 && yarn start-backend
+BACKSTAGE_BACKEND_NUM_WORKERS=1 npx ts-node --inspect packages/backend/src/index.ts
