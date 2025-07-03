@@ -1,24 +1,25 @@
-import { fetch, ProxyAgent } from 'undici';
+constructUrl(
+  path: string,
+  limit: number,
+  offset: number,
+  filter: string | undefined,
+): string {
 
-export class ServicenowService {
+  console.log('estou recebendo esse filter ' + filter);
 
-  async getDataFromServiceNow(path: string, limit: number, offset: number, filter: string | undefined): Promise<any> {
-    // ✅ Use Undici's ProxyAgent instead
-    const proxyAgent = new ProxyAgent('http://proxybl.net.bradesco.com.br:80');
+  // Sanitiza limit e offset para garantir que não tenham lixo
+  const cleanLimit = parseInt(String(limit).trim(), 10);
+  const cleanOffset = parseInt(String(offset).trim(), 10);
 
-    const response = await fetch(this.constructUrl(path, limit, offset, filter), {
-      dispatcher: proxyAgent,   // ✅ correct for undici
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': this.autorizationGetToken,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`ServiceNow call error: ${response.status}`);
-    }
-
-    return response.json();
+  if (path.match('source')) {
+    return `${this.baseGetUrl}${this.urlMap.get(path)}`;
   }
+
+  const response = `${this.baseGetUrl}${this.urlMap.get(path)}sysparm_query=active%3Dtrue%5EnameLIKE${filter}%5EnameISNOTEMPTY&sysparm_fields=${
+    path.match('department') ? 'department.name' : 'name'
+  }&sysparm_limit=${cleanLimit}&sysparm_offset=${cleanOffset}`;
+
+  console.log(response);
+
+  return response;
 }
