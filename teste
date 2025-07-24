@@ -1,25 +1,65 @@
-constructUrl(
-  path: string,
-  limit: number,
-  offset: number,
-  filter: string | undefined,
-): string {
 
-  console.log('estou recebendo esse filter ' + filter);
+GitHub Actions API - Endpoints Principais (GET e POST)
 
-  // Sanitiza limit e offset para garantir que não tenham lixo
-  const cleanLimit = parseInt(String(limit).trim(), 10);
-  const cleanOffset = parseInt(String(offset).trim(), 10);
+==========================
+GET Endpoints
+==========================
 
-  if (path.match('source')) {
-    return `${this.baseGetUrl}${this.urlMap.get(path)}`;
-  }
+1. GET /repos/{owner}/{repo}/actions/workflows
+   - Descrição: Lista todos os workflows do repositório
+   - Autenticação: Sim
+   - Observações: Retorna lista com nomes, IDs, arquivos .yml
 
-  const response = `${this.baseGetUrl}${this.urlMap.get(path)}sysparm_query=active%3Dtrue%5EnameLIKE${filter}%5EnameISNOTEMPTY&sysparm_fields=${
-    path.match('department') ? 'department.name' : 'name'
-  }&sysparm_limit=${cleanLimit}&sysparm_offset=${cleanOffset}`;
+2. GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}
+   - Descrição: Detalhes de um workflow específico
+   - Autenticação: Sim
+   - Observações: Pode usar workflow_id ou nome do arquivo (ex: build.yml)
 
-  console.log(response);
+3. GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs
+   - Descrição: Lista execuções (runs) de um workflow
+   - Autenticação: Sim
+   - Observações: Pode filtrar por branch, status, etc.
 
-  return response;
-}
+4. GET /repos/{owner}/{repo}/actions/runs
+   - Descrição: Lista todas as execuções (workflow runs)
+   - Autenticação: Sim
+   - Observações: Inclui todas as execuções do repositório
+
+5. GET /repos/{owner}/{repo}/actions/runs/{run_id}
+   - Descrição: Detalhes de uma execução específica
+   - Autenticação: Sim
+   - Observações: Retorna status, conclusão, commit, etc.
+
+6. GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs
+   - Descrição: Lista todos os jobs de uma execução
+   - Autenticação: Sim
+   - Observações: Inclui nome dos steps, status e conclusão
+
+7. GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs
+   - Descrição: Baixa o .zip com todos os logs da execução
+   - Autenticação: Sim
+   - Observações: Retorna application/zip com todos os logs por job/step
+
+8. GET /repos/{owner}/{repo}/branches
+   - Descrição: Lista as branches do repositório
+   - Autenticação: Não (se repositório for público)
+   - Observações: Pode ser útil para saber em qual branch rodar a action
+
+
+==========================
+POST Endpoints
+==========================
+
+1. POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches
+   - Descrição: Dispara um workflow manualmente (workflow_dispatch)
+   - Autenticação: Sim
+   - Observações: "ref" obrigatório, "inputs" opcionais (desde que definidos no .yml)
+
+   Exemplo de body JSON:
+   {
+     "ref": "main",
+     "inputs": {
+       "env": "staging",
+       "deploy": "true"
+     }
+   }
