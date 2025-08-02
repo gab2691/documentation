@@ -1,51 +1,34 @@
 apiVersion: backstage.io/v1alpha1
-kind: Location
-metadata:
-  name: example-repositories
-  description: "Simulação de alguns repositórios Git para Backstage"
-spec:
-  targets:
-    - ./services/catalog-info-service.yaml
-    - ./libs/catalog-info-lib.yaml
-    - ./apps/catalog-info-app.yaml
----
-# Service 1
-apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: payments-service
-  description: "Serviço de pagamentos da empresa"
+  description: Serviço de pagamentos
   annotations:
     github.com/project-slug: minha-org/payments-service
-    backstage.io/source-location: url:https://github.com/minha-org/payments-service
 spec:
   type: service
   lifecycle: production
   owner: equipe-pagamentos
 ---
-# Library 2
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: shared-lib
-  description: "Biblioteca compartilhada entre vários serviços"
+  description: Biblioteca interna para outros serviços
   annotations:
     github.com/project-slug: minha-org/shared-lib
-    backstage.io/source-location: url:https://github.com/minha-org/shared-lib
 spec:
   type: library
   lifecycle: experimental
   owner: equipe-core
 ---
-# App 3
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: customer-portal
-  description: "Portal do cliente"
+  description: Portal do cliente
   annotations:
     github.com/project-slug: minha-org/customer-portal
-    backstage.io/source-location: url:https://github.com/minha-org/customer-portal
 spec:
   type: website
   lifecycle: development
