@@ -1,65 +1,125 @@
+backstageVariables:
+  versionValue: ${ENVIRONMENT:-ENV} v1.0.46
+  underMaintenance: ${UNDER_MAINTENANCE:-false}
+  maintainers: ${MAINTAINERS:-gustavoleal.s.souza@bradesco.com.br}
+  maintenanceEndDate: ${MAINTENANCE_ENDDATE:-.}
+  permissionGroups: ${PERMISSION_GROUPS:-n/a}
+  guestAuthEnabled: ${GUEST_AUTH_ENABLED:-true}   # 👈 Mantém Guest habilitado
+  innerSourceEnabled: ${INNERSOURCE_ENABLED:-false}
 
-GitHub Actions API - Endpoints Principais (GET e POST)
+app:
+  title: ${APP_TITLE:-Bex}
+  baseUrl: ${APP_HOST_FRONTEND}
+  signInPage: guest   # 👈 FORÇA login automático como Guest
+  backstageServices:
+    innerSourceUrl: ${INNERSOURCE_URL}
+    middlewareUrl: ${MIDDLEWARE_URL}
+    archflowUrl: ${ARCHFLOW_URL}
+    bexAccessUrl: ${BEX_ACCESS_URL}
+    solicitationUrl: ${SOLICITATION_URL}
+  extensions:
+    - entity-content:github-actions/entity
+    - entity-card:github-actions/latest-workflow-run
+    - entity-card:github-actions/latest-branch-workflow-runs
+    - entity-card:github-actions/recent-workflow-runs:
+        config:
+          filter: kind:component,api,group
 
-==========================
-GET Endpoints
-==========================
+organization:
+  name: ${APP_TITLE:-Bex}
 
-1. GET /repos/{owner}/{repo}/actions/workflows
-   - Descrição: Lista todos os workflows do repositório
-   - Autenticação: Sim
-   - Observações: Retorna lista com nomes, IDs, arquivos .yml
+permission:
+  enabled: true
 
-2. GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}
-   - Descrição: Detalhes de um workflow específico
-   - Autenticação: Sim
-   - Observações: Pode usar workflow_id ou nome do arquivo (ex: build.yml)
+backend:
+  baseUrl: ${APP_HOST_BACKEND}
+  listen:
+    port: 7007
+  csp:
+    img-src:
+      [
+        "'self'",
+        'data:',
+        'https://avatars.githubusercontent.com',
+        'https://portalcorporativo.net.bradesco.com.br',
+      ]
+    connect-src: ["'self'", 'http:', 'https:']
+  cors:
+    origin: ${APP_HOST_FRONTEND}
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+  database:
+    client: better-sqlite3
+    connection: ':memory:'
+  auth:
+    externalAccess:
+      - type: static
+        options:
+          token: ${BACKSTAGEAPIADMINTOKEN:-tokenparatestelocal}
+          subject: backstage-api-admin-user
 
-3. GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs
-   - Descrição: Lista execuções (runs) de um workflow
-   - Autenticação: Sim
-   - Observações: Pode filtrar por branch, status, etc.
+integrations:
 
-4. GET /repos/{owner}/{repo}/actions/runs
-   - Descrição: Lista todas as execuções (workflow runs)
-   - Autenticação: Sim
-   - Observações: Inclui todas as execuções do repositório
+proxy:
 
-5. GET /repos/{owner}/{repo}/actions/runs/{run_id}
-   - Descrição: Detalhes de uma execução específica
-   - Autenticação: Sim
-   - Observações: Retorna status, conclusão, commit, etc.
+techdocs:
+  builder: 'local'
+  generator:
+    runIn: 'local'
+  publisher:
+    type: 'local'
+  cache:
+    ttl: 3600000
+    readTimeout: 500
 
-6. GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs
-   - Descrição: Lista todos os jobs de uma execução
-   - Autenticação: Sim
-   - Observações: Inclui nome dos steps, status e conclusão
+auth:
+  providers:
+    guest: {}    # 👈 Deixa o provedor Guest ativo
+    github:
+      development:
+        clientId: Iv23liNZ83pDW0E52taJ
+        clientSecret: 5561b426c858f35425c07a1158ba3adde2269f94
+    microsoft:
+      # Required if GUEST_AUTH_ENABLED is set to false, to enable Azure AD SSO authentication.
+      # development:
+      #   clientId: ${AZURE_CLIENT_ID}
+      #   clientSecret: ${AZURE_CLIENT_SECRET}
+      #   tenantId: ${AZURE_TENANT_ID}
+      #   signIn:
+      #     resolvers:
+      #       - resolver: emailMatchingUserEntityProfileEmail
+      #       - resolver: emailLocalPartMatchingUserEntityName
+      #       - resolver: emailMatchingUserEntityAnnotation
 
-7. GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs
-   - Descrição: Baixa o .zip com todos os logs da execução
-   - Autenticação: Sim
-   - Observações: Retorna application/zip com todos os logs por job/step
+scaffolder:
+  defaultAuthor:
+    name: Usuario Sistemico
+    email: system@teste.bradesco.com.br
+  defaultCommitMessage: 'Initial'
 
-8. GET /repos/{owner}/{repo}/branches
-   - Descrição: Lista as branches do repositório
-   - Autenticação: Não (se repositório for público)
-   - Observações: Pode ser útil para saber em qual branch rodar a action
-
-
-==========================
-POST Endpoints
-==========================
-
-1. POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches
-   - Descrição: Dispara um workflow manualmente (workflow_dispatch)
-   - Autenticação: Sim
-   - Observações: "ref" obrigatório, "inputs" opcionais (desde que definidos no .yml)
-
-   Exemplo de body JSON:
-   {
-     "ref": "main",
-     "inputs": {
-       "env": "staging",
-       "deploy": "true"
-     }
-   }
+catalog:
+  orphanStrategy: delete
+  processingInterval: { hours: 72 }
+  import:
+    entityFilename: catalog-info.yaml
+    pullRequestBranchName: backstage-integration
+  rules:
+    - allow:
+        [
+          Component,
+          System,
+          API,
+          Resource,
+          User,
+          Group,
+          Domain,
+          Location,
+          Template,
+        ]
+  locations:
+    # - type: file
+    #   target: template.yaml
+    # - type: file
+    #   target: catalog-info-1.yaml
+    # - type: file
+    #   target: catalog-info-2.yaml
