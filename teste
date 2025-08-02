@@ -1,125 +1,52 @@
-backstageVariables:
-  versionValue: ${ENVIRONMENT:-ENV} v1.0.46
-  underMaintenance: ${UNDER_MAINTENANCE:-false}
-  maintainers: ${MAINTAINERS:-gustavoleal.s.souza@bradesco.com.br}
-  maintenanceEndDate: ${MAINTENANCE_ENDDATE:-.}
-  permissionGroups: ${PERMISSION_GROUPS:-n/a}
-  guestAuthEnabled: ${GUEST_AUTH_ENABLED:-true}   # 👈 Mantém Guest habilitado
-  innerSourceEnabled: ${INNERSOURCE_ENABLED:-false}
-
-app:
-  title: ${APP_TITLE:-Bex}
-  baseUrl: ${APP_HOST_FRONTEND}
-  signInPage: guest   # 👈 FORÇA login automático como Guest
-  backstageServices:
-    innerSourceUrl: ${INNERSOURCE_URL}
-    middlewareUrl: ${MIDDLEWARE_URL}
-    archflowUrl: ${ARCHFLOW_URL}
-    bexAccessUrl: ${BEX_ACCESS_URL}
-    solicitationUrl: ${SOLICITATION_URL}
-  extensions:
-    - entity-content:github-actions/entity
-    - entity-card:github-actions/latest-workflow-run
-    - entity-card:github-actions/latest-branch-workflow-runs
-    - entity-card:github-actions/recent-workflow-runs:
-        config:
-          filter: kind:component,api,group
-
-organization:
-  name: ${APP_TITLE:-Bex}
-
-permission:
-  enabled: true
-
-backend:
-  baseUrl: ${APP_HOST_BACKEND}
-  listen:
-    port: 7007
-  csp:
-    img-src:
-      [
-        "'self'",
-        'data:',
-        'https://avatars.githubusercontent.com',
-        'https://portalcorporativo.net.bradesco.com.br',
-      ]
-    connect-src: ["'self'", 'http:', 'https:']
-  cors:
-    origin: ${APP_HOST_FRONTEND}
-    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
-    credentials: true
-  database:
-    client: better-sqlite3
-    connection: ':memory:'
-  auth:
-    externalAccess:
-      - type: static
-        options:
-          token: ${BACKSTAGEAPIADMINTOKEN:-tokenparatestelocal}
-          subject: backstage-api-admin-user
-
-integrations:
-
-proxy:
-
-techdocs:
-  builder: 'local'
-  generator:
-    runIn: 'local'
-  publisher:
-    type: 'local'
-  cache:
-    ttl: 3600000
-    readTimeout: 500
-
-auth:
-  providers:
-    guest: {}    # 👈 Deixa o provedor Guest ativo
-    github:
-      development:
-        clientId: Iv23liNZ83pDW0E52taJ
-        clientSecret: 5561b426c858f35425c07a1158ba3adde2269f94
-    microsoft:
-      # Required if GUEST_AUTH_ENABLED is set to false, to enable Azure AD SSO authentication.
-      # development:
-      #   clientId: ${AZURE_CLIENT_ID}
-      #   clientSecret: ${AZURE_CLIENT_SECRET}
-      #   tenantId: ${AZURE_TENANT_ID}
-      #   signIn:
-      #     resolvers:
-      #       - resolver: emailMatchingUserEntityProfileEmail
-      #       - resolver: emailLocalPartMatchingUserEntityName
-      #       - resolver: emailMatchingUserEntityAnnotation
-
-scaffolder:
-  defaultAuthor:
-    name: Usuario Sistemico
-    email: system@teste.bradesco.com.br
-  defaultCommitMessage: 'Initial'
-
-catalog:
-  orphanStrategy: delete
-  processingInterval: { hours: 72 }
-  import:
-    entityFilename: catalog-info.yaml
-    pullRequestBranchName: backstage-integration
-  rules:
-    - allow:
-        [
-          Component,
-          System,
-          API,
-          Resource,
-          User,
-          Group,
-          Domain,
-          Location,
-          Template,
-        ]
-  locations:
-    # - type: file
-    #   target: template.yaml
-    # - type: file
-    #   target: catalog-info-1.yaml
-    # - type: file
-    #   target: catalog-info-2.yaml
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: example-repositories
+  description: "Simulação de alguns repositórios Git para Backstage"
+spec:
+  targets:
+    - ./services/catalog-info-service.yaml
+    - ./libs/catalog-info-lib.yaml
+    - ./apps/catalog-info-app.yaml
+---
+# Service 1
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: payments-service
+  description: "Serviço de pagamentos da empresa"
+  annotations:
+    github.com/project-slug: minha-org/payments-service
+    backstage.io/source-location: url:https://github.com/minha-org/payments-service
+spec:
+  type: service
+  lifecycle: production
+  owner: equipe-pagamentos
+---
+# Library 2
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: shared-lib
+  description: "Biblioteca compartilhada entre vários serviços"
+  annotations:
+    github.com/project-slug: minha-org/shared-lib
+    backstage.io/source-location: url:https://github.com/minha-org/shared-lib
+spec:
+  type: library
+  lifecycle: experimental
+  owner: equipe-core
+---
+# App 3
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: customer-portal
+  description: "Portal do cliente"
+  annotations:
+    github.com/project-slug: minha-org/customer-portal
+    backstage.io/source-location: url:https://github.com/minha-org/customer-portal
+spec:
+  type: website
+  lifecycle: development
+  owner: equipe-web
