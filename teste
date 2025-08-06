@@ -1,35 +1,42 @@
-apiVersion: backstage.io/v1alpha1
-kind: Component
-metadata:
-  name: payments-service
-  description: Serviço de pagamentos
-  annotations:
-    github.com/project-slug: minha-org/payments-service
-spec:
-  type: service
-  lifecycle: production
-  owner: equipe-pagamentos
----
-apiVersion: backstage.io/v1alpha1
-kind: Component
-metadata:
-  name: shared-lib
-  description: Biblioteca interna para outros serviços
-  annotations:
-    github.com/project-slug: minha-org/shared-lib
-spec:
-  type: library
-  lifecycle: experimental
-  owner: equipe-core
----
-apiVersion: backstage.io/v1alpha1
-kind: Component
-metadata:
-  name: customer-portal
-  description: Portal do cliente
-  annotations:
-    github.com/project-slug: minha-org/customer-portal
-spec:
-  type: website
-  lifecycle: development
-  owner: equipe-web
+import React from 'react';
+import { InfoCard, Table, StatusChip } from '@backstage/core-components';
+import { useEntity } from '@backstage/plugin-catalog-react';
+import { Typography } from '@material-ui/core';
+
+export const CiCdAplicacaoTab = () => {
+  const entity = useEntity().entity;
+  const data = []; // aqui você irá colocar os workflowRuns
+  const repoSlug = entity.metadata?.annotations?.['github.com/project-slug'];
+
+  return (
+    <InfoCard title="GitHub Actions">
+      <Typography variant="body2" color="textSecondary">
+        Repositório: {repoSlug}
+      </Typography>
+      <Table
+        title="Executions"
+        options={{ paging: true, pageSize: 5, search: true }}
+        columns={[
+          { title: 'Workflow', field: 'name' },
+          { title: 'Evento', field: 'event' },
+          {
+            title: 'Status',
+            field: 'conclusion',
+            render: row => <StatusChip status={row.conclusion} />,
+          },
+          { title: 'Conclusão', field: 'status' },
+          {
+            title: 'Link',
+            field: 'html_url',
+            render: row => (
+              <a href={row.html_url} target="_blank" rel="noopener">
+                Ver no GitHub
+              </a>
+            ),
+          },
+        ]}
+        data={data}
+      />
+    </InfoCard>
+  );
+};
