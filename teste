@@ -1,3 +1,11 @@
+// CustomWorkflowTable.tsx
+import React from 'react';
+import {
+  Table,
+  TableColumn,
+  Link,
+  EmptyState,
+} from '@backstage/core-components';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import IconButton from '@material-ui/core/IconButton';
@@ -5,31 +13,34 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Button from '@material-ui/core/Button';
 import RetryIcon from '@material-ui/icons/Replay';
 import GitHubIcon from '@material-ui/icons/GitHub';
-import { Link as RouterLink } from 'react-router-dom';
-import { useWorkflowRuns, WorkflowRun } from '../useWorkflowRuns';
-import { WorkflowRunStatus } from '../WorkflowRunStatus';
 import SyncIcon from '@material-ui/icons/Sync';
-import { buildRouteRef } from '../../routes';
-import { getProjectNameFromEntity } from '../getProjectNameFromEntity';
-import { Entity } from '@backstage/catalog-model';
 
-import {
-  EmptyState,
-  Table,
-  TableColumn,
-  Link,
-} from '@backstage/core-components';
-import { useRouteRef } from '@backstage/core-plugin-api';
-import { getHostnameFromEntity } from '../getHostnameFromEntity';
-import { getStatusDescription } from '../WorkflowRunStatus/WorkflowRunStatus';
+// Se quiser manter o chip visual, pode criar um componente local ou simplificar
+const StatusChip = ({ status }: { status?: string }) => (
+  <Box>{status}</Box>
+);
 
-// Utility function to truncate string at the first newline character
 const truncateAtNewline = (str: string) => {
   const newlineIndex = str.indexOf('\n');
   return newlineIndex !== -1 ? str.substring(0, newlineIndex) : str;
 };
 
-const generatedColumns: TableColumn<Partial<WorkflowRun>>[] = [
+export type CustomWorkflowRun = {
+  id: number;
+  message?: string;
+  workflowName: string;
+  event: string;
+  status?: string;
+  conclusion?: string;
+  statusDate?: string;
+  statusAge?: string;
+  html_url: string;
+  branchName?: string;
+  commitHash?: string;
+  onReRunClick?: () => void;
+};
+
+const generatedColumns: TableColumn<CustomWorkflowRun>[] = [
   {
     title: 'ID',
     field: 'id',
@@ -40,34 +51,19 @@ const generatedColumns: TableColumn<Partial<WorkflowRun>>[] = [
     title: 'Message',
     field: 'message',
     highlight: true,
-    render: row => {
-      const LinkWrapper = () => {
-        const routeLink = useRouteRef(buildRouteRef);
-        const truncatedMessage = truncateAtNewline(row.message!);
-        return (
-          <Link
-            component={RouterLink}
-            to={routeLink({ id: row.id! })}
-            title={row.message} // display full message on hover
-          >
-            {truncatedMessage}
-          </Link>
-        );
-      };
-
-      return <LinkWrapper />;
-    },
+    render: row => (
+      <Tooltip title={row.message}>
+        <Box>{truncateAtNewline(row.message ?? '')}</Box>
+      </Tooltip>
+    ),
   },
   {
-    title: 'Source',
+    title: 'Branch / Commit',
     render: row => (
       <Typography variant="body2" noWrap>
-        <Typography paragraph variant="body2">
-          {row.source?.branchName}
-        </Typography>
-        <Typography paragraph variant="body2">
-          {row.source?.commit.hash}
-        </Typography>
+        {row.branchName}
+        <br />
+        {row.commitHash}
       </Typography>
     ),
   },
@@ -77,42 +73,30 @@ const generatedColumns: TableColumn<Partial<WorkflowRun>>[] = [
   },
   {
     title: 'Status',
-    customSort: (d1, d2) => {
-      return getStatusDescription(d1).localeCompare(getStatusDescription(d2));
-    },
-    render: row => (
-      <Box display="flex" justifyContent="center" alignItems="center">
-        <WorkflowRunStatus status={row.status} conclusion={row.conclusion} />
-      </Box>
-    ),
+    render: row => <StatusChip status={row.conclusion} />,
   },
   {
     title: 'Age',
     render: row => (
-      <Box display="flex" justifyContent="center" alignItems="center">
-        <Tooltip title={row.statusDate ?? ''}>
-          <Box>{row.statusAge}</Box>
-        </Tooltip>
-      </Box>
+      <Tooltip title={row.statusDate ?? ''}>
+        <Box>{row.statusAge}</Box>
+      </Tooltip>
     ),
   },
   {
-    title: 'Actions',
-    render: (row: Partial<WorkflowRun>) => (
-      <Tooltip title="Rerun workflow">
-        <IconButton onClick={row.onReRunClick}>
-          <RetryIcon />
-        </IconButton>
-      </Tooltip>
+    title: 'GitHub',
+    render: row => (
+      <Link to={row.html_url} target="_blank">
+        Acessar
+      </Link>
     ),
-    width: '10%',
   },
 ];
 
 type Props = {
   loading: boolean;
   retry: () => void;
-  runs?: WorkflowRun[];
+  runs?: CustomWorkflowRun[];
   projectName: string;
   page: number;
   onChangePage: (page: number) => void;
@@ -121,7 +105,7 @@ type Props = {
   onChangePageSize: (pageSize: number) => void;
 };
 
-export const WorkflowRunsTableView = ({
+export const CustomWorkflowRunsTable = ({
   projectName,
   loading,
   pageSize,
@@ -132,6 +116,26 @@ export const WorkflowRunsTableView = ({
   onChangePageSize,
   total,
 }: Props) => {
+  if (!runs?.length && !loading) {
+    return (
+      <EmptyState
+        missing="data"
+        title="Sem execuções encontradas"
+        description="Este componente está configurado com GitHub Actions, mas não foram encontradas execuções."
+        action={
+          <Button
+            variant="contained"
+            color="primary"
+            href={`https://github.com/${projectName}/actions/new`}
+            target="_blank"
+          >
+            Criar novo Workflow
+          </Button>
+        }
+      />
+    );
+  }
+
   return (
     <Table
       isLoading={loading}
@@ -141,9 +145,9 @@ export const WorkflowRunsTableView = ({
       actions={[
         {
           icon: () => <SyncIcon />,
-          tooltip: 'Reload workflow runs',
+          tooltip: 'Recarregar workflows',
           isFreeAction: true,
-          onClick: () => retry(),
+          onClick: retry,
         },
       ]}
       data={runs ?? []}
@@ -158,55 +162,6 @@ export const WorkflowRunsTableView = ({
         </Box>
       }
       columns={generatedColumns}
-    />
-  );
-};
-
-export const WorkflowRunsTable = ({
-  entity,
-  branch,
-}: {
-  entity: Entity;
-  branch?: string;
-}) => {
-  const projectName = getProjectNameFromEntity(entity);
-  const hostname = getHostnameFromEntity(entity);
-  const [owner, repo] = (projectName ?? '/').split('/');
-  const [{ runs, ...tableProps }, { retry, setPage, setPageSize }] =
-    useWorkflowRuns({
-      hostname,
-      owner,
-      repo,
-      branch,
-      fetchAllBranches: false,
-    });
-
-  const githubHost = hostname || 'github.com';
-  const hasNoRuns = !tableProps.loading && !runs;
-
-  return hasNoRuns ? (
-    <EmptyState
-      missing="data"
-      title="No Workflow Data"
-      description="This component has GitHub Actions enabled, but no data was found. Have you created any Workflows? Click the button below to create a new Workflow."
-      action={
-        <Button
-          variant="contained"
-          color="primary"
-          href={`https://${githubHost}/${projectName}/actions/new`}
-        >
-          Create new Workflow
-        </Button>
-      }
-    />
-  ) : (
-    <WorkflowRunsTableView
-      {...tableProps}
-      runs={runs}
-      loading={tableProps.loading}
-      retry={retry}
-      onChangePageSize={setPageSize}
-      onChangePage={setPage}
     />
   );
 };
