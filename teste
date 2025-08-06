@@ -1,167 +1,45 @@
-// CustomWorkflowTable.tsx
-import React from 'react';
-import {
-  Table,
-  TableColumn,
-  Link,
-  EmptyState,
-} from '@backstage/core-components';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
-import Button from '@material-ui/core/Button';
-import RetryIcon from '@material-ui/icons/Replay';
-import GitHubIcon from '@material-ui/icons/GitHub';
-import SyncIcon from '@material-ui/icons/Sync';
+// ...colar CustomWorkflowRunsTable e tipo CustomWorkflowRun aqui...
 
-// Se quiser manter o chip visual, pode criar um componente local ou simplificar
-const StatusChip = ({ status }: { status?: string }) => (
-  <Box>{status}</Box>
-);
+export const CiCdAplicacaoTab = () => {
+  // useEffect para fetch dos dados, estados, etc.
+  const [runs, setRuns] = useState<CustomWorkflowRun[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(5);
 
-const truncateAtNewline = (str: string) => {
-  const newlineIndex = str.indexOf('\n');
-  return newlineIndex !== -1 ? str.substring(0, newlineIndex) : str;
-};
-
-export type CustomWorkflowRun = {
-  id: number;
-  message?: string;
-  workflowName: string;
-  event: string;
-  status?: string;
-  conclusion?: string;
-  statusDate?: string;
-  statusAge?: string;
-  html_url: string;
-  branchName?: string;
-  commitHash?: string;
-  onReRunClick?: () => void;
-};
-
-const generatedColumns: TableColumn<CustomWorkflowRun>[] = [
-  {
-    title: 'ID',
-    field: 'id',
-    type: 'numeric',
-    width: '150px',
-  },
-  {
-    title: 'Message',
-    field: 'message',
-    highlight: true,
-    render: row => (
-      <Tooltip title={row.message}>
-        <Box>{truncateAtNewline(row.message ?? '')}</Box>
-      </Tooltip>
-    ),
-  },
-  {
-    title: 'Branch / Commit',
-    render: row => (
-      <Typography variant="body2" noWrap>
-        {row.branchName}
-        <br />
-        {row.commitHash}
-      </Typography>
-    ),
-  },
-  {
-    title: 'Workflow',
-    field: 'workflowName',
-  },
-  {
-    title: 'Status',
-    render: row => <StatusChip status={row.conclusion} />,
-  },
-  {
-    title: 'Age',
-    render: row => (
-      <Tooltip title={row.statusDate ?? ''}>
-        <Box>{row.statusAge}</Box>
-      </Tooltip>
-    ),
-  },
-  {
-    title: 'GitHub',
-    render: row => (
-      <Link to={row.html_url} target="_blank">
-        Acessar
-      </Link>
-    ),
-  },
-];
-
-type Props = {
-  loading: boolean;
-  retry: () => void;
-  runs?: CustomWorkflowRun[];
-  projectName: string;
-  page: number;
-  onChangePage: (page: number) => void;
-  total: number;
-  pageSize: number;
-  onChangePageSize: (pageSize: number) => void;
-};
-
-export const CustomWorkflowRunsTable = ({
-  projectName,
-  loading,
-  pageSize,
-  page,
-  retry,
-  runs,
-  onChangePage,
-  onChangePageSize,
-  total,
-}: Props) => {
-  if (!runs?.length && !loading) {
-    return (
-      <EmptyState
-        missing="data"
-        title="Sem execuções encontradas"
-        description="Este componente está configurado com GitHub Actions, mas não foram encontradas execuções."
-        action={
-          <Button
-            variant="contained"
-            color="primary"
-            href={`https://github.com/${projectName}/actions/new`}
-            target="_blank"
-          >
-            Criar novo Workflow
-          </Button>
-        }
-      />
-    );
-  }
+  useEffect(() => {
+    fetch(`/api/ci/list-runs?repo=org/repo`)
+      .then(res => res.json())
+      .then(data => {
+        const parsed: CustomWorkflowRun[] = data.workflow_runs.map(run => ({
+          id: run.id,
+          workflowName: run.name,
+          status: run.status,
+          conclusion: run.conclusion,
+          html_url: run.html_url,
+          event: run.event,
+          statusDate: run.created_at,
+          statusAge: '2h', // pode calcular depois
+          message: run.head_commit?.message,
+          branchName: run.head_branch,
+          commitHash: run.head_sha?.slice(0, 7),
+        }));
+        setRuns(parsed);
+        setLoading(false);
+      });
+  }, []);
 
   return (
-    <Table
-      isLoading={loading}
-      options={{ paging: true, pageSize, padding: 'dense' }}
-      totalCount={total}
+    <CustomWorkflowRunsTable
+      runs={runs}
+      loading={loading}
+      retry={() => window.location.reload()}
+      projectName="org/repo"
       page={page}
-      actions={[
-        {
-          icon: () => <SyncIcon />,
-          tooltip: 'Recarregar workflows',
-          isFreeAction: true,
-          onClick: retry,
-        },
-      ]}
-      data={runs ?? []}
-      onPageChange={onChangePage}
-      onRowsPerPageChange={onChangePageSize}
-      style={{ width: '100%' }}
-      title={
-        <Box display="flex" alignItems="center">
-          <GitHubIcon />
-          <Box mr={1} />
-          <Typography variant="h6">{projectName}</Typography>
-        </Box>
-      }
-      columns={generatedColumns}
+      onChangePage={setPage}
+      total={runs.length}
+      pageSize={pageSize}
+      onChangePageSize={setPageSize}
     />
   );
 };
