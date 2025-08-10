@@ -1,1 +1,6 @@
-.record(elapsedMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
+(
+  sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[1h]))
+/
+  sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[1h]))
+) * 1000
+
