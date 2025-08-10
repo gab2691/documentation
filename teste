@@ -1,10 +1,1 @@
-fun recordProcessFiles(integration: Integration, entityType: String, generationType: String, elapsedMillis: Long, lines: Int) {
-        val tags = Tags.of(
-            Tag.of("integration", integration.name),
-            Tag.of("entityType", entityType),
-            Tag.of("generationType", generationType),
-            Tag.of("elapsedMillis", elapsedMillis.toString()),
-            Tag.of("rows", lines.toString())
-        )
-        meterRegistry.gauge(ELAPSED_TIME_KEY, tags, elapsedMillis)
-    }
+.record(elapsedMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
