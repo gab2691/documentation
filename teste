@@ -1,11 +1,12 @@
 label_join(
   (
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[1h]))
+    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[$__range]))
   /
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[1h]))
+    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[$__range]))
   ) * 1000,
   "join_key","|","integration","entityType","generationType"
 )
+
 
 label_join(
   sum by (integration, entityType, generationType) (
@@ -13,5 +14,6 @@ label_join(
   ),
   "join_key","|","integration","entityType","generationType"
 )
+
 
 
