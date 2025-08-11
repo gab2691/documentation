@@ -1,7 +1,6 @@
 label_join(
-  clamp_min(
-    max by (integration, entityType, generationType) (idelta(process_files_rows_total[5m])),
-    0
+  max by (integration, entityType, generationType) (
+    increase(process_files_rows_total[$__rate_interval])
   ),
   "join_key","|","integration","entityType","generationType"
 )
