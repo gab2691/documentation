@@ -1,3 +1,16 @@
+query a
+
+label_join(
+  (
+    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[$__range]))
+  /
+    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[$__range]))
+  ) * 1000,
+  "join_key","|","integration","entityType","generationType"
+)
+
+query b 
+
 label_join(
   clamp_min(
     max by (integration, entityType, generationType) (process_files_rows_total)
@@ -6,3 +19,43 @@ label_join(
   ),
   "join_key","|","integration","entityType","generationType"
 )
+
+Instant ligado, join pelo join_key, esse e o resultado
+
+entityType
+generationType
+Value #A
+Time
+Value #B
+CONTRACT_EFFECT
+REGENERATION
+0.667
+2025-08-11 12:45:53.000
+0
+CONTRACT_EFFECT_DET
+REGENERATION
+0.250
+2025-08-11 12:45:53.000
+0
+MOVEMENTS
+REGENERATION
+1.33
+2025-08-11 12:45:53.000
+0
+PIX
+REGENERATION
+0.250
+2025-08-11 12:45:53.000
+0
+TRANSACTIONS
+REGENERATION
+0.500
+2025-08-11 12:45:53.000
+0
+WITHDRAWALS
+REGENERATION
+0.417
+2025-08-11 12:45:53.000
+0
+
+
