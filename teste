@@ -1,8 +1,59 @@
-label_join(
-  process_files_duration_seconds_count,
-  "join_key","|","integration","entityType","generationType"
-)
-label_join(
-  process_files_rows_total, 
-  "join_key","|","integration","entityType","generationType"
-)
+fun execute(networkCtx: MerchantNetworkContext) {
+        var totalRows = 0
+
+        MDC.put("ediExecutionId", networkCtx.executionId)
+        MDC.put("ediGenerationType", networkCtx.generationType.toString())
+
+        val elapsedMillis = measureTimeMillis {
+            networkCtx.saveExecution()
+            val searchFile = fileSearchFactory.getFileSearch(networkCtx.entityType)
+            val ediFile = EdiFileLocal(
+                objectMapper = internalObjectMapper(),
+                entityType = networkCtx.entityType,
+                executionId = networkCtx.executionId
+            )
+
+            var numRows = 0
+
+            val sellers: Iterable<Seller> = networkCtx.merchantNetworks
+                .getSellersDistinctBy(searchFile.sellerSelector())
+                .applyTop13Blocklist(ctx = networkCtx)
+
+            sellers.forEach { seller ->
+                searchFile.getEntitiesByNetworkAndDate(
+                    seller,
+                    networkCtx
+                ) { trx ->
+                    trx.forEach { tr ->
+                        ediFile.writeLine(tr)
+                        numRows++
+                    }
+                }
+            }
+
+            val param = NotificationDTO.from(networkCtx)
+
+            filterFacade.notifyByEntity(networkCtx.entityType, param)
+
+            val exchange = networkCtx.toExchange(numRows)
+
+            when (exchange.integration) {
+                AWS_S3 -> awsS3SenderService.send(exchange)
+                FTP -> {
+                    ftpSenderService.send(exchange)
+                    awsS3SenderService.send(exchange)
+                }
+            }
+            totalRows = numRows
+        }
+
+        MDC.put("ediElapsedMillis", elapsedMillis.toString())
+
+        logger.info("Finished process task : entityType=${networkCtx.entityType}, generationType=${networkCtx.generationType}, " +
+                    "executionId=${networkCtx.executionId}, number of rows=${totalRows} elapsedTime=${elapsedMillis/1000.0}s")
+
+        MDC.remove("ediExecutionId")
+        MDC.remove("ediElapsedMillis")
+        MDC.remove("ediGenerationType")
+        fileSenderMetric.recordProcessFiles(networkCtx.integration, networkCtx.entityType.toString(), networkCtx.generationType.toString(), elapsedMillis/1000, totalRows)
+    }
