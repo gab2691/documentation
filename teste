@@ -1,1 +1,8 @@
-process_files_rows_total{integration="FTP",entityType="CONTRACT_EFFECT",generationType="REGENERATION"}
+label_join(
+  process_files_duration_seconds_count,
+  "join_key","|","integration","entityType","generationType"
+)
+label_join(
+  process_files_rows_total, 
+  "join_key","|","integration","entityType","generationType"
+)
