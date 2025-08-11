@@ -1,6 +1,12 @@
-(
-  sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[1h]))
-/
-  sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[1h]))
-) * 1000
+fun recordProcessFiles(integration: Integration, entityType: String, generationType: String, elapsedMillis: Long, lines: Int) {
+        val tags = Tags.of(
+            Tag.of("integration", integration.name),
+            Tag.of("entityType", entityType),
+            Tag.of("generationType", generationType)
+        )
+        meterRegistry.timer("process_files_duration", tags)
+            .record(elapsedMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
 
+        meterRegistry.counter("process_files_rows_total", tags)
+            .increment(lines.toDouble())
+    }
