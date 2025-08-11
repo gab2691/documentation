@@ -1,13 +1,3 @@
-label_join(
-  (
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[1h]))
-  /
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[1h]))
-  ) * 1000,
-  "join_key","|","integration","entityType","generationType"
-)
-
-label_join(
-  sum by (integration, entityType, generationType) (increase(process_files_rows_total[1h])),
-  "join_key","|","integration","entityType","generationType"
-)
+sum by (integration, entityType, generationType) (increase(process_files_rows_total[1h]))
+/
+sum by (integration, entityType, generationType) (increase(process_files_duration_seconds_count[1h]))
