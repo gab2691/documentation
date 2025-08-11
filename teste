@@ -8,11 +8,10 @@ label_join(
 )
 
 label_join(
-  clamp_min(
-    sum by (integration, entityType, generationType) (process_files_rows_total)
-  - sum by (integration, entityType, generationType) (process_files_rows_total offset 2m),
-  0
+  sum by (integration, entityType, generationType) (
+    increase(process_files_rows_total[$__rate_interval])
   ),
   "join_key","|","integration","entityType","generationType"
 )
+
 
