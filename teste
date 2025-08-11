@@ -1,6 +1,1 @@
-label_join(
-  max by (integration, entityType, generationType) (
-    clamp_min(idelta(process_files_rows_total[5m]), 0)
-  ),
-  "join_key","|","integration","entityType","generationType"
-)
+{__name__=~"process_files_.*"}
