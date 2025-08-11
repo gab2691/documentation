@@ -1,1 +1,1 @@
-{__name__=~"process_files_.*"}
+process_files_rows_total{integration="FTP",entityType="CONTRACT_EFFECT",generationType="REGENERATION"}
