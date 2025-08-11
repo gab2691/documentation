@@ -1,19 +1,12 @@
-label_join(
-  (
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[$__range]))
-  /
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[$__range]))
-  ) * 1000,
-  "join_key","|","integration","entityType","generationType"
-)
+fun recordProcessFiles(integration: Integration, entityType: String, generationType: String, elapsedMillis: Long, lines: Int) {
+        val tags = Tags.of(
+            Tag.of("integration", integration.name),
+            Tag.of("entityType", entityType),
+            Tag.of("generationType", generationType)
+        )
+        meterRegistry.timer("process_files_duration", tags)
+            .record(elapsedMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
 
-
-label_join(
-  sum by (integration, entityType, generationType) (
-    increase(process_files_rows_total[$__rate_interval])
-  ),
-  "join_key","|","integration","entityType","generationType"
-)
-
-
-
+        meterRegistry.counter("process_files_rows_total", tags)
+            .increment(lines.toDouble())
+    }
