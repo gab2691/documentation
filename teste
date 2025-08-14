@@ -1,27 +1,172 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router';
-import { Typography, Box, CircularProgress } from '@material-ui/core';
+// CustomWorkflowTable.tsx
+import React from 'react';
+import {
+  Table,
+  TableColumn,
+  Link,
+  EmptyState,
+} from '@backstage/core-components';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
+import Button from '@material-ui/core/Button';
+import RetryIcon from '@material-ui/icons/Replay';
+import GitHubIcon from '@material-ui/icons/GitHub';
+import SyncIcon from '@material-ui/icons/Sync';
+import { Link as RouterLink } from 'react-router-dom';
 
-export const WorkflowDetailsPage = () => {
-  const { id } = useParams<{ id: string }>();
-  const [details, setDetails] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+const StatusChip = ({ status }: { status?: string }) => (
+  <Box>{status}</Box>
+);
 
-  useEffect(() => {
-    fetch(`/api/ci/workflow-run?id=${id}`)
-      .then(res => res.json())
-      .then(data => {
-        setDetails(data);
-        setLoading(false);
-      });
-  }, [id]);
+const truncateAtNewline = (str: string) => {
+  const newlineIndex = str.indexOf('\n');
+  return newlineIndex !== -1 ? str.substring(0, newlineIndex) : str;
+};
 
-  if (loading) return <CircularProgress />;
+export type CustomWorkflowRun = {
+  id: number;
+  message?: string;
+  workflowName: string;
+  event: string;
+  status?: string;
+  conclusion?: string;
+  statusDate?: string;
+  statusAge?: string;
+  html_url: string;
+  branchName?: string;
+  commitHash?: string;
+  onReRunClick?: () => void;
+};
+
+const generatedColumns: TableColumn<CustomWorkflowRun>[] = [
+  {
+    title: 'ID',
+    field: 'id',
+    type: 'numeric',
+    width: '150px',
+  },
+  {
+    title: 'Workflow',
+    field: 'workflowName',
+    render: row => (
+      <Link component={RouterLink} to={`/ci-cd-aplicacao/${row.id}`}>
+        {row.workflowName}
+      </Link>
+    ),
+  },
+  {
+    title: 'Mensagem',
+    field: 'message',
+    highlight: true,
+    render: row => (
+      <Tooltip title={row.message}>
+        <Box>{truncateAtNewline(row.message ?? '')}</Box>
+      </Tooltip>
+    ),
+  },
+  {
+    title: 'Branch / Commit',
+    render: row => (
+      <Typography variant="body2" noWrap>
+        {row.branchName}
+        <br />
+        {row.commitHash}
+      </Typography>
+    ),
+  },
+  {
+    title: 'Status',
+    render: row => <StatusChip status={row.conclusion} />,
+  },
+  {
+    title: 'Age',
+    render: row => (
+      <Tooltip title={row.statusDate ?? ''}>
+        <Box>{row.statusAge}</Box>
+      </Tooltip>
+    ),
+  },
+  {
+    title: 'GitHub',
+    render: row => (
+      <Link to={row.html_url} target="_blank">
+        Acessar
+      </Link>
+    ),
+  },
+];
+
+type Props = {
+  loading: boolean;
+  retry: () => void;
+  runs?: CustomWorkflowRun[];
+  projectName: string;
+  page: number;
+  onChangePage: (page: number) => void;
+  total: number;
+  pageSize: number;
+  onChangePageSize: (pageSize: number) => void;
+};
+
+export const CustomWorkflowRunsTable = ({
+  projectName,
+  loading,
+  pageSize,
+  page,
+  retry,
+  runs,
+  onChangePage,
+  onChangePageSize,
+  total,
+}: Props) => {
+  if (!runs?.length && !loading) {
+    return (
+      <EmptyState
+        missing="data"
+        title="Sem execuções encontradas"
+        description="Este componente está configurado com GitHub Actions, mas não foram encontradas execuções."
+        action={
+          <Button
+            variant="contained"
+            color="primary"
+            href={`https://github.com/${projectName}/actions/new`}
+            target="_blank"
+          >
+            Criar novo Workflow
+          </Button>
+        }
+      />
+    );
+  }
 
   return (
-    <Box>
-      <Typography variant="h4">Detalhes do Workflow {id}</Typography>
-      <pre>{JSON.stringify(details, null, 2)}</pre>
-    </Box>
+    <Table
+      isLoading={loading}
+      options={{ paging: true, pageSize, padding: 'dense' }}
+      totalCount={total}
+      page={page}
+      actions={[
+        {
+          icon: () => <SyncIcon />,
+          tooltip: 'Recarregar workflows',
+          isFreeAction: true,
+          onClick: retry,
+        },
+      ]}
+      data={runs ?? []}
+      onPageChange={onChangePage}
+      onRowsPerPageChange={onChangePageSize}
+      style={{ width: '100%' }}
+      title={
+        <Box display="flex" alignItems="center">
+          <GitHubIcon />
+          <Box mr={1} />
+          <Typography variant="h6">{projectName}</Typography>
+        </Box>
+      }
+      columns={generatedColumns}
+    />
   );
 };
