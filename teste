@@ -1,172 +1,67 @@
-// CustomWorkflowTable.tsx
-import React from 'react';
-import {
-  Table,
-  TableColumn,
-  Link,
-  EmptyState,
-} from '@backstage/core-components';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
-import Button from '@material-ui/core/Button';
-import RetryIcon from '@material-ui/icons/Replay';
-import GitHubIcon from '@material-ui/icons/GitHub';
-import SyncIcon from '@material-ui/icons/Sync';
-import { Link as RouterLink } from 'react-router-dom';
+// src/components/ciCdAplicacaoTab/WorkflowDetailsPage.tsx
 
-const StatusChip = ({ status }: { status?: string }) => (
-  <Box>{status}</Box>
-);
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useEntity } from '@backstage/plugin-catalog-react';
+import { CircularProgress, Typography, Box } from '@material-ui/core';
+import { WorkflowDetailsLayout, WorkflowJob } from './WorkflowDetailsLayout';
 
-const truncateAtNewline = (str: string) => {
-  const newlineIndex = str.indexOf('\n');
-  return newlineIndex !== -1 ? str.substring(0, newlineIndex) : str;
-};
+export const WorkflowDetailsPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const { entity } = useEntity();
+  const repo = entity?.metadata?.annotations?.['github.com/project-slug'] ?? '';
+  const [jobs, setJobs] = useState<WorkflowJob[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export type CustomWorkflowRun = {
-  id: number;
-  message?: string;
-  workflowName: string;
-  event: string;
-  status?: string;
-  conclusion?: string;
-  statusDate?: string;
-  statusAge?: string;
-  html_url: string;
-  branchName?: string;
-  commitHash?: string;
-  onReRunClick?: () => void;
-};
+  useEffect(() => {
+    const fetchDetails = async () => {
+      try {
+        const jobsUrl = `https://api.github.com/repos/${repo}/actions/runs/${id}/jobs`;
+        const res = await fetch(jobsUrl, {
+          headers: {
+            Authorization: 'token ghu_32HzuE7c9MQCCqQgoFWa2Dix8OUns21XlCj2',
+            Accept: 'application/vnd.github.v3+json',
+          },
+        });
+        const data = await res.json();
 
-const generatedColumns: TableColumn<CustomWorkflowRun>[] = [
-  {
-    title: 'ID',
-    field: 'id',
-    type: 'numeric',
-    width: '150px',
-  },
-  {
-    title: 'Workflow',
-    field: 'workflowName',
-    render: row => (
-      <Link component={RouterLink} to={`/ci-cd-aplicacao/${row.id}`}>
-        {row.workflowName}
-      </Link>
-    ),
-  },
-  {
-    title: 'Mensagem',
-    field: 'message',
-    highlight: true,
-    render: row => (
-      <Tooltip title={row.message}>
-        <Box>{truncateAtNewline(row.message ?? '')}</Box>
-      </Tooltip>
-    ),
-  },
-  {
-    title: 'Branch / Commit',
-    render: row => (
-      <Typography variant="body2" noWrap>
-        {row.branchName}
-        <br />
-        {row.commitHash}
-      </Typography>
-    ),
-  },
-  {
-    title: 'Status',
-    render: row => <StatusChip status={row.conclusion} />,
-  },
-  {
-    title: 'Age',
-    render: row => (
-      <Tooltip title={row.statusDate ?? ''}>
-        <Box>{row.statusAge}</Box>
-      </Tooltip>
-    ),
-  },
-  {
-    title: 'GitHub',
-    render: row => (
-      <Link to={row.html_url} target="_blank">
-        Acessar
-      </Link>
-    ),
-  },
-];
+        const parsedJobs: WorkflowJob[] = data.jobs.map((job: any) => ({
+          id: job.id,
+          name: job.name,
+          status: job.status,
+          conclusion: job.conclusion,
+          started_at: job.started_at,
+          completed_at: job.completed_at,
+          steps: job.steps?.map((step: any, idx: number) => ({
+            name: step.name,
+            status: step.status,
+            conclusion: step.conclusion,
+            number: idx + 1,
+          })),
+        }));
 
-type Props = {
-  loading: boolean;
-  retry: () => void;
-  runs?: CustomWorkflowRun[];
-  projectName: string;
-  page: number;
-  onChangePage: (page: number) => void;
-  total: number;
-  pageSize: number;
-  onChangePageSize: (pageSize: number) => void;
-};
+        setJobs(parsedJobs);
+        setLoading(false);
+      } catch (e) {
+        console.error('Erro ao buscar detalhes do workflow:', e);
+        setLoading(false);
+      }
+    };
 
-export const CustomWorkflowRunsTable = ({
-  projectName,
-  loading,
-  pageSize,
-  page,
-  retry,
-  runs,
-  onChangePage,
-  onChangePageSize,
-  total,
-}: Props) => {
-  if (!runs?.length && !loading) {
-    return (
-      <EmptyState
-        missing="data"
-        title="Sem execuções encontradas"
-        description="Este componente está configurado com GitHub Actions, mas não foram encontradas execuções."
-        action={
-          <Button
-            variant="contained"
-            color="primary"
-            href={`https://github.com/${projectName}/actions/new`}
-            target="_blank"
-          >
-            Criar novo Workflow
-          </Button>
-        }
-      />
-    );
-  }
+    fetchDetails();
+  }, [id, repo]);
+
+  if (loading) return <CircularProgress />;
 
   return (
-    <Table
-      isLoading={loading}
-      options={{ paging: true, pageSize, padding: 'dense' }}
-      totalCount={total}
-      page={page}
-      actions={[
-        {
-          icon: () => <SyncIcon />,
-          tooltip: 'Recarregar workflows',
-          isFreeAction: true,
-          onClick: retry,
-        },
-      ]}
-      data={runs ?? []}
-      onPageChange={onChangePage}
-      onRowsPerPageChange={onChangePageSize}
-      style={{ width: '100%' }}
-      title={
-        <Box display="flex" alignItems="center">
-          <GitHubIcon />
-          <Box mr={1} />
-          <Typography variant="h6">{projectName}</Typography>
-        </Box>
-      }
-      columns={generatedColumns}
-    />
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Detalhes da Execução #{id}
+      </Typography>
+      <WorkflowDetailsLayout
+        jobs={jobs}
+        repoUrl={`https://github.com/${repo}/actions/runs/${id}`}
+      />
+    </Box>
   );
 };
