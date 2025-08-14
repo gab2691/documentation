@@ -1,14 +1,27 @@
-label_join(
-  (
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[$__range]))
-  /
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[$__range]))
-  ) * 1000000,
-  "join_key","|","integration","entityType","generationType"
-)
-label_join(
-  max by (integration, entityType, generationType) (
-    clamp_min(idelta(process_files_rows_total[10m]), 0)
-  ),
-  "join_key","|","integration","entityType","generationType"
-)
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router';
+import { Typography, Box, CircularProgress } from '@material-ui/core';
+
+export const WorkflowDetailsPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const [details, setDetails] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/ci/workflow-run?id=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        setDetails(data);
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) return <CircularProgress />;
+
+  return (
+    <Box>
+      <Typography variant="h4">Detalhes do Workflow {id}</Typography>
+      <pre>{JSON.stringify(details, null, 2)}</pre>
+    </Box>
+  );
+};
