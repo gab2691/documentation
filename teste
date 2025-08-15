@@ -1,4 +1,4 @@
-label_join(
+label_replace(
   1000 *
   (
     sum by (integration, entityType, generationType) (
@@ -12,13 +12,11 @@ label_join(
       1
     )
   ),
-  "join_key","|","integration","entityType","generationType"
+  "metric","tempo","__name__",".*"
 )
-
-
-label_join(
+label_replace(
   sum by (integration, entityType, generationType) (
     increase(process_files_rows_total[$__interval])
   ),
-  "join_key","|","integration","entityType","generationType"
+  "metric","linhas","__name__",".*"
 )
