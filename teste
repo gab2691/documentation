@@ -1,29 +1,15 @@
-fun recordProcessFiles(integration: Integration, entityType: String, generationType: String, elapsedMillis: Long, lines: Int) {
-        val tags = Tags.of(
-            Tag.of("integration", integration.name),
-            Tag.of("entityType", entityType),
-            Tag.of("generationType", generationType)
-        )
-        meterRegistry.timer("process_files_duration", tags)
-            .record(elapsedMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
-
-        meterRegistry.counter("process_files_rows_total", tags)
-            .increment(lines.toDouble())
-    }
-
-label_join(
-  (
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[$__range]))
-  /
-    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[$__range]))
-  ) * 1000000,
-  "join_key","|","integration","entityType","generationType"
+1000 *
+sum by (integration, entityType, generationType) (
+  rate(process_files_duration_seconds_sum[$__rate_interval])
 )
-
-
-label_join(
-  max by (integration, entityType, generationType) (
-    clamp_min(idelta(process_files_rows_total[10m]), 0)
-  ),
-  "join_key","|","integration","entityType","generationType"
+/
+sum by (integration, entityType, generationType) (
+  rate(process_files_duration_seconds_count[$__rate_interval])
+)
+sum by (integration, entityType, generationType) (
+  rate(process_files_rows_total[$__rate_interval])
+)
+/
+sum by (integration, entityType, generationType) (
+  rate(process_files_duration_seconds_count[$__rate_interval])
 )
