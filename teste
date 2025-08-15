@@ -1,22 +1,18 @@
-label_replace(
-  1000 *
-  (
-    sum by (integration, entityType, generationType) (
-      increase(process_files_duration_seconds_sum[$__interval])
-    )
-    /
-    clamp_min(
-      sum by (integration, entityType, generationType) (
-        increase(process_files_duration_seconds_count[$__interval])
-      ),
-      1
-    )
-  ),
-  "metric","tempo","__name__",".*"
-)
-label_replace(
+1000 *
+(
   sum by (integration, entityType, generationType) (
-    increase(process_files_rows_total[$__interval])
+    increase(process_files_duration_seconds_sum[$__interval])
+  )
+/
+clamp_min(
+  sum by (integration, entityType, generationType) (
+    increase(process_files_duration_seconds_count[$__interval])
   ),
-  "metric","linhas","__name__",".*"
+  1
+)
+)
+
+
+sum by (integration, entityType, generationType) (
+  increase(process_files_rows_total[$__interval])
 )
