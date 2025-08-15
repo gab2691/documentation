@@ -1,89 +1,29 @@
-// src/components/ciCdAplicacaoTab/WorkflowDetailsLayout.tsx
+fun recordProcessFiles(integration: Integration, entityType: String, generationType: String, elapsedMillis: Long, lines: Int) {
+        val tags = Tags.of(
+            Tag.of("integration", integration.name),
+            Tag.of("entityType", entityType),
+            Tag.of("generationType", generationType)
+        )
+        meterRegistry.timer("process_files_duration", tags)
+            .record(elapsedMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
 
-import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  Box,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  Link,
-} from '@material-ui/core';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import GitHubIcon from '@material-ui/icons/GitHub';
+        meterRegistry.counter("process_files_rows_total", tags)
+            .increment(lines.toDouble())
+    }
 
-export type WorkflowStep = {
-  name: string;
-  status: string;
-  conclusion: string;
-  number: number;
-};
+label_join(
+  (
+    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_sum[$__range]))
+  /
+    sum by (integration, entityType, generationType) (rate(process_files_duration_seconds_count[$__range]))
+  ) * 1000000,
+  "join_key","|","integration","entityType","generationType"
+)
 
-export type WorkflowJob = {
-  id: number;
-  name: string;
-  status: string;
-  conclusion: string;
-  started_at: string;
-  completed_at: string;
-  steps?: WorkflowStep[];
-};
 
-type Props = {
-  jobs: WorkflowJob[];
-  repoUrl: string;
-};
-
-export const WorkflowDetailsLayout = ({ jobs, repoUrl }: Props) => {
-  return (
-    <Box>
-      <Box mb={2}>
-        <Link href={repoUrl} target="_blank" rel="noopener">
-          <GitHubIcon fontSize="small" /> Ver no GitHub
-        </Link>
-      </Box>
-
-      {jobs.map(job => (
-        <Card key={job.id} style={{ marginBottom: 16 }}>
-          <CardHeader
-            title={job.name}
-            subheader={`Status: ${job.status} | Resultado: ${job.conclusion}`}
-          />
-          <CardContent>
-            <Typography variant="body2">
-              Iniciado em: {new Date(job.started_at).toLocaleString()}<br />
-              Finalizado em: {new Date(job.completed_at).toLocaleString()}
-            </Typography>
-
-            {job.steps?.map(step => (
-              <Accordion key={step.number} style={{ marginTop: 8 }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Box display="flex" justifyContent="space-between" width="100%">
-                    <Typography>{step.name}</Typography>
-                    <Box>
-                      <Chip
-                        label={step.status}
-                        size="small"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Chip label={step.conclusion} size="small" />
-                    </Box>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography>
-                    Etapa {step.number}: {step.name} - {step.status} / {step.conclusion}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
-    </Box>
-  );
-};
+label_join(
+  max by (integration, entityType, generationType) (
+    clamp_min(idelta(process_files_rows_total[10m]), 0)
+  ),
+  "join_key","|","integration","entityType","generationType"
+)
