@@ -1,16 +1,18 @@
+sum by (generationType, entityType, integration) (
+  increase(process_files_rows_total[$__interval])
+) 
+* 0 
++ 
 1000 *
 (
-  sum by (integration, entityType, generationType) (
+  sum by (generationType, entityType, integration) (
     increase(process_files_duration_seconds_sum[$__interval])
   )
-/
-clamp_min(
-  sum by (integration, entityType, generationType) (
-    increase(process_files_duration_seconds_count[$__interval])
-  ),
-  1
-)
-)
-sum by (integration, entityType, generationType) (
-  increase(process_files_rows_total[$__interval])
+  /
+  clamp_min(
+    sum by (generationType, entityType, integration) (
+      increase(process_files_duration_seconds_count[$__interval])
+    ),
+    1
+  )
 )
