@@ -11,8 +11,6 @@ clamp_min(
   1
 )
 )
-
-
 sum by (integration, entityType, generationType) (
   increase(process_files_rows_total[$__interval])
 )
