@@ -1,21 +1,24 @@
-1000 *
-sum by (integration, entityType, generationType) (
-  increase(process_files_duration_seconds_sum[$__interval])
-)
-/
-clamp_min(
-  sum by (integration, entityType, generationType) (
-    increase(process_files_duration_seconds_count[$__interval])
+label_join(
+  1000 *
+  (
+    sum by (integration, entityType, generationType) (
+      increase(process_files_duration_seconds_sum[$__interval])
+    )
+    /
+    clamp_min(
+      sum by (integration, entityType, generationType) (
+        increase(process_files_duration_seconds_count[$__interval])
+      ),
+      1
+    )
   ),
-  1
+  "join_key","|","integration","entityType","generationType"
 )
 
 
-sum by (integration, entityType, generationType) (
-  increase(process_files_rows_total[$__interval])
-)
-
-
-sum by (integration, entityType, generationType) (
-  increase(process_files_duration_seconds_count[$__interval])
+label_join(
+  sum by (integration, entityType, generationType) (
+    increase(process_files_rows_total[$__interval])
+  ),
+  "join_key","|","integration","entityType","generationType"
 )
