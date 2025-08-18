@@ -1,3 +1,6 @@
+private const val ELAPSED_TIME_KEY = "edi_wrk_integrator_elapsed_millis"
+private const val LINE_COUNT_KEY = "edi_wrk_integrator_lines"
+
 fun recordProcessFiles(integration: Integration, entityType: String, generationType: String, elapsedMillis: Long, lines: Int) {
         val tags = Tags.of(
             Tag.of("integration", integration.name),
