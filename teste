@@ -7,6 +7,7 @@ sum by (integration, entityType, generationType, executionID) (
   increase(edi_wrk_integrator_elapsed_millis_seconds_count[$__range])
 )
 
+
 sum by (integration, entityType, generationType, executionID) (
-  increase(edi_wrk_integrator_lines[$__range])
+  increase(edi_wrk_integrator_lines_total[$__range])
 )
