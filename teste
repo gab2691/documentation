@@ -1,5 +1,33 @@
-increase(edi_wrk_integrator_lines_total[$__range]) > 0
+executionID
+
+Time
+
+entityType
+
+generationType
+
+integration
+
+Linhas
+
+Tempo
+gvbus-21-07-fcfc71d8-749e-4dc0-a168-e38c2bf0b4c1
 
 
-1000 *
-increase(edi_wrk_integrator_elapsed_millis_seconds_sum[$__range])
+2025-08-19 18:30:00.000
+TRANSACTIONS
+REGENERATION
+AWS_S3
+15036
+0
+entityType=TRANSACTIONS, generationType=REGENERATION, executionId=gvbus-teste-33e16fbd-d837-473f-9f94-e85fc7c061a1, number of rows=15036 elapsedTime=4.227s"
+
+
+gvbus-teste-33e16fbd-d837-473f-9f94-e85fc7c061a1
+2025-08-19 18:30:00.000
+TRANSACTIONS
+REGENERATION
+AWS_S3
+15036
+0
+entityType=MOVEMENTS, generationType=REGENERATION, executionId=gvbus-teste-33e16fbd-d837-473f-9f94-e85fc7c061a1, number of rows=13707 elapsedTime=4.501s
