@@ -1,1 +1,14 @@
-entityType=TRANSACTIONS, generationType=REGENERATION, executionId=gvbus-21-07-fcfc71d8-749e-4dc0-a168-e38c2bf0b4c1, number of rows=15036 elapsedTime=6.299s"
+1000 *
+sum by (generationType, entityType, integration, executionID) (
+  increase(edi_wrk_integrator_elapsed_millis_seconds_sum[$__range])
+)
+/
+clamp_min(
+  sum by (generationType, entityType, integration, executionID) (
+    increase(edi_wrk_integrator_elapsed_millis_seconds_count[$__range])
+  ),
+  1
+)
+sum by (generationType, entityType, integration, executionID) (
+  increase(edi_wrk_integrator_lines_total[$__range])
+) > 0
