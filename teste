@@ -1,14 +1,17 @@
-1000 *
-sum by (generationType, entityType, integration, executionID) (
-  increase(edi_wrk_integrator_elapsed_millis_seconds_sum[$__range])
-)
-/
-clamp_min(
-  sum by (generationType, entityType, integration, executionID) (
-    increase(edi_wrk_integrator_elapsed_millis_seconds_count[$__range])
-  ),
-  1
-)
 sum by (generationType, entityType, integration, executionID) (
   increase(edi_wrk_integrator_lines_total[$__range])
 ) > 0
+or on (generationType, entityType, integration, executionID)
+(
+  1000 *
+  sum by (generationType, entityType, integration, executionID) (
+    increase(edi_wrk_integrator_elapsed_millis_seconds_sum[$__range])
+  )
+  /
+  clamp_min(
+    sum by (generationType, entityType, integration, executionID) (
+      increase(edi_wrk_integrator_elapsed_millis_seconds_count[$__range])
+    ),
+    1
+  )
+)
