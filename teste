@@ -1,14 +1,1 @@
-1000 *
-sum by (generationType, entityType, integration, executionId) (
-  increase(edi_wrk_integrator_elapsed_millis_seconds_sum[$__interval])
-)
-/
-clamp_min(
-  sum by (generationType, entityType, integration, executionId) (
-    increase(edi_wrk_integrator_elapsed_millis_seconds_count[$__interval])
-  ),
-  1
-)
-sum by (generationType, entityType, integration, executionId) (
-  increase(edi_wrk_integrator_lines_total[$__interval])
-)
+edi_wrk_integrator_lines_total > 0
