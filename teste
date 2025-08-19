@@ -1,13 +1,9 @@
-fun recordProcessFiles(integration: Integration, entityType: String, generationType: String, elapsedMillis: Long, lines: Int, executionID: String) {
-        val tags = Tags.of(
-            Tag.of("integration", integration.name),
-            Tag.of("entityType", entityType),
-            Tag.of("generationType", generationType),
-            Tag.of("executionID", executionID)
-        )
-        meterRegistry.timer(ELAPSED_TIME_KEY, tags)
-            .record(elapsedMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
-
-        meterRegistry.counter(LINE_COUNT_KEY, tags)
-            .increment(lines.toDouble())
-    }
+1000 * (
+  sum by (integration, entityType, generationType, executionID) (
+    rate(edi_wrk_integrator_elapsed_millis_sum[5m])
+  )
+  /
+  sum by (integration, entityType, generationType, executionID) (
+    rate(edi_wrk_integrator_elapsed_millis_count[5m])
+  )
+)
