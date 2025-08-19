@@ -1,1 +1,37 @@
-edi_wrk_integrator_lines_total > 0
+2025-08-19 18:00:00
+edi_wrk_integrator_lines_total
+
+
+v24
+033807515076
+us-east-1
+PIX
+reprocess--5374a363-52d4-4208-b3d2-a5e994450dc8
+REGENERATION
+10.178.25.131:8080
+AWS_S3
+edi-wrk-integrator-api
+eks-emerad-use1-prd
+edi-wrk-integrator-api-6b97cf49c7-n6dtp
+ms-edi-wrk-integrator
+edi-wrk-integrator-api-6b97cf49c7-n6dtp
+5184554
+2025-08-19 18:10:00
+edi_wrk_integrator_lines_total
+v24
+033807515076
+us-east-1
+PIX
+reprocess--5374a363-52d4-4208-b3d2-a5e994450dc8
+REGENERATION
+10.178.25.131:8080
+AWS_S3
+edi-wrk-integrator-api
+eks-emerad-use1-prd
+edi-wrk-integrator-api-6b97cf49c7-n6dtp
+ms-edi-wrk-integrator
+edi-wrk-integrator-api-6b97cf49c7-n6dtp
+5184554
+
+
+entityType=PIX, generationType=REGENERATION, executionId=reprocess--5374a363-52d4-4208-b3d2-a5e994450dc8, number of rows=5184554 elapsedTime=2442.422s
