@@ -1,14 +1,23 @@
-1000 *
-sum by (integration, entityType, generationType, executionID) (
-  increase(edi_wrk_integrator_elapsed_millis_seconds_sum[$__interval])
-)
-/
-clamp_min(
-  sum by (integration, entityType, generationType, executionID) (
-    increase(edi_wrk_integrator_elapsed_millis_seconds_count[$__interval])
+label_replace(
+  1000 *
+  (
+    sum by (integration, entityType, generationType, executionID) (
+      increase(edi_wrk_integrator_elapsed_millis_seconds_sum[$__range])
+    )
+    /
+    clamp_min(
+      sum by (integration, entityType, generationType, executionID) (
+        increase(edi_wrk_integrator_elapsed_millis_seconds_count[$__range])
+      ),
+      1
+    )
   ),
-  1
+  "metric","tempo","__name__",".*"
 )
-sum by (integration, entityType, generationType, executionID) (
-  increase(edi_wrk_integrator_lines_total[$__interval])
+or
+label_replace(
+  sum by (integration, entityType, generationType, executionID) (
+    increase(edi_wrk_integrator_lines_total[$__range])
+  ),
+  "metric","linhas","__name__",".*"
 )
