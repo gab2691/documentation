@@ -1,1 +1,3 @@
-XADD orders-stream * data '{"orderId":"A123","amount":9999,"createdAt":"2025-08-26T15:10:00Z"}'
+SELECT 0
+XGROUP CREATE orders-stream orders-group $ MKSTREAM   // cria o group (uma vez)
+XADD orders-stream * data '{"orderId":"T1","amount":1,"createdAt":"2025-08-26T16:30:00Z"}'
