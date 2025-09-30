@@ -1,53 +1,191 @@
-1756234300.814079 [0 172.17.0.1:54184] "HELLO" "3"
-1756234300.817144 [0 172.17.0.1:54184] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234300.817159 [0 172.17.0.1:54184] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234300.820461 [0 172.17.0.1:54184] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234301.841480 [0 172.17.0.1:54192] "HELLO" "3"
-1756234301.844225 [0 172.17.0.1:54192] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234301.844233 [0 172.17.0.1:54192] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234301.847497 [0 172.17.0.1:54192] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234302.877752 [0 172.17.0.1:54198] "HELLO" "3"
-1756234302.879149 [0 172.17.0.1:54198] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234302.879153 [0 172.17.0.1:54198] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234302.880437 [0 172.17.0.1:54198] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234303.914385 [0 172.17.0.1:54206] "HELLO" "3"
-1756234303.918648 [0 172.17.0.1:54206] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234303.918663 [0 172.17.0.1:54206] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234303.922220 [0 172.17.0.1:54206] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234304.944994 [0 172.17.0.1:34748] "HELLO" "3"
-1756234304.951456 [0 172.17.0.1:34748] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234304.951481 [0 172.17.0.1:34748] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234304.954391 [0 172.17.0.1:34748] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234305.987437 [0 172.17.0.1:34762] "HELLO" "3"
-1756234305.990679 [0 172.17.0.1:34762] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234305.990690 [0 172.17.0.1:34762] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234305.995241 [0 172.17.0.1:34762] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234307.031948 [0 172.17.0.1:34766] "HELLO" "3"
-1756234307.035153 [0 172.17.0.1:34766] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234307.035169 [0 172.17.0.1:34766] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234307.038394 [0 172.17.0.1:34766] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234308.066398 [0 172.17.0.1:34780] "HELLO" "3"
-1756234308.069464 [0 172.17.0.1:34780] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234308.069475 [0 172.17.0.1:34780] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234308.073053 [0 172.17.0.1:34780] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234309.094292 [0 172.17.0.1:34794] "HELLO" "3"
-1756234309.095918 [0 172.17.0.1:34794] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234309.095922 [0 172.17.0.1:34794] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234309.097553 [0 172.17.0.1:34794] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234310.140509 [0 172.17.0.1:34804] "HELLO" "3"
-1756234310.143528 [0 172.17.0.1:34804] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234310.143539 [0 172.17.0.1:34804] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234310.146130 [0 172.17.0.1:34804] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234311.179458 [0 172.17.0.1:34816] "HELLO" "3"
-1756234311.182050 [0 172.17.0.1:34816] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234311.182061 [0 172.17.0.1:34816] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234311.185128 [0 172.17.0.1:34816] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234312.222935 [0 172.17.0.1:34828] "HELLO" "3"
-1756234312.225873 [0 172.17.0.1:34828] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234312.225884 [0 172.17.0.1:34828] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234312.228538 [0 172.17.0.1:34828] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234313.256972 [0 172.17.0.1:34836] "HELLO" "3"
-1756234313.259754 [0 172.17.0.1:34836] "CLIENT" "SETINFO" "lib-name" "Lettuce"
-1756234313.259765 [0 172.17.0.1:34836] "CLIENT" "SETINFO" "lib-ver" "6.6.0.RELEASE/643bd47"
-1756234313.262119 [0 172.17.0.1:34836] "XREADGROUP" "GROUP" "orders-group" "consumer-4982aead-4331-4963-af59-0dbd67a6f83c" "BLOCK" "1000" "STREAMS" "order-stream" ">"
-1756234314.303995 [0 172.17.0.1:34848] "HELLO" "3"
+spring:
+  application:
+    name: ms-edi-pix
+  main:
+    banner-mode: off
+info:
+  app:
+    name: ms-edi-pix
+    description: Pix EDI
+    version: @project.version@
+    profile: ${INFO-APP-PROFILE:DEV}
+management:
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoints.web.base-path: /
+picpay:
+  edi:
+    pix-edi:
+      should-validate: ${EDI_PIX_READER_SHOULD_VALIDATE:true}
+      kafka-local-module: ${KAFKA_LOCAL_MODULE:true}
+#  mongodb:
+#    uri: ${MONGO_URI:mongodb://172.17.0.2:27017}
+#    database: ${MONGO_DATA_BASE:conciliations-process}
+#    auto-index-creation: true
+  logger:
+    enabled: ${PICPAY_LOGGER_ENABLED:true}
+    level: ${LOGGER_LEVEL:INFO}
+    appender: ${LOGGER_APPENDER_FORMAT:CONSOLE}
+    type: APPLICATION
+  kafka:
+    brokers:
+      fnsvcpf:
+        bootstrap-servers: ${BALANCE_FNSVCPF_KAFKA_LISTENER_BOOTSTRAP:b-1.mskfnsvcpfuse1hom.84ys4q.c23.kafka.us-east-1.amazonaws.com:9096,b-2.mskfnsvcpfuse1hom.84ys4q.c23.kafka.us-east-1.amazonaws.com:9096,b-3.mskfnsvcpfuse1hom.84ys4q.c23.kafka.us-east-1.amazonaws.com:9096}
+        username: ${MSK-FNSVCPF_MS-BALANCE-PIX-TRANSACTIONS_USERNAME:MSK_FNSVCPF_USE1_HOM_MS_BALANCE_PIX_TRANSACTIONS}
+        password: ${MSK_FNSVCPF_MS_BALANCE_PIX_TRANSACTIONS_PASSWORD:XiX)-:sj-1TOq[N:82:#:_1mPg_I)ETx}
+        security-protocol: SASL_SSL
+        mechanism: SCRAM-SHA-512
+      bankpj:
+        bootstrap-servers: ${BALANCE_BANKPJ_KAFKA_LISTENER_BOOTSTRAP:b-1.mskbankpjuse1hom.ol2v6z.c1.kafka.us-east-1.amazonaws.com:9096,b-2.mskbankpjuse1hom.ol2v6z.c1.kafka.us-east-1.amazonaws.com:9096,b-3.mskbankpjuse1hom.ol2v6z.c1.kafka.us-east-1.amazonaws.com:9096}
+        username: ${MSK_BANKPJ_MS_BALANCE_PIX_TRANSACTIONS_USERNAME:MSK_BANKPJ_USE1_HOM_MS_BALANCE_PIX_TRANSACTIONS}
+        password: ${MSK_BANKPJ_MS_BALANCE_PIX_TRANSACTIONS_PASSWORD:#jskUscRiAkYe%4507RF8OHPeomuYExa}
+        security-protocol: SASL_SSL
+        mechanism: SCRAM-SHA-512
+      legacy:
+        bootstrap-servers: ${BALANCE_FNCSVPJ_KAFKA_LISTENER_BOOTSTRAP:b-1.kafka.s0ns5h.c17.kafka.us-east-1.amazonaws.com:9092}
+    consumers:
+      fnsvcpf:
+        broker-id: fnsvcpf
+        group-id: ${KAFKA_GROUP_ID_FNSVCPF:edi-pix-reader-group-fnsvcpf}
+        topic: ${KAFKA_TOPIC_FNSVCPF:pix-receivement_events}
+        auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
+      bankpj:
+        broker-id: bankpj
+        group-id: ${KAFKA_GROUP_ID_BANKPJ:edi-pix-reader-group-bankpj}
+        topic: ${KAFKA_TOPIC_BANKPJ:pix-pj-fee-enforcer_output-events}
+        auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
+      legacy:
+        broker-id: legacy
+        group-id: ${KAFKA_GROUP_ID_LEGACY:edi-pix-reader-group-legacy}
+        topic: ${KAFKA_TOPIC_LEGACY:pix_transactions-event-notify}
+        auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
+    topics-prefix: ${KAFKA_FINANCIAL_TOPIC_PREFIX:}
+    bind:
+      consumer:
+        pix-sales-receivement: ${KAFKA_SALE_PIX:pix-receivement_events}
+        pix-tax-devolutiontax-receivement: ${KAFKA_TAX_DEVOLUTIONTAX_RECEIVEMENT:pix-pj-fee-enforcer_output-events}
+        pix-cancellation-receivement: ${KAFKA_CANCELLATION_RECEIVEMENT:pix_transactions-event-notify}
+      producer:
+        sale: ${KAFKA_SALE_FINANCIAL:""}
+        settlement: ${KAFKA_TAX_FINANCIAL:""}
+        cancellation: ${KAFKA_CANCELLATION_FINANCIAL:""}
+        tax-cancellation: ${KAFKA_TAX_CANCELLATION_FINANCIAL:""}
+    config:
+      max-pool-records: ${KAFKA_MAX_POOL_RECORDS:300}
+      max-pool-interval: ${KAFKA_MAX_POOL_SIZE:75000}
+      session-timeout: ${KAFKA_SESSION_TIMEOUT:30000}
+      security-protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
+      sasl-ssl-mechanism: ${KAFKA_SASL_SSL_MECHANISM:SSL}
+      sasl-plain-mechanism: ${KAFKA_SASL_PLAIN_MECHANISM:PLAIN}
+      auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
+      trusted-packages: ${KAFKA_TRUSTED_PACKAGES:*}
+      max-size-msg: ${KAFKA_PRODUCER_MAX_SIZE_MSG:20971520}
+      retry-attempts: 3
+      retry-delay: 300000
+      listener-concurrency: 1
+
+
+
+
+
+package com.picpay.pix.message.kafka
+
+import com.picpay.pix.config.properties.KafkaProperties
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.springframework.kafka.annotation.KafkaHandler
+import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.annotation.RetryableTopic
+import org.springframework.kafka.retrytopic.SameIntervalTopicReuseStrategy
+import org.springframework.kafka.support.Acknowledgment
+import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.messaging.handler.annotation.Header
+import org.springframework.messaging.handler.annotation.Payload
+import org.springframework.retry.annotation.Backoff
+import org.springframework.stereotype.Component
+
+@Component
+class MainKafkaConsumer(
+    val consumers: List<ConsumerKafka>,
+    private val kafkaProperties: KafkaProperties
+) {
+    private val prefix: String = kafkaProperties.topicsPrefix ?: "extrato-edi_"
+    private val suffix: String = kafkaProperties.retrySuffix ?: "_pix-reader_retry"
+
+    fun listener(
+        consumerRecordMessage: ConsumerRecord<String, String>,
+        topic: String,
+        ack: Acknowledgment
+    ) {
+        val bindKey = getBindKey(topic) ?: throw IllegalStateException("Bind not found for topic: $topic")
+        val consumer = consumers.firstOrNull {
+            it.input == bindKey
+        } ?: throw IllegalStateException("Consumer not found")
+        try {
+            consumer.receive(consumerRecordMessage.value(), ack)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    private fun getBindKey(topic: String): String? =
+        kafkaProperties.consumers?.entries?.firstOrNull { (_, values) ->
+            topic in allTopics(values.topic ?: "", "", "")
+        }?.value?.topic
+
+    private fun allTopics(topic: String, suffix: String, prefix: String): List<String> =
+        listOf(topic, "$prefix$topic$suffix")
+}
+
+@Component
+class KafkaConsumer(val mainKafkaConsumer: MainKafkaConsumer) {
+
+    @KafkaHandler
+    @KafkaListener(
+        topics = ["\${picpay.kafka.consumers.fnsvcpf.topic}"],
+        groupId = "\${picpay.kafka.consumers.fnsvcpf.group-id}",
+        containerFactory = "kafkaListenerFnsvcpf"
+    )
+    fun listenerFnsvcpf(
+        @Payload consumerRecordMessage: ConsumerRecord<String, String>,
+        @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
+        ack: Acknowledgment
+    ) {
+        mainKafkaConsumer.listener(consumerRecordMessage, topic, ack)
+    }
+
+    @KafkaHandler
+    @KafkaListener(
+        topics = ["\${picpay.kafka.consumers.bankpj.topic}"],
+        groupId = "\${picpay.kafka.consumers.bankpj.group-id}",
+        containerFactory = "kafkaListenerBankpj"
+    )
+    fun listenerBankpj(
+        @Payload consumerRecordMessage: ConsumerRecord<String, String>,
+        @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
+        ack: Acknowledgment
+    ) {
+        mainKafkaConsumer.listener(consumerRecordMessage, topic, ack)
+    }
+
+    @KafkaHandler
+    @KafkaListener(
+        topics = ["\${picpay.kafka.consumers.legacy.topic}"],
+        groupId = "\${picpay.kafka.consumers.legacy.group-id}",
+        containerFactory = "kafkaListenerLegacy"
+    )
+    fun listenerFncsvpj(
+        @Payload consumerRecordMessage: ConsumerRecord<String, String>,
+        @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
+        ack: Acknowledgment
+    ) {
+        mainKafkaConsumer.listener(consumerRecordMessage, topic, ack)
+    }
+
+}
