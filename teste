@@ -1,191 +1,72 @@
-spring:
-  application:
-    name: ms-edi-pix
-  main:
-    banner-mode: off
-info:
-  app:
-    name: ms-edi-pix
-    description: Pix EDI
-    version: @project.version@
-    profile: ${INFO-APP-PROFILE:DEV}
-management:
-  endpoint:
-    prometheus:
-      enabled: true
-    health:
-      show-details: always
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-  endpoints.web.base-path: /
-picpay:
-  edi:
-    pix-edi:
-      should-validate: ${EDI_PIX_READER_SHOULD_VALIDATE:true}
-      kafka-local-module: ${KAFKA_LOCAL_MODULE:true}
-#  mongodb:
-#    uri: ${MONGO_URI:mongodb://172.17.0.2:27017}
-#    database: ${MONGO_DATA_BASE:conciliations-process}
-#    auto-index-creation: true
-  logger:
-    enabled: ${PICPAY_LOGGER_ENABLED:true}
-    level: ${LOGGER_LEVEL:INFO}
-    appender: ${LOGGER_APPENDER_FORMAT:CONSOLE}
-    type: APPLICATION
-  kafka:
-    brokers:
-      fnsvcpf:
-        bootstrap-servers: ${BALANCE_FNSVCPF_KAFKA_LISTENER_BOOTSTRAP:b-1.mskfnsvcpfuse1hom.84ys4q.c23.kafka.us-east-1.amazonaws.com:9096,b-2.mskfnsvcpfuse1hom.84ys4q.c23.kafka.us-east-1.amazonaws.com:9096,b-3.mskfnsvcpfuse1hom.84ys4q.c23.kafka.us-east-1.amazonaws.com:9096}
-        username: ${MSK-FNSVCPF_MS-BALANCE-PIX-TRANSACTIONS_USERNAME:MSK_FNSVCPF_USE1_HOM_MS_BALANCE_PIX_TRANSACTIONS}
-        password: ${MSK_FNSVCPF_MS_BALANCE_PIX_TRANSACTIONS_PASSWORD:XiX)-:sj-1TOq[N:82:#:_1mPg_I)ETx}
-        security-protocol: SASL_SSL
-        mechanism: SCRAM-SHA-512
-      bankpj:
-        bootstrap-servers: ${BALANCE_BANKPJ_KAFKA_LISTENER_BOOTSTRAP:b-1.mskbankpjuse1hom.ol2v6z.c1.kafka.us-east-1.amazonaws.com:9096,b-2.mskbankpjuse1hom.ol2v6z.c1.kafka.us-east-1.amazonaws.com:9096,b-3.mskbankpjuse1hom.ol2v6z.c1.kafka.us-east-1.amazonaws.com:9096}
-        username: ${MSK_BANKPJ_MS_BALANCE_PIX_TRANSACTIONS_USERNAME:MSK_BANKPJ_USE1_HOM_MS_BALANCE_PIX_TRANSACTIONS}
-        password: ${MSK_BANKPJ_MS_BALANCE_PIX_TRANSACTIONS_PASSWORD:#jskUscRiAkYe%4507RF8OHPeomuYExa}
-        security-protocol: SASL_SSL
-        mechanism: SCRAM-SHA-512
-      legacy:
-        bootstrap-servers: ${BALANCE_FNCSVPJ_KAFKA_LISTENER_BOOTSTRAP:b-1.kafka.s0ns5h.c17.kafka.us-east-1.amazonaws.com:9092}
-    consumers:
-      fnsvcpf:
-        broker-id: fnsvcpf
-        group-id: ${KAFKA_GROUP_ID_FNSVCPF:edi-pix-reader-group-fnsvcpf}
-        topic: ${KAFKA_TOPIC_FNSVCPF:pix-receivement_events}
-        auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
-      bankpj:
-        broker-id: bankpj
-        group-id: ${KAFKA_GROUP_ID_BANKPJ:edi-pix-reader-group-bankpj}
-        topic: ${KAFKA_TOPIC_BANKPJ:pix-pj-fee-enforcer_output-events}
-        auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
-      legacy:
-        broker-id: legacy
-        group-id: ${KAFKA_GROUP_ID_LEGACY:edi-pix-reader-group-legacy}
-        topic: ${KAFKA_TOPIC_LEGACY:pix_transactions-event-notify}
-        auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
-    topics-prefix: ${KAFKA_FINANCIAL_TOPIC_PREFIX:}
-    bind:
-      consumer:
-        pix-sales-receivement: ${KAFKA_SALE_PIX:pix-receivement_events}
-        pix-tax-devolutiontax-receivement: ${KAFKA_TAX_DEVOLUTIONTAX_RECEIVEMENT:pix-pj-fee-enforcer_output-events}
-        pix-cancellation-receivement: ${KAFKA_CANCELLATION_RECEIVEMENT:pix_transactions-event-notify}
-      producer:
-        sale: ${KAFKA_SALE_FINANCIAL:""}
-        settlement: ${KAFKA_TAX_FINANCIAL:""}
-        cancellation: ${KAFKA_CANCELLATION_FINANCIAL:""}
-        tax-cancellation: ${KAFKA_TAX_CANCELLATION_FINANCIAL:""}
-    config:
-      max-pool-records: ${KAFKA_MAX_POOL_RECORDS:300}
-      max-pool-interval: ${KAFKA_MAX_POOL_SIZE:75000}
-      session-timeout: ${KAFKA_SESSION_TIMEOUT:30000}
-      security-protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
-      sasl-ssl-mechanism: ${KAFKA_SASL_SSL_MECHANISM:SSL}
-      sasl-plain-mechanism: ${KAFKA_SASL_PLAIN_MECHANISM:PLAIN}
-      auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
-      trusted-packages: ${KAFKA_TRUSTED_PACKAGES:*}
-      max-size-msg: ${KAFKA_PRODUCER_MAX_SIZE_MSG:20971520}
-      retry-attempts: 3
-      retry-delay: 300000
-      listener-concurrency: 1
+@Configuration
+@ConfigurationProperties(prefix = "picpay.kafka")
+class KafkaProperties {
+    var brokers: Map<String, BrokerConfig> = emptyMap()
+    var consumers: Map<String, ConsumerConfig> = emptyMap()
+    var retrySuffix: String? = null
+    var dltSuffix: String? = null
+    var topicsPrefix: String? = null
+    var producer: Producer? = null
+    var bind: BindConfig? = null
+    var config: Config? = null
+    var bindMap: Map<String, BinderValues>? = null
+    var retry: Retry? = null
+    var dlt: Dlt? = null
 
-
-
-
-
-package com.picpay.pix.message.kafka
-
-import com.picpay.pix.config.properties.KafkaProperties
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.springframework.kafka.annotation.KafkaHandler
-import org.springframework.kafka.annotation.KafkaListener
-import org.springframework.kafka.annotation.RetryableTopic
-import org.springframework.kafka.retrytopic.SameIntervalTopicReuseStrategy
-import org.springframework.kafka.support.Acknowledgment
-import org.springframework.kafka.support.KafkaHeaders
-import org.springframework.messaging.handler.annotation.Header
-import org.springframework.messaging.handler.annotation.Payload
-import org.springframework.retry.annotation.Backoff
-import org.springframework.stereotype.Component
-
-@Component
-class MainKafkaConsumer(
-    val consumers: List<ConsumerKafka>,
-    private val kafkaProperties: KafkaProperties
-) {
-    private val prefix: String = kafkaProperties.topicsPrefix ?: "extrato-edi_"
-    private val suffix: String = kafkaProperties.retrySuffix ?: "_pix-reader_retry"
-
-    fun listener(
-        consumerRecordMessage: ConsumerRecord<String, String>,
-        topic: String,
-        ack: Acknowledgment
-    ) {
-        val bindKey = getBindKey(topic) ?: throw IllegalStateException("Bind not found for topic: $topic")
-        val consumer = consumers.firstOrNull {
-            it.input == bindKey
-        } ?: throw IllegalStateException("Consumer not found")
-        try {
-            consumer.receive(consumerRecordMessage.value(), ack)
-        } catch (e: Exception) {
-            throw e
-        }
+    class BrokerConfig {
+        var bootstrapServers: String? = null
+        var username: String? = null
+        var password: String? = null
+        var securityProtocol: String? = null
+        var mechanism: String? = null
     }
 
-    private fun getBindKey(topic: String): String? =
-        kafkaProperties.consumers?.entries?.firstOrNull { (_, values) ->
-            topic in allTopics(values.topic ?: "", "", "")
-        }?.value?.topic
+    class ConsumerConfig {
+        var brokerId: String? = null
+        var groupId: String? = null
+        var topic: String? = null
+        var autoOffsetReset: String? = null
+    }
 
-    private fun allTopics(topic: String, suffix: String, prefix: String): List<String> =
-        listOf(topic, "$prefix$topic$suffix")
-}
+    class BindConfig {
+        var consumer: Map<String, String>? = null
+        var producer: Map<String, String>? = null
+    }
 
-@Component
-class KafkaConsumer(val mainKafkaConsumer: MainKafkaConsumer) {
-
-    @KafkaHandler
-    @KafkaListener(
-        topics = ["\${picpay.kafka.consumers.fnsvcpf.topic}"],
-        groupId = "\${picpay.kafka.consumers.fnsvcpf.group-id}",
-        containerFactory = "kafkaListenerFnsvcpf"
+    class Config {
+        var maxPoolRecords: Int? = null
+        var maxPoolInterval: Int? = null
+        var sessionTimeout: Int? = null
+        var securityProtocol: String? = null
+        var saslSslMechanism: String? = null
+        var saslPlainMechanism: String? = null
+        var autoOffsetReset: String? = null
+        var trustedPackages: String? = null
+        var maxSizeMsg: Int? = null
+        var retryAttempts: Int? = null
+        var retryDelay: Int? = null
+        var listenerConcurrency: Int? = null
+    }
+    data class BinderValues(
+        var legacy: String,
+        var new: String
     )
-    fun listenerFnsvcpf(
-        @Payload consumerRecordMessage: ConsumerRecord<String, String>,
-        @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
-        ack: Acknowledgment
-    ) {
-        mainKafkaConsumer.listener(consumerRecordMessage, topic, ack)
-    }
 
-    @KafkaHandler
-    @KafkaListener(
-        topics = ["\${picpay.kafka.consumers.bankpj.topic}"],
-        groupId = "\${picpay.kafka.consumers.bankpj.group-id}",
-        containerFactory = "kafkaListenerBankpj"
+    data class Retry(
+        var attempts: Int?,
+        var delay: Int?,
+        var mode: String?,
+        var suffix: String?
     )
-    fun listenerBankpj(
-        @Payload consumerRecordMessage: ConsumerRecord<String, String>,
-        @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
-        ack: Acknowledgment
-    ) {
-        mainKafkaConsumer.listener(consumerRecordMessage, topic, ack)
-    }
 
-    @KafkaHandler
-    @KafkaListener(
-        topics = ["\${picpay.kafka.consumers.legacy.topic}"],
-        groupId = "\${picpay.kafka.consumers.legacy.group-id}",
-        containerFactory = "kafkaListenerLegacy"
+    data class Dlt(
+        var suffix: String?
     )
-    fun listenerFncsvpj(
-        @Payload consumerRecordMessage: ConsumerRecord<String, String>,
-        @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
-        ack: Acknowledgment
-    ) {
-        mainKafkaConsumer.listener(consumerRecordMessage, topic, ack)
-    }
 
+    data class Producer(
+        var idempotence: Boolean?,
+        var clientId: String?,
+        var retires: Int?,
+        var acks: String?
+    )
 }
