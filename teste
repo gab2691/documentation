@@ -1,72 +1,301 @@
-@Configuration
-@ConfigurationProperties(prefix = "picpay.kafka")
-class KafkaProperties {
-    var brokers: Map<String, BrokerConfig> = emptyMap()
-    var consumers: Map<String, ConsumerConfig> = emptyMap()
-    var retrySuffix: String? = null
-    var dltSuffix: String? = null
-    var topicsPrefix: String? = null
-    var producer: Producer? = null
-    var bind: BindConfig? = null
-    var config: Config? = null
-    var bindMap: Map<String, BinderValues>? = null
-    var retry: Retry? = null
-    var dlt: Dlt? = null
+global:
+  app_stage: qa
+  image:
+    tag: 91f4d49547afe5c4260cdbe6b712e1062cbb7ecd
+  releaseNumber: 0
+  jvm_metrics:
+    enabled: true
+    port: 8081
 
-    class BrokerConfig {
-        var bootstrapServers: String? = null
-        var username: String? = null
-        var password: String? = null
-        var securityProtocol: String? = null
-        var mechanism: String? = null
-    }
+picpay-ms-v2:
+  apis:
+    - name: bankpj
+      args:
+        - "-XX:+UseG1GC"
+        - "-XX:MaxRAMPercentage=80"
+        - "-Dotel.instrumentation.tomcat.enabled=false"
+        - "-Dspring.profiles.active=bankpj"
+      envFrom:
+        - secretRef:
+            name: envs
+        - secretRef:
+            name: envs-secrets
+      externalSecrets:
+        - name: default-bankpj
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/env
+          dataFrom:
+            - secretFile: ms-edi-pix
+        - name: secrets-bankpj
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/scrt
+          dataFrom:
+            - secretFile: ms-edi-pix
+      workload: srvfpj
+      health:
+        path: /health
+      readiness:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 3
+        timeoutSeconds: 5
+      liveness:
+        initialDelaySeconds: 200
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 4
+        timeoutSeconds: 5
+      hpa:
+        enabled: true
+        max: 2
+        min: 1
+        targetCPU: 80
+      containerPort: 8080
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          hosts:
+            - hostname: ms-edi-pix.ms.qa
+              path: "/"
+      podDisruptionBudget:
+        enabled: false
+      limits_memory: 2Gi
+      limits_cpu: 500m
+      requests_cpu: 50m
+      requests_memory: 1Gi
+      service:
+        enabled: true
+        port: 80
+        targetPort: 8080
+      lifecycle:
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: 25%
+      rollingUpdateMaxUnavailable: 0%
+      rollouts:
+        enabled: true
+        type: canary
+        abortScaleDownDelaySeconds: 120
+        strategyCanarySteps:
+          duration: 10m
+          weights: 50/100
+      analysis:
+        enabled: true
+        metrics:
+          - name: http-request-alive
+            interval: 30s
+            initialDelay: 30s
+            failureLimit: 5
+            successCondition: "result == 'OK'"
+            provider:
+              web:
+                url: "http://{{args.canary-service}}:80/health"
+                timeoutSeconds: 30
+                jsonPath: "{$.status}"
 
-    class ConsumerConfig {
-        var brokerId: String? = null
-        var groupId: String? = null
-        var topic: String? = null
-        var autoOffsetReset: String? = null
-    }
+    - name: legacy
+      args:
+        - "-XX:+UseG1GC"
+        - "-XX:MaxRAMPercentage=80"
+        - "-Dotel.instrumentation.tomcat.enabled=false"
+        - "-Dspring.profiles.active=legacy"
+      envFrom:
+        - secretRef:
+            name: envs
+        - secretRef:
+            name: envs-secrets
+      externalSecrets:
+        - name: default-legacy
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/env
+          dataFrom:
+            - secretFile: ms-edi-pix
+        - name: secrets-legacy
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/scrt
+          dataFrom:
+            - secretFile: ms-edi-pix
+      workload: srvfpj
+      health:
+        path: /health
+      readiness:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 3
+        timeoutSeconds: 5
+      liveness:
+        initialDelaySeconds: 200
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 4
+        timeoutSeconds: 5
+      hpa:
+        enabled: true
+        max: 2
+        min: 1
+        targetCPU: 80
+      containerPort: 8080
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          hosts:
+            - hostname: ms-edi-pix.ms.qa
+              path: "/"
+      podDisruptionBudget:
+        enabled: false
+      limits_memory: 2Gi
+      limits_cpu: 500m
+      requests_cpu: 50m
+      requests_memory: 1Gi
+      service:
+        enabled: true
+        port: 80
+        targetPort: 8080
+      lifecycle:
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: 25%
+      rollingUpdateMaxUnavailable: 0%
+      rollouts:
+        enabled: true
+        type: canary
+        abortScaleDownDelaySeconds: 120
+        strategyCanarySteps:
+          duration: 10m
+          weights: 50/100
+      analysis:
+        enabled: true
+        metrics:
+          - name: http-request-alive
+            interval: 30s
+            initialDelay: 30s
+            failureLimit: 5
+            successCondition: "result == 'OK'"
+            provider:
+              web:
+                url: "http://{{args.canary-service}}:80/health"
+                timeoutSeconds: 30
+                jsonPath: "{$.status}"
 
-    class BindConfig {
-        var consumer: Map<String, String>? = null
-        var producer: Map<String, String>? = null
-    }
+    - name: fnsvcpf
+      args:
+        - "-XX:+UseG1GC"
+        - "-XX:MaxRAMPercentage=80"
+        - "-Dotel.instrumentation.tomcat.enabled=false"
+        - "-Dspring.profiles.active=fnsvcpf"
+      envFrom:
+        - secretRef:
+            name: envs
+        - secretRef:
+            name: envs-secrets
+      externalSecrets:
+        - name: default-fnsvcpf
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/env
+          dataFrom:
+            - secretFile: ms-edi-pix
+        - name: secrets-fnsvcpf
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/scrt
+          dataFrom:
+            - secretFile: ms-edi-pix
+      workload: srvfpj
+      health:
+        path: /health
+      readiness:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 3
+        timeoutSeconds: 5
+      liveness:
+        initialDelaySeconds: 200
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 4
+        timeoutSeconds: 5
+      hpa:
+        enabled: true
+        max: 2
+        min: 1
+        targetCPU: 80
+      containerPort: 8080
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          hosts:
+            - hostname: ms-edi-pix.ms.qa
+              path: "/"
+      podDisruptionBudget:
+        enabled: false
+      limits_memory: 2Gi
+      limits_cpu: 500m
+      requests_cpu: 50m
+      requests_memory: 1Gi
+      service:
+        enabled: true
+        port: 80
+        targetPort: 8080
+      lifecycle:
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: 25%
+      rollingUpdateMaxUnavailable: 0%
+      rollouts:
+        enabled: true
+        type: canary
+        abortScaleDownDelaySeconds: 120
+        strategyCanarySteps:
+          duration: 10m
+          weights: 50/100
+      analysis:
+        enabled: true
+        metrics:
+          - name: http-request-alive
+            interval: 30s
+            initialDelay: 30s
+            failureLimit: 5
+            successCondition: "result == 'OK'"
+            provider:
+              web:
+                url: "http://{{args.canary-service}}:80/health"
+                timeoutSeconds: 30
+                jsonPath: "{$.status}"
 
-    class Config {
-        var maxPoolRecords: Int? = null
-        var maxPoolInterval: Int? = null
-        var sessionTimeout: Int? = null
-        var securityProtocol: String? = null
-        var saslSslMechanism: String? = null
-        var saslPlainMechanism: String? = null
-        var autoOffsetReset: String? = null
-        var trustedPackages: String? = null
-        var maxSizeMsg: Int? = null
-        var retryAttempts: Int? = null
-        var retryDelay: Int? = null
-        var listenerConcurrency: Int? = null
-    }
-    data class BinderValues(
-        var legacy: String,
-        var new: String
-    )
+  workers: []
 
-    data class Retry(
-        var attempts: Int?,
-        var delay: Int?,
-        var mode: String?,
-        var suffix: String?
-    )
 
-    data class Dlt(
-        var suffix: String?
-    )
-
-    data class Producer(
-        var idempotence: Boolean?,
-        var clientId: String?,
-        var retires: Int?,
-        var acks: String?
-    )
-}
+RepeatedResourceWarning
+Resource /Service/ms-edi-pix/edi-pix-service-jvm-metrics appeared 2 times among application resources.
+3 minutes ago (Wed Oct 01 2025 16:56:49 GMT-0300)
+RepeatedResourceWarning
+Resource monitoring.coreos.com/ServiceMonitor/ms-edi-pix/edi-pix-jvm-metrics-service-monitor appeared 2 times among application resources.
