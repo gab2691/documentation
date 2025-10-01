@@ -1,223 +1,41 @@
 global:
   app_stage: qa
   image:
-    tag: 265ebd23d91ec699386eb3e5ca43e67e2fdc9c4e
+    tag: 91f4d49547afe5c4260cdbe6b712e1062cbb7ecd
   releaseNumber: 0
-  topologySpreadAz: true
-  bu: financial_services_pj
-  namespace:
-    labels:
-      dynatrace: true
-      team: extrato_edi
-  externalSecrets:
-    - name: default
-      enabled: true
-      type: vault
-      refreshInterval: 10m
-      mountPath: kubernetes-srvfpj-use1-hom
-      path: financial_services_pj/hom/env
-      dataFrom:
-        - secretFile: ms-edi-wrk-extension-reader
-    - name: secrets
-      enabled: true
-      type: vault
-      refreshInterval: 10m
-      mountPath: kubernetes-srvfpj-use1-hom
-      path: financial_services_pj/hom/scrt
-      dataFrom:
-        - secretFile: ms-edi-wrk-extension-reader
-    - name: kafka
-      enabled: true
-      type: vault
-      mountPath: kubernetes-srvfpj-use1-hom
-      path: kv/financial_services_pj/hom
-      dataFrom:
-        - secretFile: ms-edi-wrk-extension-reader
+  jvm_metrics:
+    enabled: true
+    port: 8081
 
 picpay-ms-v2:
-  enabled: false
-
-picpay-ms-v2-qa:
-  enabled: true
   apis:
-
-    - name: balance
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-balance
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
+    - name: bankpj
       args:
         - "-XX:+UseG1GC"
         - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
         - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dspring.profiles.active=balance"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" # 60seg
+        - "-Dspring.profiles.active=bankpj"
       envFrom:
         - secretRef:
             name: envs
         - secretRef:
             name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
-      health:
-        path: /health
-      readiness:
-        initialDelaySeconds: 50
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-        timeoutSeconds: 5
-      liveness:
-        initialDelaySeconds: 200
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 4
-        timeoutSeconds: 5
-      hpa:
-        enabled: true
-        min: 1
-        max: 1
-
-      rollouts:
-        enabled: true
-        type: canary
-        rollingDynamicStableScale: false
-        strategyCanarySteps:
-          duration: 10m
-          weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
-      analysis:
-        enabled: true
-        metrics:
-          - name: http-request-alive
-            interval: 30s
-            initialDelay: 200s
-            failureLimit: 5
-            successCondition: "result == 'UP'"
-            provider:
-              web:
-                url: "http://{{args.canary-service}}:80/health"
-                timeoutSeconds: 30
-                jsonPath: "{$.status}"
-
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-balance.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-balance
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-balance.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 500Mi
-      limits_memory: 500Mi
-      requests_cpu: 40m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-
-    - name: dgstore
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-dgstore
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
-      args:
-        - "-XX:+UseG1GC"
-        - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
-        - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dspring.profiles.active=dgstore"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" #60seg
-      envFrom:
-        - secretRef:
-            name: envs
-        - secretRef:
-            name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
+      externalSecrets:
+        - name: default-bankpj
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/env
+          dataFrom:
+            - secretFile: ms-edi-pix
+        - name: secrets-bankpj
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/scrt
+          dataFrom:
+            - secretFile: ms-edi-pix
+      workload: srvfpj
       health:
         path: /health
       readiness:
@@ -234,129 +52,86 @@ picpay-ms-v2-qa:
         timeoutSeconds: 5
       hpa:
         enabled: true
+        max: 2
         min: 1
-        max: 1
-
+        targetCPU: 80
+      containerPort: 8080
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          name: internal-ms-edi-pix-bankpj
+          hosts:
+            - hostname: ms-edi-pix-bankpj.ms.qa
+              path: "/"
+      service:
+        enabled: true
+        name: edi-pix-bankpj
+        port: 80
+        targetPort: 8080
+      podDisruptionBudget:
+        enabled: false
+      limits_memory: 2Gi
+      limits_cpu: 500m
+      requests_cpu: 50m
+      requests_memory: 1Gi
+      lifecycle:
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: 25%
+      rollingUpdateMaxUnavailable: 0%
       rollouts:
         enabled: true
         type: canary
-        rollingDynamicStableScale: false
+        abortScaleDownDelaySeconds: 120
         strategyCanarySteps:
           duration: 10m
           weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
       analysis:
         enabled: true
         metrics:
           - name: http-request-alive
             interval: 30s
-            initialDelay: 200s
+            initialDelay: 30s
             failureLimit: 5
-            successCondition: "result == 'UP'"
+            successCondition: "result == 'OK'"
             provider:
               web:
                 url: "http://{{args.canary-service}}:80/health"
                 timeoutSeconds: 30
                 jsonPath: "{$.status}"
 
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-dgstore.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-dgstore
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-dgstore.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 700Mi
-      limits_memory: 700Mi
-      requests_cpu: 20m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                      
-    - name: ecommerce
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-ecommerce
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
+    - name: legacy
       args:
         - "-XX:+UseG1GC"
         - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
         - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dspring.profiles.active=ecommerce"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" #60seg
+        - "-Dspring.profiles.active=legacy"
       envFrom:
         - secretRef:
             name: envs
         - secretRef:
             name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
+      externalSecrets:
+        - name: default-legacy
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/env
+          dataFrom:
+            - secretFile: ms-edi-pix
+        - name: secrets-legacy
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/scrt
+          dataFrom:
+            - secretFile: ms-edi-pix
+      workload: srvfpj
       health:
         path: /health
       readiness:
@@ -373,129 +148,86 @@ picpay-ms-v2-qa:
         timeoutSeconds: 5
       hpa:
         enabled: true
+        max: 2
         min: 1
-        max: 1
-      
+        targetCPU: 80
+      containerPort: 8080
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          name: internal-ms-edi-pix-legacy
+          hosts:
+            - hostname: ms-edi-pix-legacy.ms.qa
+              path: "/"
+      service:
+        enabled: true
+        name: edi-pix-legacy
+        port: 80
+        targetPort: 8080
+      podDisruptionBudget:
+        enabled: false
+      limits_memory: 2Gi
+      limits_cpu: 500m
+      requests_cpu: 50m
+      requests_memory: 1Gi
+      lifecycle:
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: 25%
+      rollingUpdateMaxUnavailable: 0%
       rollouts:
         enabled: true
         type: canary
-        rollingDynamicStableScale: false
+        abortScaleDownDelaySeconds: 120
         strategyCanarySteps:
           duration: 10m
           weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
       analysis:
         enabled: true
         metrics:
           - name: http-request-alive
             interval: 30s
-            initialDelay: 200s
+            initialDelay: 30s
             failureLimit: 5
-            successCondition: "result == 'UP'"
+            successCondition: "result == 'OK'"
             provider:
               web:
                 url: "http://{{args.canary-service}}:80/health"
                 timeoutSeconds: 30
                 jsonPath: "{$.status}"
 
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-ecommerce.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-ecommerce
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-ecommerce.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 480Mi
-      limits_memory: 650Mi
-      requests_cpu: 40m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-
-    - name: mobility
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-mobility
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
+    - name: fnsvcpf
       args:
         - "-XX:+UseG1GC"
         - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
         - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dspring.profiles.active=mobility"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" #60seg
+        - "-Dspring.profiles.active=fnsvcpf"
       envFrom:
         - secretRef:
             name: envs
         - secretRef:
             name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
+      externalSecrets:
+        - name: default-fnsvcpf
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/env
+          dataFrom:
+            - secretFile: ms-edi-pix
+        - name: secrets-fnsvcpf
+          enabled: true
+          type: vault
+          mountPath: kubernetes-srvfpj-use1-hom
+          path: financial_services_pj/hom/scrt
+          dataFrom:
+            - secretFile: ms-edi-pix
+      workload: srvfpj
       health:
         path: /health
       readiness:
@@ -512,850 +244,57 @@ picpay-ms-v2-qa:
         timeoutSeconds: 5
       hpa:
         enabled: true
+        max: 2
         min: 1
-        max: 1
-
+        targetCPU: 80
+      containerPort: 8080
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          name: internal-ms-edi-pix-fnsvcpf
+          hosts:
+            - hostname: ms-edi-pix-fnsvcpf.ms.qa
+              path: "/"
+      service:
+        enabled: true
+        name: edi-pix-fnsvcpf
+        port: 80
+        targetPort: 8080
+      podDisruptionBudget:
+        enabled: false
+      limits_memory: 2Gi
+      limits_cpu: 500m
+      requests_cpu: 50m
+      requests_memory: 1Gi
+      lifecycle:
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: 25%
+      rollingUpdateMaxUnavailable: 0%
       rollouts:
         enabled: true
         type: canary
-        rollingDynamicStableScale: false
+        abortScaleDownDelaySeconds: 120
         strategyCanarySteps:
           duration: 10m
           weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
       analysis:
         enabled: true
         metrics:
           - name: http-request-alive
             interval: 30s
-            initialDelay: 200s
+            initialDelay: 30s
             failureLimit: 5
-            successCondition: "result == 'UP'"
+            successCondition: "result == 'OK'"
             provider:
               web:
                 url: "http://{{args.canary-service}}:80/health"
                 timeoutSeconds: 30
                 jsonPath: "{$.status}"
-
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-mobility.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-mobility
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-mobility.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 500Mi
-      limits_memory: 700Mi
-      requests_cpu: 40m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-
-    - name: oneclick
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-oneclick
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
-      args:
-        - "-XX:+UseG1GC"
-        - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
-        - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dpicpay.edi.oneclick-transaction-event-enabled=true"
-        - "-Dspring.profiles.active=oneclick"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" #60seg
-      envFrom:
-        - secretRef:
-            name: envs
-        - secretRef:
-            name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
-      health:
-        path: /health
-      readiness:
-        initialDelaySeconds: 30
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-        timeoutSeconds: 5
-      liveness:
-        initialDelaySeconds: 200
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 4
-        timeoutSeconds: 5
-      hpa:
-        enabled: true
-        min: 1
-        max: 1
-
-      rollouts:
-        enabled: true
-        type: canary
-        rollingDynamicStableScale: false
-        strategyCanarySteps:
-          duration: 10m
-          weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
-      analysis:
-        enabled: true
-        metrics:
-          - name: http-request-alive
-            interval: 30s
-            initialDelay: 200s
-            failureLimit: 5
-            successCondition: "result == 'UP'"
-            provider:
-              web:
-                url: "http://{{args.canary-service}}:80/health"
-                timeoutSeconds: 30
-                jsonPath: "{$.status}"
-
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-oneclick.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-oneclick
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-oneclick.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 450Mi
-      limits_memory: 650Mi
-      requests_cpu: 40m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-
-    - name: recharge
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-recharge
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
-      args:
-        - "-XX:+UseG1GC"
-        - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
-        - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dspring.profiles.active=recharge"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" #60seg
-      envFrom:
-        - secretRef:
-            name: envs
-        - secretRef:
-            name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
-      health:
-        path: /health
-      readiness:
-        initialDelaySeconds: 30
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-        timeoutSeconds: 5
-      liveness:
-        initialDelaySeconds: 200
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 4
-        timeoutSeconds: 5
-      hpa:
-        enabled: true
-        min: 1
-        max: 1
-
-      rollouts:
-        enabled: true
-        type: canary
-        rollingDynamicStableScale: false
-        strategyCanarySteps:
-          duration: 10m
-          weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
-      analysis:
-        enabled: true
-        metrics:
-          - name: http-request-alive
-            interval: 30s
-            initialDelay: 200s
-            failureLimit: 5
-            successCondition: "result == 'UP'"
-            provider:
-              web:
-                url: "http://{{args.canary-service}}:80/health"
-                timeoutSeconds: 30
-                jsonPath: "{$.status}"
-
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-recharge.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-recharge
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-recharge.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 450Mi
-      limits_memory: 650Mi
-      requests_cpu: 40m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-
-    - name: tef
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-tef
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
-      args:
-        - "-XX:+UseG1GC"
-        - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
-        - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dspring.profiles.active=tef"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" #60seg
-      envFrom:
-        - secretRef:
-            name: envs
-        - secretRef:
-            name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
-      health:
-        path: /health
-      readiness:
-        initialDelaySeconds: 30
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-        timeoutSeconds: 5
-      liveness:
-        initialDelaySeconds: 200
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 4
-        timeoutSeconds: 5
-      hpa:
-        enabled: true
-        min: 1
-        max: 1
-
-      rollouts:
-        enabled: true
-        type: canary
-        rollingDynamicStableScale: false
-        strategyCanarySteps:
-          duration: 10m
-          weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
-      analysis:
-        enabled: true
-        metrics:
-          - name: http-request-alive
-            interval: 30s
-            initialDelay: 200s
-            failureLimit: 5
-            successCondition: "result == 'UP'"
-            provider:
-              web:
-                url: "http://{{args.canary-service}}:80/health"
-                timeoutSeconds: 30
-                jsonPath: "{$.status}"
-
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-tef.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-tef
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-tef.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 480Mi
-      limits_memory: 650Mi
-      requests_cpu: 40m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-
-    - name: cerc
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-cerc
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
-      args:
-        - "-XX:+UseG1GC"
-        - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
-        - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dspring.profiles.active=cerc"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" #60seg
-      envFrom:
-        - secretRef:
-            name: envs
-        - secretRef:
-            name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
-      health:
-        path: /health
-      readiness:
-        initialDelaySeconds: 30
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-        timeoutSeconds: 5
-      liveness:
-        initialDelaySeconds: 200
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 4
-        timeoutSeconds: 5
-      hpa:
-        enabled: true
-        min: 1
-        max: 1
-
-      rollouts:
-        enabled: true
-        type: canary
-        rollingDynamicStableScale: false
-        strategyCanarySteps:
-          duration: 10m
-          weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
-      analysis:
-        enabled: true
-        metrics:
-          - name: http-request-alive
-            interval: 30s
-            initialDelay: 200s
-            failureLimit: 5
-            successCondition: "result == 'UP'"
-            provider:
-              web:
-                url: "http://{{args.canary-service}}:80/health"
-                timeoutSeconds: 30
-                jsonPath: "{$.status}"
-
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-cerc.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-cerc
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-cerc.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 480Mi
-      limits_memory: 650Mi
-      requests_cpu: 40m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-    - name: late-enrichment
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-late-enrichment
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
-      args:
-        - "-XX:+UseG1GC"
-        - "-XX:MaxRAMPercentage=80"
-        - "-Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader"
-        - "-Dotel.instrumentation.tomcat.enabled=false"
-        - "-Dspring.profiles.active=enrichment"
-        - "-Dpicpay.kafka.errors.retry.attempts=3"
-        - "-Dpicpay.kafka.errors.retry.delay=60000" #60seg
-      envFrom:
-        - secretRef:
-            name: envs
-        - secretRef:
-            name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
-      health:
-        path: /health
-      readiness:
-        initialDelaySeconds: 30
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 3
-        timeoutSeconds: 5
-      liveness:
-        initialDelaySeconds: 200
-        periodSeconds: 5
-        successThreshold: 1
-        failureThreshold: 4
-        timeoutSeconds: 5
-      hpa:
-        enabled: true
-        min: 1
-        max: 1
-
-      rollouts:
-        enabled: true
-        type: canary
-        rollingDynamicStableScale: false
-        strategyCanarySteps:
-          duration: 10m
-          weights: 50/100
-          autoPromotion: true
-          trafficRouting: false
-
-      analysis:
-        enabled: true
-        metrics:
-          - name: http-request-alive
-            interval: 30s
-            initialDelay: 200s
-            failureLimit: 5
-            successCondition: "result == 'UP'"
-            provider:
-              web:
-                url: "http://{{args.canary-service}}:80/health"
-                timeoutSeconds: 30
-                jsonPath: "{$.status}"
-
-      containerPort: 8080
-      image:
-        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      ingress:
-        - enabled: true
-          type: internal-microservices
-          hostname: ms-edi-wrk-extension-reader-late-enrichment.ms.qa
-          name: internal-ms-edi-wrk-extension-reader-late-enrichment
-          annotations:
-            alb.ingress.kubernetes.io/group.name: internal-microservices
-            alb.ingress.kubernetes.io/scheme: internal
-            alb.ingress.kubernetes.io/target-type: ip
-            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-            alb.ingress.kubernetes.io/ssl-redirect: "false"
-            alb.ingress.kubernetes.io/backend-protocol: HTTP
-          path: /
-          hosts:
-            - hostname: ms-edi-wrk-extension-reader-late-enrichment.ms.qa
-      podDisruptionBudget:
-        enabled: false
-      requests_memory: 480Mi
-      limits_memory: 650Mi
-      requests_cpu: 40m
-      limits_cpu: 600m
-      service:
-        enabled: true
-        port: 80
-        targetPort: 8080
-      lifecycle:
-        preStop:
-          - "/bin/bash"
-          - "-c"
-          - "/bin/sleep 20"
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                      
-  cronjobs:
-    - name: process-blacklist
-      image: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-wrk-extension-reader
-      labels:
-        bu: financial_services_pj
-        fmu: financial_services_pj
-        product: extrato_edi_pjee
-        produto: extrato_edi_pjee
-        servico: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        service: extrato_edi_pjee_servicos_funcionalidade_nao_catalogado
-        squad: extrato_edi
-        tribo: processamento_liquidacao
-        tribe: processamento_liquidacao
-        vertical: aceitacao
-        subservico: ms-edi-wrk-extension-reader-api-oneclick
-        escalation: "PJ-Extrato_edi"
-      annotations:
-        observability.ppay.me/bu: financial_services_pj
-        observability.ppay.me/log_service: DYNA
-        oneagent.dynatrace.com/inject: "true"
-        observability.ppay.me/scrape: true
-        observability.ppay.me/port: "8080"
-        observability.ppay.me/path: "/actuator/prometheus"
-        live.stormforge.io/auto-deploy: "Disabled"
-      command: /docker-cron-entrypoint.sh
-      args:
-        - "-XX:+UseG1GC -XX:MaxRAMPercentage=80 -Dotel.resource.attributes=service.name=ms-edi-wrk-extension-reader -Dotel.instrumentation.tomcat.enabled=false -Dspring.profiles.active=runner -Dpicpay.edi.tef-api=http://tef-connect.ms.qa/private/v1/conciliation -Dpicpay.edi.blacklist.days=10"
-        - PROCESS_BLACKLIST
-      envFrom:
-        - secretRef:
-            name: envs
-        - secretRef:
-            name: envs-secrets
-        - secretRef:
-            name: envs-kafka
-      workload: edi-wrk-extension-reader
-      schedule: "*/30 * * * *"
-      ttl: 1800
-      enabled: true
-      memory: 700Mi
-      cpu: 100m
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: family
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: picpay-ops/workload
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-                  - key: app
-                    operator: In
-                    values:
-                      - financial-services-pj-arm
-      tolerations:
-        - effect: NoExecute
-          key: spot
-          value: "true"
-        - effect: NoSchedule
-          key: spot
-          value: "true"
 
   workers: []
