@@ -6,16 +6,5 @@ helm template ms-edi-pix ./charts/picpay-ms-v2-qa \
 
 
 
-gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . -f values.qa.yaml --namespace ms-edi-pix
-Release "ms-edi-pix" does not exist. Installing it now.
-Error: unable to build kubernetes objects from release manifest: [resource mapping not found for name: "edi-pix-bankpj" namespace: "ms-edi-pix" from "": no matches for kind "AnalysisTemplate" in version "argoproj.io/v1alpha1"
-ensure CRDs are installed first, resource mapping not found for name: "edi-pix-legacy" namespace: "ms-edi-pix" from "": no matches for kind "AnalysisTemplate" in version "argoproj.io/v1alpha1"
-ensure CRDs are installed first, resource mapping not found for name: "edi-pix-fnsvcpf" namespace: "ms-edi-pix" from "": no matches for kind "AnalysisTemplate" in version "argoproj.io/v1alpha1"
-ensure CRDs are installed first, resource mapping not found for name: "edi-pix-default" namespace: "ms-edi-pix" from "": no matches for kind "ExternalSecret" in version "external-secrets.io/v1beta1"
-ensure CRDs are installed first, resource mapping not found for name: "edi-pix-bankpj" namespace: "ms-edi-pix" from "": no matches for kind "Rollout" in version "argoproj.io/v1alpha1"
-ensure CRDs are installed first, resource mapping not found for name: "edi-pix-legacy" namespace: "ms-edi-pix" from "": no matches for kind "Rollout" in version "argoproj.io/v1alpha1"
-ensure CRDs are installed first, resource mapping not found for name: "edi-pix-fnsvcpf" namespace: "ms-edi-pix" from "": no matches for kind "Rollout" in version "argoproj.io/v1alpha1"
-ensure CRDs are installed first, resource mapping not found for name: "envs-secretstore-default" namespace: "ms-edi-pix" from "": no matches for kind "SecretStore" in version "external-secrets.io/v1beta1"
-ensure CRDs are installed first, resource mapping not found for name: "edi-pix-jvm-metrics-service-monitor" namespace: "" from "": no matches for kind "ServiceMonitor" in version "monitoring.coreos.com/v1"
-ensure CRDs are installed first]
-gabriel.bbatista@PPM-JAMF-32830 chart %  
+kubectl create ns argo-rollouts 2>/dev/null || true
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
