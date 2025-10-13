@@ -276,3 +276,7 @@ picpay-ms-v2-qa:
 
 picpay-ms-v2:
   enabled: false
+
+
+container "edi-pix-bankpj" in pod "edi-pix-bankpj-864b9bffbc-4f65x" is waiting to start: CreateContainerConfigError
+
