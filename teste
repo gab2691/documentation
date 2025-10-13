@@ -1,3 +1,27 @@
-kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/v0.9.13/deploy/crds/bundle.yaml
-kubectl get crd externalsecrets.external-secrets.io -o=jsonpath='{range .spec.versions[*]}{.name}={.served}{"\n"}{end}'
-kubectl get crd secretstores.external-secrets.io -o=jsonpath='{range .spec.versions[*]}{.name}={.served}{"\n"}{end}'
+global:
+  externalSecrets: []          # NÃO cria ExternalSecret/SecretStore no render local
+  jvm_metrics:
+    enabled: false             # evita criar ServiceMonitor (Prometheus)
+
+picpay-ms-v2-qa:
+  apis:
+    - rollouts: { enabled: false }
+      analysis: { enabled: false }
+    - rollouts: { enabled: false }
+      analysis: { enabled: false }
+    - rollouts: { enabled: false }
+      analysis: { enabled: false }
+local-no-crds.yaml
+
+
+kubectl -n ms-edi-pix create secret generic envs --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n ms-edi-pix create secret generic envs-secrets --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
+
+
+helm upgrade --install ms-edi-pix . \
+  -f values.qa.yaml \
+  -f local-no-crds.yaml \
+  --namespace ms-edi-pix
+
+
+kubectl -n ms-edi-pix get deploy,po
