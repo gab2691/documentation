@@ -27,3 +27,8 @@ kubectl -n ms-edi-pix get pods
 
 P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
 kubectl -n ms-edi-pix describe pod "$P" | sed -n '/Events/,$p'
+
+gabriel.bbatista@PPM-JAMF-32830 chart % docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
+
+ctr: unrecognized image format
+gabriel.bbatista@PPM-JAMF-32830 chart % 
