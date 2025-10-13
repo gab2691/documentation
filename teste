@@ -1,5 +1,10 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % POD=edi-pix-bankpj-6494f6cbb-j4lxh
+NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+echo $NODE
 
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pod $POD -o jsonpath='{range .spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[*].matchExpressions[*]}{.key} {.operator} {.values}{"\n"}{end}'
-family In ["srvfpj"]
-gabriel.bbatista@PPM-JAMF-32830 chart % 
+
+kubectl label node "$NODE" family=srvfpj --overwrite
+
+kubectl get node "$NODE" --show-labels | sed 's/,/\n/g'
+
+
+kubectl -n ms-edi-pix get pods -w
