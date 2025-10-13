@@ -1,10 +1,11 @@
-# remova o taint do control-plane (Kind moderno)
-kubectl taint nodes local-dev-control-plane node-role.kubernetes.io/control-plane- 2>/dev/null || true
-# remova o taint legado (se existir)
-kubectl taint nodes local-dev-control-plane node-role.kubernetes.io/master- 2>/dev/null || true
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl taint nodes local-dev-control-plane node-role.kubernetes.io/control-plane- 2>/dev/null || true
 
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl taint nodes local-dev-control-plane node-role.kubernetes.io/master- 2>/dev/null || true
 
-kubectl -n ms-edi-pix get pods -w
+gabriel.bbatista@PPM-JAMF-32830 chart % 
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pods -w
 
-
-kubectl -n ms-edi-pix describe pod edi-pix-bankpj-6494f6cbb-j4lxh | sed -n '/Events/,$p'
+NAME                               READY   STATUS    RESTARTS   AGE
+edi-pix-bankpj-6494f6cbb-j4lxh     0/1     Pending   0          18m
+edi-pix-fnsvcpf-7cd7fd46bd-xm4tl   0/1     Pending   0          18m
+edi-pix-legacy-95c4d9478-cmdbj     0/1     Pending   0          18m
