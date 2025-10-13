@@ -1,7 +1,43 @@
-briel.bbatista@PPM-JAMF-32830 chart % docker save -o /tmp/nginx-stable-arm64.tar nginx:stable
+docker pull --platform=linux/arm64 nginx:1.27-alpine
+docker tag nginx:1.27-alpine nginx:local
 
-gabriel.bbatista@PPM-JAMF-32830 chart % kind load image-archive /tmp/nginx-stable-arm64.tar --name local-dev
 
-ERROR: failed to load image: command "docker exec --privileged -i local-dev-control-plane ctr --namespace=k8s.io images import --all-platforms --digests --snapshotter=overlayfs -" failed with error: exit status 1
-Command Output: ctr: content digest sha256:d9c62df87ab2f884f401f81e170f2dd3f7e0b0ba6983a144cf73f2015698a13c: not found
-gabriel.bbatista@PPM-JAMF-32830 chart % 
+kind load docker-image nginx:local --name local-dev
+
+
+docker save -o /tmp/nginx-local.tar nginx:local
+docker cp /tmp/nginx-local.tar local-dev-control-plane:/tmp/nginx-local.tar
+docker exec -it local-dev-control-plane ctr -n k8s.io images import /tmp/nginx-local.tar
+docker exec -it local-dev-control-plane crictl images | grep nginx
+
+
+helm upgrade --install ms-edi-pix . \
+  -f values.qa.yaml \
+  -f local-no-crds.yaml \
+  --namespace ms-edi-pix \
+  --set 'global.topologySpreadAz=false' \
+  --set 'picpay-ms-v2-qa.apis[0].image.repositoryURI=nginx' \
+  --set 'picpay-ms-v2-qa.apis[0].image.tag=local' \
+  --set 'picpay-ms-v2-qa.apis[1].image.repositoryURI=nginx' \
+  --set 'picpay-ms-v2-qa.apis[1].image.tag=local' \
+  --set 'picpay-ms-v2-qa.apis[2].image.repositoryURI=nginx' \
+  --set 'picpay-ms-v2-qa.apis[2].image.tag=local' \
+  --set 'picpay-ms-v2-qa.apis[0].rollouts.enabled=false' \
+  --set 'picpay-ms-v2-qa.apis[0].analysis.enabled=false' \
+  --set 'picpay-ms-v2-qa.apis[1].rollouts.enabled=false' \
+  --set 'picpay-ms-v2-qa.apis[1].analysis.enabled=false' \
+  --set 'picpay-ms-v2-qa.apis[2].rollouts.enabled=false' \
+  --set 'picpay-ms-v2-qa.apis[2].analysis.enabled=false' \
+  --set 'picpay-ms-v2-qa.apis[0].readiness.httpGet.path=/' \
+  --set 'picpay-ms-v2-qa.apis[0].liveness.httpGet.path=/' \
+  --set 'picpay-ms-v2-qa.apis[1].readiness.httpGet.path=/' \
+  --set 'picpay-ms-v2-qa.apis[1].liveness.httpGet.path=/' \
+  --set 'picpay-ms-v2-qa.apis[2].readiness.httpGet.path=/' \
+  --set 'picpay-ms-v2-qa.apis[2].liveness.httpGet.path=/'
+
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+kubectl -n ms-edi-pix get pods -w
+
+
+kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[*].image}{"\n"}{end}'
