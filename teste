@@ -288,3 +288,17 @@ picpay-ms-v2:
                 jsonPath: "{$.status}"
 
   workers: []
+
+########## ANALISANDO SERVICE: chart ##########
+"charts" has been added to your repositories
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "charts" chart repository
+Update Complete. ⎈Happy Helming!⎈
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "charts" chart repository
+Update Complete. ⎈Happy Helming!⎈
+Saving 2 charts
+Downloading picpay-ms-v2 from repo https://chartmuseum.ppay.me
+Downloading picpay-ms-v2-qa from repo https://chartmuseum.ppay.me
+Deleting outdated charts
+Error: failed to parse chart/values.qa.yaml: error converting YAML to JSON: yaml: line 289: did not find expected key
