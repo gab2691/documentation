@@ -1,19 +1,22 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix create secret generic envs --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
-kubectl -n ms-edi-pix create secret generic envs-secrets --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
+# local-no-crds.yaml
+global:
+  externalSecrets: []      # desliga ExternalSecret/SecretStore
+  jvm_metrics:
+    enabled: false         # evita ServiceMonitor
 
-secret/envs unchanged
-secret/envs-secrets unchanged
-gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
+
+
+helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
-  --namespace ms-edi-pix
-Release "ms-edi-pix" does not exist. Installing it now.
-Error: values don't meet the specifications of the schema(s) in the following chart(s):
-picpay-ms-v2-qa:
-- at '/apis/0': missing properties 'requests_cpu', 'limits_cpu', 'requests_memory', 'limits_memory'
-- at '/apis/1': missing properties 'requests_cpu', 'limits_cpu', 'requests_memory', 'limits_memory'
-- at '/apis/2': missing properties 'requests_cpu', 'limits_cpu', 'requests_memory', 'limits_memory'
+  --namespace ms-edi-pix \
+  --set picpay-ms-v2-qa.apis\[0\].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis\[0\].analysis.enabled=false \
+  --set picpay-ms-v2-qa.apis\[1\].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis\[1\].analysis.enabled=false \
+  --set picpay-ms-v2-qa.apis\[2\].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis\[2\].analysis.enabled=false
 
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get deploy,po
-No resources found in ms-edi-pix namespace.
-gabriel.bbatista@PPM-JAMF-32830 chart % 
+
+kubectl -n ms-edi-pix get deploy,po || kubectl -n ms-edi-pix get rollouts,po
+
