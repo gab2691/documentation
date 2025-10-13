@@ -1,18 +1,11 @@
-kubectl label namespace ms-edi-pix app.kubernetes.io/managed-by=Helm --overwrite
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get deploy,po                                 
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/edi-pix-bankpj    0/1     1            0           30s
+deployment.apps/edi-pix-fnsvcpf   0/1     1            0           30s
+deployment.apps/edi-pix-legacy    0/1     1            0           30s
 
-kubectl annotate namespace ms-edi-pix \
-  meta.helm.sh/release-name=ms-edi-pix \
-  meta.helm.sh/release-namespace=ms-edi-pix \
-  --overwrite
-
-
-helm upgrade --install ms-edi-pix . \
-  -f values.qa.yaml \
-  -f local-no-crds.yaml \
-  --namespace ms-edi-pix \
-  --set picpay-ms-v2-qa.apis\[0\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[0\].analysis.enabled=false \
-  --set picpay-ms-v2-qa.apis\[1\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[1\].analysis.enabled=false \
-  --set picpay-ms-v2-qa.apis\[2\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[2\].analysis.enabled=false
+NAME                                   READY   STATUS    RESTARTS   AGE
+pod/edi-pix-bankpj-6494f6cbb-j4lxh     0/1     Pending   0          30s
+pod/edi-pix-fnsvcpf-7cd7fd46bd-xm4tl   0/1     Pending   0          30s
+pod/edi-pix-legacy-95c4d9478-cmdbj     0/1     Pending   0          30s
+gabriel.bbatista@PPM-JAMF-32830 chart % 
