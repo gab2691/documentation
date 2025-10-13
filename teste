@@ -1,1 +1,6 @@
-kubectl -n ms-edi-pix describe pod edi-pix-bankpj-6494f6cbb-j4lxh | sed -n '/Events/,$p'
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix describe pod edi-pix-bankpj-6494f6cbb-j4lxh | sed -n '/Events/,$p'
+Events:
+  Type     Reason            Age    From               Message
+  ----     ------            ----   ----               -------
+  Warning  FailedScheduling  2m22s  default-scheduler  0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+gabriel.bbatista@PPM-JAMF-32830 chart % 
