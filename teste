@@ -1,17 +1,1 @@
-externalSecrets:
-    - name: envs
-      enabled: true
-      refreshInterval: 10m
-      type: vault
-      mountPath: kubernetes-srvfpj-use1-hom
-      path: financial_services_pj/hom/env
-      dataFrom:
-        - secretFile: ms-edi-pix
-    - name: envs-secrets
-      enabled: true
-      refreshInterval: 10m
-      type: vault
-      mountPath: kubernetes-srvfpj-use1-hom
-      path: financial_services_pj/hom/scrt
-      dataFrom:
-        - secretFile: ms-edi-pix
+kind create cluster --name local-dev --image kindest/node:v1.29.2
