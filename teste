@@ -1,1 +1,14 @@
-kubectl describe pod ... | sed -n '/Events/,$p'
+gabriel.bbatista@PPM-JAMF-32830 chart % colima stop && colima start --memory 6 --cpu 4
+INFO[0000] stopping colima                              
+INFO[0002] stopping ...                                  context=docker
+INFO[0013] stopping ...                                  context=vm
+INFO[0016] done                                         
+INFO[0001] starting colima                              
+INFO[0001] runtime: docker                              
+INFO[0003] starting ...                                  context=vm
+INFO[0017] provisioning ...                              context=docker
+INFO[0030] starting ...                                  context=docker
+INFO[0034] done                                         
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl describe pod ... | sed -n '/Events/,$p'
+Error from server (NotFound): pods "..." not found
+gabriel.bbatista@PPM-JAMF-32830 chart % 
