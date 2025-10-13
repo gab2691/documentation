@@ -1,10 +1,21 @@
-NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+gabriel.bbatista@PPM-JAMF-32830 chart % NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
 echo $NODE
+local-dev-control-plane
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl label node "$NODE" family=srvfpj --overwrite
 
+node/local-dev-control-plane labeled
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl get node "$NODE" --show-labels | sed 's/,/\n/g'
 
-kubectl label node "$NODE" family=srvfpj --overwrite
-
-kubectl get node "$NODE" --show-labels | sed 's/,/\n/g'
-
-
-kubectl -n ms-edi-pix get pods -w
+NAME                      STATUS   ROLES           AGE   VERSION   LABELS
+local-dev-control-plane   Ready    control-plane   66m   v1.29.2   beta.kubernetes.io/arch=arm64
+beta.kubernetes.io/os=linux
+family=srvfpj
+kubernetes.io/arch=arm64
+kubernetes.io/hostname=local-dev-control-plane
+kubernetes.io/os=linux
+node-role.kubernetes.io/control-plane=
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pods -w
+NAME                               READY   STATUS    RESTARTS   AGE
+edi-pix-bankpj-6494f6cbb-j4lxh     0/1     Pending   0          6m18s
+edi-pix-fnsvcpf-7cd7fd46bd-xm4tl   0/1     Pending   0          6m18s
+edi-pix-legacy-95c4d9478-cmdbj     0/1     Pending   0          6m18s
