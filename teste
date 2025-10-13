@@ -1,23 +1,2 @@
-helm lint ./charts/picpay-ms-v2-qa -f values.qa.yaml
-
-helm template ms-edi-pix ./charts/picpay-ms-v2-qa \
-  -f values.qa.yaml \
-  --namespace ms-edi-pix > /tmp/render.yaml
-
-
-kubectl -n ms-edi-pix create secret generic envs --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
-kubectl -n ms-edi-pix create secret generic envs-secrets --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
-
-no matches for kind "ExternalSecret" in version "external-secrets.io/v1beta1"
-no matches for kind "SecretStore" in version "external-secrets.io/v1beta1"
-
-helm repo add external-secrets https://charts.external-secrets.io
-helm repo update
-helm upgrade --install external-secrets external-secrets/external-secrets \
-  -n external-secrets --create-namespace
-
-kubectl -n ms-edi-pix create secret generic envs --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
-kubectl -n ms-edi-pix create secret generic envs-secrets --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
-
-
+helm upgrade --install ms-edi-pix . -f values.qa.yaml --namespace ms-edi-pix
+kubectl -n ms-edi-pix get rollouts,pods
