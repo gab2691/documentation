@@ -1,10 +1,10 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl config current-context
+# 1) Tenta um bundle com v1 + v1beta1 (ex. 0.9.16)
+kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/v0.9.16/deploy/crds/bundle.yaml
 
-kind-local-dev
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl get crd externalsecrets.external-secrets.io -o=jsonpath='{range .spec.versions[*]}{.name}={.served}{"\n"}{end}'
+# confira se agora o v1beta1 está served
+kubectl get crd externalsecrets.external-secrets.io -o=jsonpath='{range .spec.versions[*]}{.name}={.served}{"\n"}{end}'
+# esperado: ... v1beta1=true ...
 
-v1=true
-v1beta1=false
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl api-resources | grep -E '^externalsecrets\.external-secrets\.io'
-kubectl api-resources | grep -E '^secretstores\.external-secrets\.io'
-gabriel.bbatista@PPM-JAMF-32830 chart % 
+# idem p/ SecretStore
+kubectl get crd secretstores.external-secrets.io -o=jsonpath='{range .spec.versions[*]}{.name}={.served}{"\n"}{end}'
+
