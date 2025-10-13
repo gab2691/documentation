@@ -1,18 +1,49 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % docker save -o /tmp/nginx-local.tar nginx:local
-docker cp /tmp/nginx-local.tar local-dev-control-plane:/tmp/nginx-local.tar
-docker exec -it local-dev-control-plane ctr -n k8s.io images import /tmp/nginx-local.tar
+docker pull --platform=linux/arm64 nginx:1.27-alpine
+docker tag nginx:1.27-alpine nginx:local
+
+
+docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
+
+
+
+docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
+# ou
 docker exec -it local-dev-control-plane crictl images | grep nginx
-Successfully copied 21.8MB to local-dev-control-plane:/tmp/nginx-local.tar
-ctr: open /tmp/nginx-local.tar: no such file or directory
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+
+
+helm upgrade --install ms-edi-pix . \
+  -f values.qa.yaml \
+  -f local-no-crds.yaml \
+  --namespace ms-edi-pix \
+  --set 'global.topologySpreadAz=false' \
+  --set 'picpay-ms-v2-qa.apis[0].image.repositoryURI=nginx' \
+  --set 'picpay-ms-v2-qa.apis[0].image.tag=local' \
+  --set 'picpay-ms-v2-qa.apis[0].image.pullPolicy=Never' \
+  --set 'picpay-ms-v2-qa.apis[1].image.repositoryURI=nginx' \
+  --set 'picpay-ms-v2-qa.apis[1].image.tag=local' \
+  --set 'picpay-ms-v2-qa.apis[1].image.pullPolicy=Never' \
+  --set 'picpay-ms-v2-qa.apis[2].image.repositoryURI=nginx' \
+  --set 'picpay-ms-v2-qa.apis[2].image.tag=local' \
+  --set 'picpay-ms-v2-qa.apis[2].image.pullPolicy=Never'
+
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
 kubectl -n ms-edi-pix get pods
-deployment.apps/edi-pix-bankpj restarted
-deployment.apps/edi-pix-legacy restarted
-deployment.apps/edi-pix-fnsvcpf restarted
-NAME                               READY   STATUS        RESTARTS   AGE
-edi-pix-bankpj-846d648c46-242gv    0/1     Pending       0          2m21s
-edi-pix-bankpj-8cdcd4c7d-hkcj6     0/1     Terminating   0          2m28s
-edi-pix-fnsvcpf-65594f7976-b5c6d   0/1     Pending       0          2m28s
-edi-pix-fnsvcpf-c7df8d44-xtjzz     0/1     Pending       0          2m21s
-edi-pix-legacy-78f5d975d7-5xsx5    0/1     Pending       0          2m21s
-gabriel.bbatista@PPM-JAMF-32830 chart % 
+
+
+
+helm upgrade --install ms-edi-pix . \
+  -f values.qa.yaml -f local-no-crds.yaml \
+  --namespace ms-edi-pix \
+  --set 'picpay-ms-v2-qa.apis[0].requests_memory=128Mi' --set 'picpay-ms-v2-qa.apis[0].limits_memory=256Mi' \
+  --set 'picpay-ms-v2-qa.apis[1].requests_memory=128Mi' --set 'picpay-ms-v2-qa.apis[1].limits_memory=256Mi' \
+  --set 'picpay-ms-v2-qa.apis[2].requests_memory=128Mi' --set 'picpay-ms-v2-qa.apis[2].limits_memory=256Mi' \
+  --set 'picpay-ms-v2-qa.apis[0].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[0].limits_cpu=200m' \
+  --set 'picpay-ms-v2-qa.apis[1].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[1].limits_cpu=200m' \
+  --set 'picpay-ms-v2-qa.apis[2].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[2].limits_cpu=200m'
+
+
+
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-bankpj || true
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-legacy || true
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-fnsvcpf || true
