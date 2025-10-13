@@ -1,8 +1,2 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % 
-helm upgrade --install ms-edi-pix . \
-  -f values.qa.yaml \
-  -f local-no-crds.yaml \
-  -f local-images.yaml \
-  -f local-resources.yaml \
-  --namespace ms-edi-pix
-Error: chart file "-" is larger than the maximum file size 5242880
+pwd
+ls -l Chart.yaml values.qa.yaml local-no-crds.yaml local-images.yaml local-resources.yaml
