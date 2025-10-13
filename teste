@@ -1,5 +1,5 @@
-# pegue o nome do pod que está Pending (ajuste se mudou)
-POD=edi-pix-bankpj-6494f6cbb-j4lxh
+gabriel.bbatista@PPM-JAMF-32830 chart % POD=edi-pix-bankpj-6494f6cbb-j4lxh
 
-# veja a nodeAffinity requerida (chaves/valores)
-kubectl -n ms-edi-pix get pod $POD -o jsonpath='{range .spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[*].matchExpressions[*]}{.key} {.operator} {.values}{"\n"}{end}'
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pod $POD -o jsonpath='{range .spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[*].matchExpressions[*]}{.key} {.operator} {.values}{"\n"}{end}'
+family In ["srvfpj"]
+gabriel.bbatista@PPM-JAMF-32830 chart % 
