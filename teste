@@ -320,3 +320,5 @@ picpay-ms-v2:
                 timeoutSeconds: 30
                 jsonPath: "{$.status}"
   workers: []
+
+Resource /Namespace//ms-edi-pix appeared 2 times among application resources.
