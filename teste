@@ -1,7 +1,10 @@
-Status: Downloaded newer image for nginx:stable
-docker.io/library/nginx:stable
-gabriel.bbatista@PPM-JAMF-32830 chart % kind load docker-image nginx:stable --name local-dev
-Image: "nginx:stable" with ID "sha256:3b4019335070fb6445987c8dd72cf18dec2cbc63b3575581eb66469c8173cd4f" not yet present on node "local-dev-control-plane", loading...
-ERROR: failed to load image: command "docker exec --privileged -i local-dev-control-plane ctr --namespace=k8s.io images import --all-platforms --digests --snapshotter=overlayfs -" failed with error: exit status 1
-Command Output: ctr: content digest sha256:d9c62df87ab2f884f401f81e170f2dd3f7e0b0ba6983a144cf73f2015698a13c: not found
-gabriel.bbatista@PPM-JAMF-32830 chart % 
+docker pull --platform=linux/arm64 nginx:stable
+
+docker save -o /tmp/nginx-stable-arm64.tar nginx:stable
+
+
+kind load image-archive /tmp/nginx-stable-arm64.tar --name local-dev
+
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+kubectl -n ms-edi-pix get pods -w
