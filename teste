@@ -1,12 +1,7 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
-kubectl -n ms-edi-pix describe pod "$P" | sed -n '/Events/,$p'
-Events:
-  Type     Reason     Age               From               Message
-  ----     ------     ----              ----               -------
-  Normal   Scheduled  20s               default-scheduler  Successfully assigned ms-edi-pix/edi-pix-bankpj-7b76f7854f-jrmwf to local-dev-control-plane
-  Normal   BackOff    19s               kubelet            Back-off pulling image "nginx:stable"
-  Warning  Failed     19s               kubelet            Error: ImagePullBackOff
-  Normal   Pulling    6s (x2 over 19s)  kubelet            Pulling image "nginx:stable"
-  Warning  Failed     5s (x2 over 19s)  kubelet            Failed to pull image "nginx:stable": failed to pull and unpack image "docker.io/library/nginx:stable": failed to resolve reference "docker.io/library/nginx:stable": failed to do request: Head "https://registry-1.docker.io/v2/library/nginx/manifests/stable": tls: failed to verify certificate: x509: certificate signed by unknown authority
-  Warning  Failed     5s (x2 over 19s)  kubelet            Error: ErrImagePull
+Status: Downloaded newer image for nginx:stable
+docker.io/library/nginx:stable
+gabriel.bbatista@PPM-JAMF-32830 chart % kind load docker-image nginx:stable --name local-dev
+Image: "nginx:stable" with ID "sha256:3b4019335070fb6445987c8dd72cf18dec2cbc63b3575581eb66469c8173cd4f" not yet present on node "local-dev-control-plane", loading...
+ERROR: failed to load image: command "docker exec --privileged -i local-dev-control-plane ctr --namespace=k8s.io images import --all-platforms --digests --snapshotter=overlayfs -" failed with error: exit status 1
+Command Output: ctr: content digest sha256:d9c62df87ab2f884f401f81e170f2dd3f7e0b0ba6983a144cf73f2015698a13c: not found
 gabriel.bbatista@PPM-JAMF-32830 chart % 
