@@ -1,20 +1,5 @@
-docker pull --platform=linux/arm64 nginx:1.27-alpine
-docker tag nginx:1.27-alpine nginx:local
-
-
-docker save -o /tmp/nginx-local.tar nginx:local
+gabriel.bbatista@PPM-JAMF-32830 chart % docker save -o /tmp/nginx-local.tar nginx:local
 kind load image-archive /tmp/nginx-local.tar --name local-dev
-
-
-docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
-
-
-kubectl -n ms-edi-pix patch deployment edi-pix-bankpj \
-  --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
-kubectl -n ms-edi-pix patch deployment edi-pix-legacy \
-  --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
-kubectl -n ms-edi-pix patch deployment edi-pix-fnsvcpf \
-  --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
-
-kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
-kubectl -n ms-edi-pix get pods
+ERROR: failed to load image: command "docker exec --privileged -i local-dev-control-plane ctr --namespace=k8s.io images import --all-platforms --digests --snapshotter=overlayfs -" failed with error: exit status 1
+Command Output: ctr: content digest sha256:62223d644fa234c3a1cc785ee14242ec47a77364226f1c811d2f669f96dc2ac8: not found
+gabriel.bbatista@PPM-JAMF-32830 chart % 
