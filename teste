@@ -1,30 +1,11 @@
-kubectl label node local-dev-control-plane topology.kubernetes.io/zone=use1-az1 --overwrite
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pods -w
 
-
-helm upgrade --install ms-edi-pix . \
-  -f values.qa.yaml -f local-no-crds.yaml \
-  --namespace ms-edi-pix \
-  --set global.topologySpreadAz=false \
-  --set picpay-ms-v2-qa.apis\[0\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[0\].analysis.enabled=false \
-  --set picpay-ms-v2-qa.apis\[1\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[1\].analysis.enabled=false \
-  --set picpay-ms-v2-qa.apis\[2\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[2\].analysis.enabled=false
-
-
-kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
-
-
-kubectl -n ms-edi-pix get pods -w
-
-
-# ver a afinidade EXATA que está sendo exigida (repita para cada pod se necessário)
-for P in $(kubectl -n ms-edi-pix get pods -o name); do
-  echo "== $P ==";
-  kubectl -n ms-edi-pix get $P -o jsonpath='{range .spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[*].matchExpressions[*]}{.key} {.operator} {.values}{"\n"}{end}';
-  echo; done
-
-# events detalhados (pega o primeiro pod da lista)
-POD=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
-kubectl -n ms-edi-pix describe pod "$POD" | sed -n '/Events/,$p'
+NAME                               READY   STATUS         RESTARTS   AGE
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     Pending        0          7s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     ErrImagePull   0          13s
+edi-pix-fnsvcpf-674c7796db-zk587   0/1     Pending        0          13s
+edi-pix-fnsvcpf-6f65648d44-49hb6   0/1     Pending        0          7s
+edi-pix-legacy-5c94dcb585-bj589    0/1     Pending        0          7s
+edi-pix-legacy-cc9bcb667-2dzhd     0/1     Pending        0          13s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     ImagePullBackOff   0          24s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     ErrImagePull       0          39s
