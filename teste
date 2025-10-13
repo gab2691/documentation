@@ -1,28 +1,12 @@
-kubectl config current-context
-# Se NÃO for kind-local-dev:
-kubectl config use-context kind-local-dev
-
-docker ps --format '{{.Names}}' | grep local-dev-control-plane || true
-
-kind create cluster --name local-dev --image kindest/node:v1.29.2
-
-kubectl create ns ms-edi-pix 2>/dev/null || true
-
-
-docker pull --platform=linux/arm64 nginx:1.27-alpine
-docker tag nginx:1.27-alpine nginx:local
-docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
-docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
-
-
-helm upgrade --install ms-edi-pix ./ \
-  -f values.qa.yaml \
-  -f local-no-crds.yaml \
-  -f local-images.yaml \
-  -f local-resources.yaml \
-  --namespace ms-edi-pix --debug
-
-
-kubectl -n ms-edi-pix get pods
-P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
 kubectl -n ms-edi-pix describe pod "$P" | sed -n '/Events/,$p'
+Events:
+  Type     Reason            Age                    From               Message
+  ----     ------            ----                   ----               -------
+  Warning  FailedScheduling  5m22s (x3 over 5m27s)  default-scheduler  0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod.
+  Normal   Scheduled         3m7s                   default-scheduler  Successfully assigned ms-edi-pix/edi-pix-bankpj-56ff76b794-fm5mb to local-dev-control-plane
+  Normal   Pulling           100s (x4 over 3m7s)    kubelet            Pulling image "nginx:local"
+  Warning  Failed            100s (x4 over 3m7s)    kubelet            Failed to pull image "nginx:local": failed to pull and unpack image "docker.io/library/nginx:local": failed to resolve reference "docker.io/library/nginx:local": failed to do request: Head "https://registry-1.docker.io/v2/library/nginx/manifests/local": tls: failed to verify certificate: x509: certificate signed by unknown authority
+  Warning  Failed            100s (x4 over 3m7s)    kubelet            Error: ErrImagePull
+  Warning  Failed            86s (x6 over 3m7s)     kubelet            Error: ImagePullBackOff
+  Normal   BackOff           72s (x7 over 3m7s)     kubelet            Back-off pulling image "nginx:local"
+gabriel.bbatista@PPM-JAMF-32830 chart % 
