@@ -1,8 +1,9 @@
-kubectl -n ms-edi-pix create secret generic envs --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
-kubectl -n ms-edi-pix create secret generic envs-secrets --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
-
-
-helm upgrade --install ms-edi-pix . -f values.qa.yaml --namespace ms-edi-pix
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . -f values.qa.yaml --namespace ms-edi-pix
 
 kubectl -n ms-edi-pix get rollouts,pods
-
+Release "ms-edi-pix" does not exist. Installing it now.
+Error: unable to build kubernetes objects from release manifest: [resource mapping not found for name: "edi-pix-default" namespace: "ms-edi-pix" from "": no matches for kind "ExternalSecret" in version "external-secrets.io/v1beta1"
+ensure CRDs are installed first, resource mapping not found for name: "envs-secretstore-default" namespace: "ms-edi-pix" from "": no matches for kind "SecretStore" in version "external-secrets.io/v1beta1"
+ensure CRDs are installed first]
+No resources found in ms-edi-pix namespace.
+gabriel.bbatista@PPM-JAMF-32830 chart % 
