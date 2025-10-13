@@ -1,25 +1,24 @@
-aws sts get-caller-identity
-
-
-kubectl -n ms-edi-pix create secret docker-registry ecr-creds \
-  --docker-server=289208114389.dkr.ecr.us-east-1.amazonaws.com \
-  --docker-username=AWS \
-  --docker-password="$(aws ecr get-login-password --region us-east-1)" \
-  --dry-run=client -o yaml | kubectl apply -f -
-
-
 helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   --namespace ms-edi-pix \
   --set global.topologySpreadAz=false \
-  --set global.imagePullSecrets[0].name=ecr-creds \
-  --set picpay-ms-v2-qa.apis\[0\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[0\].analysis.enabled=false \
-  --set picpay-ms-v2-qa.apis\[1\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[1\].analysis.enabled=false \
-  --set picpay-ms-v2-qa.apis\[2\].rollouts.enabled=false \
-  --set picpay-ms-v2-qa.apis\[2\].analysis.enabled=false
-
-
-kubectl -n ms-edi-pix get pods -w
+  --set global.imagePullSecrets=null \
+  --set picpay-ms-v2-qa.apis[0].image.repositoryURI=nginx \
+  --set picpay-ms-v2-qa.apis[0].image.tag=stable \
+  --set picpay-ms-v2-qa.apis[1].image.repositoryURI=nginx \
+  --set picpay-ms-v2-qa.apis[1].image.tag=stable \
+  --set picpay-ms-v2-qa.apis[2].image.repositoryURI=nginx \
+  --set picpay-ms-v2-qa.apis[2].image.tag=stable \
+  --set picpay-ms-v2-qa.apis[0].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis[0].analysis.enabled=false \
+  --set picpay-ms-v2-qa.apis[1].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis[1].analysis.enabled=false \
+  --set picpay-ms-v2-qa.apis[2].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis[2].analysis.enabled=false \
+  --set picpay-ms-v2-qa.apis[0].readiness.httpGet.path=/ \
+  --set picpay-ms-v2-qa.apis[0].liveness.httpGet.path=/ \
+  --set picpay-ms-v2-qa.apis[1].readiness.httpGet.path=/ \
+  --set picpay-ms-v2-qa.apis[1].liveness.httpGet.path=/ \
+  --set picpay-ms-v2-qa.apis[2].readiness.httpGet.path=/ \
+  --set picpay-ms-v2-qa.apis[2].liveness.httpGet.path=/
