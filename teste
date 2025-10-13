@@ -9,7 +9,15 @@ global:
     enabled: true
     port: 8081
   externalSecrets:
-    - name: default
+    - name: envs
+      enabled: true
+      refreshInterval: 10m
+      type: vault
+      mountPath: kubernetes-srvfpj-use1-hom
+      path: financial_services_pj/hom/env
+      dataFrom:
+        - secretFile: ms-edi-pix
+    - name: envs-secrets
       enabled: true
       refreshInterval: 10m
       type: vault
