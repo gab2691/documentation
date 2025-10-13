@@ -1,2 +1,15 @@
 pwd
 ls -l Chart.yaml values.qa.yaml local-no-crds.yaml local-images.yaml local-resources.yaml
+
+
+helm upgrade --install ms-edi-pix ./ -f values.qa.yaml -f local-no-crds.yaml -f local-images.yaml -f local-resources.yaml --namespace ms-edi-pix --debug
+
+
+docker pull --platform=linux/arm64 nginx:1.27-alpine
+docker tag nginx:1.27-alpine nginx:local
+docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
+docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
+
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+kubectl -n ms-edi-pix get pods
