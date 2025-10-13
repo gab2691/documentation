@@ -1,45 +1,12 @@
-helm upgrade --install ms-edi-pix . \
-  -f values.qa.yaml \
-  -f local-no-crds.yaml \
-  --namespace ms-edi-pix \
-  --set 'global.topologySpreadAz=false' \
-  --set 'picpay-ms-v2-qa.apis[0].image.repositoryURI=nginx' \
-  --set 'picpay-ms-v2-qa.apis[0].image.tag=stable' \
-  --set 'picpay-ms-v2-qa.apis[1].image.repositoryURI=nginx' \
-  --set 'picpay-ms-v2-qa.apis[1].image.tag=stable' \
-  --set 'picpay-ms-v2-qa.apis[2].image.repositoryURI=nginx' \
-  --set 'picpay-ms-v2-qa.apis[2].image.tag=stable' \
-  --set 'picpay-ms-v2-qa.apis[0].rollouts.enabled=false' \
-  --set 'picpay-ms-v2-qa.apis[0].analysis.enabled=false' \
-  --set 'picpay-ms-v2-qa.apis[1].rollouts.enabled=false' \
-  --set 'picpay-ms-v2-qa.apis[1].analysis.enabled=false' \
-  --set 'picpay-ms-v2-qa.apis[2].rollouts.enabled=false' \
-  --set 'picpay-ms-v2-qa.apis[2].analysis.enabled=false' \
-  --set 'picpay-ms-v2-qa.apis[0].readiness.httpGet.path=/' \
-  --set 'picpay-ms-v2-qa.apis[0].liveness.httpGet.path=/' \
-  --set 'picpay-ms-v2-qa.apis[1].readiness.httpGet.path=/' \
-  --set 'picpay-ms-v2-qa.apis[1].liveness.httpGet.path=/' \
-  --set 'picpay-ms-v2-qa.apis[2].readiness.httpGet.path=/' \
-  --set 'picpay-ms-v2-qa.apis[2].liveness.httpGet.path=/' \
-  --set 'picpay-ms-v2-qa.apis[0].requests_memory=128Mi' \
-  --set 'picpay-ms-v2-qa.apis[0].limits_memory=256Mi' \
-  --set 'picpay-ms-v2-qa.apis[1].requests_memory=128Mi' \
-  --set 'picpay-ms-v2-qa.apis[1].limits_memory=256Mi' \
-  --set 'picpay-ms-v2-qa.apis[2].requests_memory=128Mi' \
-  --set 'picpay-ms-v2-qa.apis[2].limits_memory=256Mi' \
-  --set 'picpay-ms-v2-qa.apis[0].requests_cpu=25m' \
-  --set 'picpay-ms-v2-qa.apis[0].limits_cpu=200m' \
-  --set 'picpay-ms-v2-qa.apis[1].requests_cpu=25m' \
-  --set 'picpay-ms-v2-qa.apis[1].limits_cpu=200m' \
-  --set 'picpay-ms-v2-qa.apis[2].requests_cpu=25m' \
-  --set 'picpay-ms-v2-qa.apis[2].limits_cpu=200m'
-
-
-kubectl -n ms-edi-pix delete pod edi-pix-bankpj-85c6b698dc-vnqjv
-
-
-kubectl -n ms-edi-pix get pods
-
-
-P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
+gabriel.bbatista@PPM-JAMF-32830 chart % P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
 kubectl -n ms-edi-pix describe pod "$P" | sed -n '/Events/,$p'
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  20s               default-scheduler  Successfully assigned ms-edi-pix/edi-pix-bankpj-7b76f7854f-jrmwf to local-dev-control-plane
+  Normal   BackOff    19s               kubelet            Back-off pulling image "nginx:stable"
+  Warning  Failed     19s               kubelet            Error: ImagePullBackOff
+  Normal   Pulling    6s (x2 over 19s)  kubelet            Pulling image "nginx:stable"
+  Warning  Failed     5s (x2 over 19s)  kubelet            Failed to pull image "nginx:stable": failed to pull and unpack image "docker.io/library/nginx:stable": failed to resolve reference "docker.io/library/nginx:stable": failed to do request: Head "https://registry-1.docker.io/v2/library/nginx/manifests/stable": tls: failed to verify certificate: x509: certificate signed by unknown authority
+  Warning  Failed     5s (x2 over 19s)  kubelet            Error: ErrImagePull
+gabriel.bbatista@PPM-JAMF-32830 chart % 
