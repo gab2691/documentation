@@ -3,13 +3,8 @@ global:
   image:
     tag: 24c892702a547f49859fdf177035efe8b8750ef4
   releaseNumber: 0
-  # Não criar Namespace pelo chart (se suportado pelo chart)
   namespace:
     create: false
-  # Removido: jvm_metrics no escopo global para evitar recursos duplicados
-  # jvm_metrics:
-  #   enabled: true
-  #   port: 8081
 
 picpay-ms-v2:
   apis:
@@ -20,23 +15,28 @@ picpay-ms-v2:
         - "-Dotel.instrumentation.tomcat.enabled=false"
         - "-Dspring.profiles.active=bankpj"
       envFrom:
-        - secretRef: { name: envs }
-        - secretRef: { name: envs-secrets }
+        - secretRef:
+            name: envs
+        - secretRef:
+            name: envs-secrets
       externalSecrets:
         - name: default-bankpj
           enabled: true
           type: vault
           mountPath: kubernetes-srvfpj-use1-hom
           path: financial_services_pj/hom/env
-          dataFrom: [ { secretFile: ms-edi-pix } ]
+          dataFrom:
+            - secretFile: ms-edi-pix
         - name: secrets-bankpj
           enabled: true
           type: vault
           mountPath: kubernetes-srvfpj-use1-hom
           path: financial_services_pj/hom/scrt
-          dataFrom: [ { secretFile: ms-edi-pix } ]
+          dataFrom:
+            - secretFile: ms-edi-pix
       workload: srvfpj
-      health: { path: /health }
+      health:
+        path: /health
       readiness:
         initialDelaySeconds: 30
         periodSeconds: 5
@@ -49,7 +49,11 @@ picpay-ms-v2:
         successThreshold: 1
         failureThreshold: 4
         timeoutSeconds: 5
-      hpa: { enabled: true, max: 2, min: 1, targetCPU: 80 }
+      hpa:
+        enabled: true
+        max: 2
+        min: 1
+        targetCPU: 80
       containerPort: 8080
       image:
         repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
@@ -65,7 +69,6 @@ picpay-ms-v2:
         name: edi-pix-bankpj
         port: 80
         targetPort: 8080
-      # JVM metrics por API, com nomes únicos:
       jvm_metrics:
         enabled: true
         port: 8081
@@ -74,23 +77,27 @@ picpay-ms-v2:
         serviceMonitor:
           enabled: true
           name: edi-pix-bankpj-jvm-metrics-sm
-      podDisruptionBudget: { enabled: false }
+      podDisruptionBudget:
+        enabled: false
       limits_memory: 2Gi
       limits_cpu: 500m
       requests_cpu: 50m
       requests_memory: 1Gi
       lifecycle:
-        preStop: [ "/bin/bash", "-c", "/bin/sleep 20 && kill -QUIT 1" ]
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
       rollingDynamicStableScale: true
-      rollingUpdateMaxSurge: 25%
-      rollingUpdateMaxUnavailable: 0%
+      rollingUpdateMaxSurge: "25%"
+      rollingUpdateMaxUnavailable: "0%"
       rollouts:
         enabled: true
         type: canary
         abortScaleDownDelaySeconds: 120
         strategyCanarySteps:
           duration: 10m
-          weights: 50/100
+          weights: "50/100"
       analysis:
         enabled: true
         metrics:
@@ -112,23 +119,28 @@ picpay-ms-v2:
         - "-Dotel.instrumentation.tomcat.enabled=false"
         - "-Dspring.profiles.active=legacy"
       envFrom:
-        - secretRef: { name: envs }
-        - secretRef: { name: envs-secrets }
+        - secretRef:
+            name: envs
+        - secretRef:
+            name: envs-secrets
       externalSecrets:
         - name: default-legacy
           enabled: true
           type: vault
           mountPath: kubernetes-srvfpj-use1-hom
           path: financial_services_pj/hom/env
-          dataFrom: [ { secretFile: ms-edi-pix } ]
+          dataFrom:
+            - secretFile: ms-edi-pix
         - name: secrets-legacy
           enabled: true
           type: vault
           mountPath: kubernetes-srvfpj-use1-hom
           path: financial_services_pj/hom/scrt
-          dataFrom: [ { secretFile: ms-edi-pix } ]
+          dataFrom:
+            - secretFile: ms-edi-pix
       workload: srvfpj
-      health: { path: /health }
+      health:
+        path: /health
       readiness:
         initialDelaySeconds: 30
         periodSeconds: 5
@@ -141,7 +153,11 @@ picpay-ms-v2:
         successThreshold: 1
         failureThreshold: 4
         timeoutSeconds: 5
-      hpa: { enabled: true, max: 2, min: 1, targetCPU: 80 }
+      hpa:
+        enabled: true
+        max: 2
+        min: 1
+        targetCPU: 80
       containerPort: 8080
       image:
         repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
@@ -165,23 +181,27 @@ picpay-ms-v2:
         serviceMonitor:
           enabled: true
           name: edi-pix-legacy-jvm-metrics-sm
-      podDisruptionBudget: { enabled: false }
+      podDisruptionBudget:
+        enabled: false
       limits_memory: 2Gi
       limits_cpu: 500m
       requests_cpu: 50m
       requests_memory: 1Gi
       lifecycle:
-        preStop: [ "/bin/bash", "-c", "/bin/sleep 20 && kill -QUIT 1" ]
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
       rollingDynamicStableScale: true
-      rollingUpdateMaxSurge: 25%
-      rollingUpdateMaxUnavailable: 0%
+      rollingUpdateMaxSurge: "25%"
+      rollingUpdateMaxUnavailable: "0%"
       rollouts:
         enabled: true
         type: canary
         abortScaleDownDelaySeconds: 120
         strategyCanarySteps:
           duration: 10m
-          weights: 50/100
+          weights: "50/100"
       analysis:
         enabled: true
         metrics:
@@ -203,23 +223,28 @@ picpay-ms-v2:
         - "-Dotel.instrumentation.tomcat.enabled=false"
         - "-Dspring.profiles.active=fnsvcpf"
       envFrom:
-        - secretRef: { name: envs }
-        - secretRef: { name: envs-secrets }
+        - secretRef:
+            name: envs
+        - secretRef:
+            name: envs-secrets
       externalSecrets:
         - name: default-fnsvcpf
           enabled: true
           type: vault
           mountPath: kubernetes-srvfpj-use1-hom
           path: financial_services_pj/hom/env
-          dataFrom: [ { secretFile: ms-edi-pix } ]
+          dataFrom:
+            - secretFile: ms-edi-pix
         - name: secrets-fnsvcpf
           enabled: true
           type: vault
           mountPath: kubernetes-srvfpj-use1-hom
           path: financial_services_pj/hom/scrt
-          dataFrom: [ { secretFile: ms-edi-pix } ]
+          dataFrom:
+            - secretFile: ms-edi-pix
       workload: srvfpj
-      health: { path: /health }
+      health:
+        path: /health
       readiness:
         initialDelaySeconds: 30
         periodSeconds: 5
@@ -232,7 +257,11 @@ picpay-ms-v2:
         successThreshold: 1
         failureThreshold: 4
         timeoutSeconds: 5
-      hpa: { enabled: true, max: 2, min: 1, targetCPU: 80 }
+      hpa:
+        enabled: true
+        max: 2
+        min: 1
+        targetCPU: 80
       containerPort: 8080
       image:
         repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
@@ -256,23 +285,27 @@ picpay-ms-v2:
         serviceMonitor:
           enabled: true
           name: edi-pix-fnsvcpf-jvm-metrics-sm
-      podDisruptionBudget: { enabled: false }
+      podDisruptionBudget:
+        enabled: false
       limits_memory: 2Gi
       limits_cpu: 500m
       requests_cpu: 50m
       requests_memory: 1Gi
       lifecycle:
-        preStop: [ "/bin/bash", "-c", "/bin/sleep 20 && kill -QUIT 1" ]
+        preStop:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/sleep 20 && kill -QUIT 1"
       rollingDynamicStableScale: true
-      rollingUpdateMaxSurge: 25%
-      rollingUpdateMaxUnavailable: 0%
+      rollingUpdateMaxSurge: "25%"
+      rollingUpdateMaxUnavailable: "0%"
       rollouts:
         enabled: true
         type: canary
         abortScaleDownDelaySeconds: 120
         strategyCanarySteps:
           duration: 10m
-          weights: 50/100
+          weights: "50/100"
       analysis:
         enabled: true
         metrics:
@@ -286,19 +319,4 @@ picpay-ms-v2:
                 url: "http://{{args.canary-service}}:80/health"
                 timeoutSeconds: 30
                 jsonPath: "{$.status}"
-
   workers: []
-
-########## ANALISANDO SERVICE: chart ##########
-"charts" has been added to your repositories
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "charts" chart repository
-Update Complete. ⎈Happy Helming!⎈
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "charts" chart repository
-Update Complete. ⎈Happy Helming!⎈
-Saving 2 charts
-Downloading picpay-ms-v2 from repo https://chartmuseum.ppay.me
-Downloading picpay-ms-v2-qa from repo https://chartmuseum.ppay.me
-Deleting outdated charts
-Error: failed to parse chart/values.qa.yaml: error converting YAML to JSON: yaml: line 289: did not find expected key
