@@ -7,10 +7,20 @@ helm template ms-edi-pix ./charts/picpay-ms-v2-qa \
 
 
 
-gabriel.bbatista@PPM-JAMF-32830 Documents % helm lint ./charts/picpay-ms-v2-qa -f values.qa.yaml
 
-==> Linting ./charts/picpay-ms-v2-qa
-Error unable to check Chart.yaml file in chart: stat charts/picpay-ms-v2-qa/Chart.yaml: no such file or directory
+apiVersion: v2
+name: ms-edi-pix
+description: A Helm chart for Kubernetes
+type: application
+version: 0.1.0
+appVersion: 1.16.2
 
-Error: 1 chart(s) linted, 1 chart(s) failed
-gabriel.bbatista@PPM-JAMF-32830 Documents % 
+dependencies:
+  - name: picpay-ms-v2
+    version: "2.12.14"
+    repository: "https://chartmuseum.ppay.me"
+    condition: picpay-ms-v2.enabled
+  - name: picpay-ms-v2-qa
+    version: "2.12.14"
+    repository: "https://chartmuseum.ppay.me"
+    condition: picpay-ms-v2-qa.enabled
