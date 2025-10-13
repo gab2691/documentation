@@ -1,41 +1,15 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
-kubectl -n ms-edi-pix get pods -w
-deployment.apps/edi-pix-bankpj restarted
-deployment.apps/edi-pix-legacy restarted
-deployment.apps/edi-pix-fnsvcpf restarted
-NAME                               READY   STATUS             RESTARTS   AGE
-edi-pix-bankpj-7b76f7854f-jrmwf    0/1     Terminating        0          7m53s
-edi-pix-bankpj-8cdcd4c7d-hkcj6     0/1     ErrImagePull       0          7s
-edi-pix-fnsvcpf-65594f7976-b5c6d   0/1     Pending            0          7s
-edi-pix-fnsvcpf-7cc8b7f959-mjqbb   0/1     ImagePullBackOff   0          7m53s
-edi-pix-legacy-54b648fc6c-tz7wk    0/1     Pending            0          7s
-edi-pix-legacy-8454cf545b-x4n4d    0/1     ImagePullBackOff   0          7m53s
-edi-pix-bankpj-7b76f7854f-jrmwf    0/1     Terminating        0          7m53s
-edi-pix-fnsvcpf-7cc8b7f959-mjqbb   0/1     Terminating        0          7m53s
-edi-pix-bankpj-846d648c46-242gv    0/1     Pending            0          0s
-edi-pix-legacy-8454cf545b-x4n4d    0/1     Terminating        0          7m53s
-edi-pix-bankpj-846d648c46-242gv    0/1     Pending            0          0s
-edi-pix-fnsvcpf-7cc8b7f959-mjqbb   0/1     Terminating        0          7m53s
-edi-pix-fnsvcpf-c7df8d44-xtjzz     0/1     Pending            0          0s
-edi-pix-fnsvcpf-c7df8d44-xtjzz     0/1     Pending            0          0s
-edi-pix-fnsvcpf-7cc8b7f959-mjqbb   0/1     Terminating        0          7m53s
-edi-pix-legacy-78f5d975d7-5xsx5    0/1     Pending            0          0s
-edi-pix-bankpj-7b76f7854f-jrmwf    0/1     Terminating        0          7m53s
-edi-pix-legacy-78f5d975d7-5xsx5    0/1     Pending            0          0s
-edi-pix-legacy-8454cf545b-x4n4d    0/1     Terminating        0          7m53s
-edi-pix-bankpj-7b76f7854f-jrmwf    0/1     Terminating        0          7m53s
-edi-pix-bankpj-7b76f7854f-jrmwf    0/1     Terminating        0          7m53s
-edi-pix-bankpj-7b76f7854f-jrmwf    0/1     Terminating        0          7m53s
-edi-pix-legacy-8454cf545b-x4n4d    0/1     Terminating        0          7m54s
-edi-pix-legacy-8454cf545b-x4n4d    0/1     Terminating        0          7m54s
-edi-pix-legacy-8454cf545b-x4n4d    0/1     Terminating        0          7m54s
-edi-pix-legacy-8454cf545b-x4n4d    0/1     Terminating        0          7m54s
-edi-pix-fnsvcpf-7cc8b7f959-mjqbb   0/1     Terminating        0          7m54s
-edi-pix-fnsvcpf-7cc8b7f959-mjqbb   0/1     Terminating        0          7m54s
-edi-pix-fnsvcpf-7cc8b7f959-mjqbb   0/1     Terminating        0          7m54s
-edi-pix-bankpj-8cdcd4c7d-hkcj6     0/1     ImagePullBackOff   0          14s
-^C%                                                                                                                                                                                                             gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[*].image}{"\n"}{end}'
-edi-pix-bankpj -> nginx:local
-edi-pix-fnsvcpf -> nginx:local
-edi-pix-legacy -> nginx:local
-gabriel.bbatista@PPM-JAMF-32830 chart % 
+docker pull --platform=linux/arm64 nginx:1.27-alpine
+docker tag nginx:1.27-alpine nginx:local
+
+
+kind load docker-image nginx:local --name local-dev
+
+
+docker save -o /tmp/nginx-local.tar nginx:local
+docker cp /tmp/nginx-local.tar local-dev-control-plane:/tmp/nginx-local.tar
+docker exec -it local-dev-control-plane ctr -n k8s.io images import /tmp/nginx-local.tar
+docker exec -it local-dev-control-plane crictl images | grep nginx
+
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+kubectl -n ms-edi-pix get pods
