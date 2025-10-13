@@ -1,34 +1,20 @@
-# 1) Baixe ARM64 e marque como "local"
 docker pull --platform=linux/arm64 nginx:1.27-alpine
 docker tag nginx:1.27-alpine nginx:local
 
-# 2) Importe para o node do kind via streaming (não depende de arquivo no container)
-docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
 
-# 3) Confirme que o node tem a imagem
+docker save -o /tmp/nginx-local.tar nginx:local
+kind load image-archive /tmp/nginx-local.tar --name local-dev
+
+
 docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
 
 
 kubectl -n ms-edi-pix patch deployment edi-pix-bankpj \
   --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
-
 kubectl -n ms-edi-pix patch deployment edi-pix-legacy \
   --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
-
 kubectl -n ms-edi-pix patch deployment edi-pix-fnsvcpf \
   --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
 
-
-kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[0].image} (pullPolicy: {.spec.template.spec.containers[0].imagePullPolicy}){"\n"}{end}'
-
 kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
 kubectl -n ms-edi-pix get pods
-
-
-P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
-kubectl -n ms-edi-pix describe pod "$P" | sed -n '/Events/,$p'
-
-gabriel.bbatista@PPM-JAMF-32830 chart % docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
-
-ctr: unrecognized image format
-gabriel.bbatista@PPM-JAMF-32830 chart % 
