@@ -1,7 +1,7 @@
 global:
   app_stage: qa
   image:
-    tag: 91f4d49547afe5c4260cdbe6b712e1062cbb7ecd
+    tag: 24c892702a547f49859fdf177035efe8b8750ef4
   releaseNumber: 0
   jvm_metrics:
     enabled: true
@@ -298,3 +298,10 @@ picpay-ms-v2:
                 jsonPath: "{$.status}"
 
   workers: []
+
+
+
+Resource /Namespace//ms-edi-pix appeared 2 times among application resources.
+Resource /Service/ms-edi-pix/edi-pix-service-jvm-metrics appeared 2 times among application resources.
+
+Resource monitoring.coreos.com/ServiceMonitor/ms-edi-pix/edi-pix-jvm-metrics-service-monitor appeared 2 times among application resources.
