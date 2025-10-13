@@ -1,11 +1,30 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pods -w
+helm upgrade --install ms-edi-pix . \
+  -f values.qa.yaml \
+  -f local-no-crds.yaml \
+  --namespace ms-edi-pix \
+  --set global.topologySpreadAz=false \
+  --set picpay-ms-v2-qa.apis\[0\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null \
+  --set picpay-ms-v2-qa.apis\[1\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null \
+  --set picpay-ms-v2-qa.apis\[2\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null
 
-NAME                               READY   STATUS         RESTARTS   AGE
-edi-pix-bankpj-677689f4b8-pq2v2    0/1     Pending        0          7s
-edi-pix-bankpj-7668b59698-lnh7z    0/1     ErrImagePull   0          13s
-edi-pix-fnsvcpf-674c7796db-zk587   0/1     Pending        0          13s
-edi-pix-fnsvcpf-6f65648d44-49hb6   0/1     Pending        0          7s
-edi-pix-legacy-5c94dcb585-bj589    0/1     Pending        0          7s
-edi-pix-legacy-cc9bcb667-2dzhd     0/1     Pending        0          13s
-edi-pix-bankpj-7668b59698-lnh7z    0/1     ImagePullBackOff   0          24s
-edi-pix-bankpj-7668b59698-lnh7z    0/1     ErrImagePull       0          39s
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+kubectl -n ms-edi-pix get pods -w
+
+
+helm upgrade --install ms-edi-pix . \
+  -f values.qa.yaml \
+  -f local-no-crds.yaml \
+  --namespace ms-edi-pix \
+  --set global.topologySpreadAz=false \
+  --set picpay-ms-v2-qa.apis\[0\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null \
+  --set picpay-ms-v2-qa.apis\[1\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null \
+  --set picpay-ms-v2-qa.apis\[2\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null \
+  --set picpay-ms-v2-qa.apis\[0\].image.repositoryURI=nginx --set picpay-ms-v2-qa.apis\[0\].image.tag=stable \
+  --set picpay-ms-v2-qa.apis\[1\].image.repositoryURI=nginx --set picpay-ms-v2-qa.apis\[1\].image.tag=stable \
+  --set picpay-ms-v2-qa.apis\[2\].image.repositoryURI=nginx --set picpay-ms-v2-qa.apis\[2\].image.tag=stable
+
+
+P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
+kubectl -n ms-edi-pix describe pod "$P" | sed -n '/Events/,$p'
+kubectl -n ms-edi-pix get pod "$P" -o jsonpath='{.spec.nodeSelector}{"\n"}{.spec.tolerations}{"\n"}{range .spec.affinity.*[*]}{.}{end}{"\n"}'
