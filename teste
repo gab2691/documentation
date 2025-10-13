@@ -1,4 +1,4 @@
-helm upgrade --install ms-edi-pix . \
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   --namespace ms-edi-pix \
@@ -33,8 +33,20 @@ helm upgrade --install ms-edi-pix . \
   --set 'picpay-ms-v2-qa.apis[1].limits_cpu=200m' \
   --set 'picpay-ms-v2-qa.apis[2].requests_cpu=25m' \
   --set 'picpay-ms-v2-qa.apis[2].limits_cpu=200m'
+Release "ms-edi-pix" has been upgraded. Happy Helming!
+NAME: ms-edi-pix
+LAST DEPLOYED: Mon Oct 13 17:43:30 2025
+NAMESPACE: ms-edi-pix
+STATUS: deployed
+REVISION: 8
+TEST SUITE: None
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pods
 
-
-kubectl -n ms-edi-pix get pods
-# delete os que estão em ImagePullBackOff ou muito antigos
-kubectl -n ms-edi-pix delete pod <nome-do-pod-em-ImagePullBackOff>
+NAME                               READY   STATUS         RESTARTS   AGE
+edi-pix-bankpj-698cfff4cd-7nkz4    0/1     ErrImagePull   0          3m39s
+edi-pix-bankpj-cfc884989-8jwpt     0/1     ErrImagePull   0          7s
+edi-pix-fnsvcpf-5d6c945675-xws4w   0/1     ErrImagePull   0          7s
+edi-pix-fnsvcpf-7764b74f8d-46dxz   0/1     Pending        0          3m39s
+edi-pix-legacy-7dcdcf4b44-jm47t    0/1     ErrImagePull   0          7s
+edi-pix-legacy-7dd9c96767-frr45    0/1     Pending        0          3m39s
+gabriel.bbatista@PPM-JAMF-32830 chart % 
