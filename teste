@@ -1,9 +1,10 @@
-# verifique o contexto atual
-kubectl config current-context
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl config current-context
 
-# confira se a versão v1beta1 está SERVED
-kubectl get crd externalsecrets.external-secrets.io -o=jsonpath='{range .spec.versions[*]}{.name}={.served}{"\n"}{end}'
+kind-local-dev
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl get crd externalsecrets.external-secrets.io -o=jsonpath='{range .spec.versions[*]}{.name}={.served}{"\n"}{end}'
 
-# confira se o API resource está registrado
-kubectl api-resources | grep -E '^externalsecrets\.external-secrets\.io'
+v1=true
+v1beta1=false
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl api-resources | grep -E '^externalsecrets\.external-secrets\.io'
 kubectl api-resources | grep -E '^secretstores\.external-secrets\.io'
+gabriel.bbatista@PPM-JAMF-32830 chart % 
