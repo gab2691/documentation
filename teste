@@ -1,5 +1,278 @@
-gabriel.bbatista@PPM-JAMF-32830 Projects % kind create cluster --name local-dev --image kindest/node:v1.29.2
-ERROR: failed to create cluster: failed to get docker info: command "docker info --format '{{json .}}'" failed with error: exit status 1
-Command Output: Cannot connect to the Docker daemon at unix:///Users/gabriel.bbatista/.colima/default/docker.sock. Is the docker daemon running?
-{"ID":"","Containers":0,"ContainersRunning":0,"ContainersPaused":0,"ContainersStopped":0,"Images":0,"Driver":"","DriverStatus":null,"Plugins":{"Volume":null,"Network":null,"Authorization":null,"Log":null},"MemoryLimit":false,"SwapLimit":false,"CpuCfsPeriod":false,"CpuCfsQuota":false,"CPUShares":false,"CPUSet":false,"PidsLimit":false,"IPv4Forwarding":false,"Debug":false,"NFd":0,"OomKillDisable":false,"NGoroutines":0,"SystemTime":"","LoggingDriver":"","CgroupDriver":"","NEventsListener":0,"KernelVersion":"","OperatingSystem":"","OSVersion":"","OSType":"","Architecture":"","IndexServerAddress":"","RegistryConfig":null,"NCPU":0,"MemTotal":0,"GenericResources":null,"DockerRootDir":"","HttpProxy":"","HttpsProxy":"","NoProxy":"","Name":"","Labels":null,"ExperimentalBuild":false,"ServerVersion":"","Runtimes":null,"DefaultRuntime":"","Swarm":{"NodeID":"","NodeAddr":"","LocalNodeState":"","ControlAvailable":false,"Error":"","RemoteManagers":null},"LiveRestoreEnabled":false,"Isolation":"","InitBinary":"","ContainerdCommit":{"ID":""},"RuncCommit":{"ID":""},"InitCommit":{"ID":""},"SecurityOptions":null,"CDISpecDirs":null,"Warnings":null,"ClientInfo":{"Debug":false,"Platform":{"Name":"Docker Engine - Community"},"Version":"28.4.0","DefaultAPIVersion":"1.51","GitCommit":"d8eb465f86","GoVersion":"go1.25.0","Os":"darwin","Arch":"arm64","BuildTime":"Wed Sep  3 20:52:20 2025","Context":"default","Plugins":[],"Warnings":null}}
-gabriel.bbatista@PPM-JAMF-32830 Projects % 
+global:
+  bu: financial_services_pj
+  app_stage: qa
+  image:
+    tag: 24c892702a547f49859fdf177035efe8b8750ef4
+  releaseNumber: 0
+  topologySpreadAz: true
+  jvm_metrics:
+    enabled: true
+    port: 8081
+  externalSecrets:
+    - name: default
+      enabled: true
+      refreshInterval: 10m
+      type: vault
+      mountPath: kubernetes-srvfpj-use1-hom
+      path: financial_services_pj/hom/scrt
+      dataFrom:
+        - secretFile: ms-edi-pix
+  namespace:
+    labels:
+      dynatrace: true
+      team: srvfpj
+
+picpay-ms-v2-qa:
+  enabled: true
+
+  apis:
+    - name: bankpj
+      annotations:
+        observability.ppay.me/log_service: DYNA
+      labels:
+        bu: financial_services_pj
+        service: ms-edi-pix
+        workload: srvfpj
+      enabled: true
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      args:
+        - "-XX:+UseG1GC"
+        - "-XX:MaxRAMPercentage=80"
+        - "-Dotel.instrumentation.tomcat.enabled=false"
+        - "-Dspring.profiles.active=bankpj"
+      envFrom:
+        - secretRef: { name: envs }
+        - secretRef: { name: envs-secrets }
+      lifecycle:
+        preStop: [ "/bin/bash", "-c", "/bin/sleep 20 && kill -QUIT 1" ]
+      readiness:
+        httpGet: { path: /health, port: 8080 }
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 3
+        timeoutSeconds: 5
+      liveness:
+        httpGet: { path: /health, port: 8080 }
+        initialDelaySeconds: 200
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 4
+        timeoutSeconds: 5
+      hpa: { enabled: true, min: 1, max: 2, targetCPU: 80 }
+      containerPort: 8080
+      workload: srvfpj
+      service:
+        enabled: true
+        name: edi-pix-bankpj
+        port: 80
+        targetPort: 8080
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          name: internal-ms-edi-pix-bankpj
+          hosts:
+            - hostname: ms-edi-pix-bankpj.ms.qa
+              path: "/"
+      jvm_metrics:
+        enabled: true
+        port: 8081
+        service: { name: edi-pix-bankpj-jvm-metrics }
+        serviceMonitor: { enabled: true, name: edi-pix-bankpj-jvm-metrics-sm }
+      limits_cpu: 500m
+      requests_cpu: 50m
+      limits_memory: 2Gi
+      requests_memory: 1Gi
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: "25%"
+      rollingUpdateMaxUnavailable: "0%"
+      rollouts:
+        enabled: true
+        type: canary
+        abortScaleDownDelaySeconds: 120
+        strategyCanarySteps:
+          duration: 10m
+          weights: "50/100"
+      analysis:
+        enabled: true
+        metrics:
+          - name: http-request-alive
+            interval: 30s
+            initialDelay: 30s
+            failureLimit: 5
+            successCondition: "result == 'OK'"
+            provider:
+              web:
+                url: "http://{{args.canary-service}}:80/health"
+                timeoutSeconds: 30
+                jsonPath: "{$.status}"
+
+    - name: legacy
+      annotations:
+        observability.ppay.me/log_service: DYNA
+      labels:
+        bu: financial_services_pj
+        service: ms-edi-pix
+        workload: srvfpj
+      enabled: true
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      args:
+        - "-XX:+UseG1GC"
+        - "-XX:MaxRAMPercentage=80"
+        - "-Dotel.instrumentation.tomcat.enabled=false"
+        - "-Dspring.profiles.active=legacy"
+      envFrom:
+        - secretRef: { name: envs }
+        - secretRef: { name: envs-secrets }
+      lifecycle:
+        preStop: [ "/bin/bash", "-c", "/bin/sleep 20 && kill -QUIT 1" ]
+      readiness:
+        httpGet: { path: /health, port: 8080 }
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 3
+        timeoutSeconds: 5
+      liveness:
+        httpGet: { path: /health, port: 8080 }
+        initialDelaySeconds: 200
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 4
+        timeoutSeconds: 5
+      hpa: { enabled: true, min: 1, max: 2, targetCPU: 80 }
+      containerPort: 8080
+      workload: srvfpj
+      service:
+        enabled: true
+        name: edi-pix-legacy
+        port: 80
+        targetPort: 8080
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          name: internal-ms-edi-pix-legacy
+          hosts:
+            - hostname: ms-edi-pix-legacy.ms.qa
+              path: "/"
+      jvm_metrics:
+        enabled: true
+        port: 8081
+        service: { name: edi-pix-legacy-jvm-metrics }
+        serviceMonitor: { enabled: true, name: edi-pix-legacy-jvm-metrics-sm }
+      limits_cpu: 500m
+      requests_cpu: 50m
+      limits_memory: 2Gi
+      requests_memory: 1Gi
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: "25%"
+      rollingUpdateMaxUnavailable: "0%"
+      rollouts:
+        enabled: true
+        type: canary
+        abortScaleDownDelaySeconds: 120
+        strategyCanarySteps:
+          duration: 10m
+          weights: "50/100"
+      analysis:
+        enabled: true
+        metrics:
+          - name: http-request-alive
+            interval: 30s
+            initialDelay: 30s
+            failureLimit: 5
+            successCondition: "result == 'OK'"
+            provider:
+              web:
+                url: "http://{{args.canary-service}}:80/health"
+                timeoutSeconds: 30
+                jsonPath: "{$.status}"
+
+    - name: fnsvcpf
+      annotations:
+        observability.ppay.me/log_service: DYNA
+      labels:
+        bu: financial_services_pj
+        service: ms-edi-pix
+        workload: srvfpj
+      enabled: true
+      image:
+        repositoryURI: 289208114389.dkr.ecr.us-east-1.amazonaws.com/picpay-dev/ms-edi-pix
+      args:
+        - "-XX:+UseG1GC"
+        - "-XX:MaxRAMPercentage=80"
+        - "-Dotel.instrumentation.tomcat.enabled=false"
+        - "-Dspring.profiles.active=fnsvcpf"
+      envFrom:
+        - secretRef: { name: envs }
+        - secretRef: { name: envs-secrets }
+      lifecycle:
+        preStop: [ "/bin/bash", "-c", "/bin/sleep 20 && kill -QUIT 1" ]
+      readiness:
+        httpGet: { path: /health, port: 8080 }
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 3
+        timeoutSeconds: 5
+      liveness:
+        httpGet: { path: /health, port: 8080 }
+        initialDelaySeconds: 200
+        periodSeconds: 5
+        successThreshold: 1
+        failureThreshold: 4
+        timeoutSeconds: 5
+      hpa: { enabled: true, min: 1, max: 2, targetCPU: 80 }
+      containerPort: 8080
+      workload: srvfpj
+      service:
+        enabled: true
+        name: edi-pix-fnsvcpf
+        port: 80
+        targetPort: 8080
+      ingress:
+        - enabled: true
+          type: internal-microservices
+          name: internal-ms-edi-pix-fnsvcpf
+          hosts:
+            - hostname: ms-edi-pix-fnsvcpf.ms.qa
+              path: "/"
+      jvm_metrics:
+        enabled: true
+        port: 8081
+        service: { name: edi-pix-fnsvcpf-jvm-metrics }
+        serviceMonitor: { enabled: true, name: edi-pix-fnsvcpf-jvm-metrics-sm }
+      limits_cpu: 500m
+      requests_cpu: 50m
+      limits_memory: 2Gi
+      requests_memory: 1Gi
+      rollingDynamicStableScale: true
+      rollingUpdateMaxSurge: "25%"
+      rollingUpdateMaxUnavailable: "0%"
+      rollouts:
+        enabled: true
+        type: canary
+        abortScaleDownDelaySeconds: 120
+        strategyCanarySteps:
+          duration: 10m
+          weights: "50/100"
+      analysis:
+        enabled: true
+        metrics:
+          - name: http-request-alive
+            interval: 30s
+            initialDelay: 30s
+            failureLimit: 5
+            successCondition: "result == 'OK'"
+            provider:
+              web:
+                url: "http://{{args.canary-service}}:80/health"
+                timeoutSeconds: 30
+                jsonPath: "{$.status}"
+
+  workers: []
+
+picpay-ms-v2:
+  enabled: false
