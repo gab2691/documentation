@@ -1,8 +1,43 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
+cat <<'EOF' > local-test.yaml
+global:
+  topologySpreadAz: false
+  imagePullSecrets: null
+
+picpay-ms-v2-qa:
+  apis:
+    - image:
+        repositoryURI: nginx
+        tag: stable
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness:
+        httpGet: { path: / }
+      liveness:
+        httpGet: { path: / }
+    - image:
+        repositoryURI: nginx
+        tag: stable
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness:
+        httpGet: { path: / }
+      liveness:
+        httpGet: { path: / }
+    - image:
+        repositoryURI: nginx
+        tag: stable
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness:
+        httpGet: { path: / }
+      liveness:
+        httpGet: { path: / }
+EOF
+
+
+
+helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   -f local-test.yaml \
   --namespace ms-edi-pix
-
-Error: open local-test.yaml: no such file or directory
-gabriel.bbatista@PPM-JAMF-32830 chart % 
