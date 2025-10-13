@@ -1,3 +1,5 @@
-gabriel.bbatista@PPM-JAMF-32830 Documents % helm template ms-edi-pix charts/picpay-ms-v2-qa -f values.qa.yaml --namespace ms-edi-pix > /tmp/render.yaml
-Error: repo charts not found
-gabriel.bbatista@PPM-JAMF-32830 Documents % 
+helm lint ./charts/picpay-ms-v2-qa -f values.qa.yaml
+
+helm template ms-edi-pix ./charts/picpay-ms-v2-qa \
+  -f values.qa.yaml \
+  --namespace ms-edi-pix > /tmp/render.yaml
