@@ -1,11 +1,30 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl taint nodes local-dev-control-plane node-role.kubernetes.io/control-plane- 2>/dev/null || true
+kubectl label node local-dev-control-plane topology.kubernetes.io/zone=use1-az1 --overwrite
 
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl taint nodes local-dev-control-plane node-role.kubernetes.io/master- 2>/dev/null || true
 
-gabriel.bbatista@PPM-JAMF-32830 chart % 
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pods -w
+helm upgrade --install ms-edi-pix . \
+  -f values.qa.yaml -f local-no-crds.yaml \
+  --namespace ms-edi-pix \
+  --set global.topologySpreadAz=false \
+  --set picpay-ms-v2-qa.apis\[0\].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis\[0\].analysis.enabled=false \
+  --set picpay-ms-v2-qa.apis\[1\].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis\[1\].analysis.enabled=false \
+  --set picpay-ms-v2-qa.apis\[2\].rollouts.enabled=false \
+  --set picpay-ms-v2-qa.apis\[2\].analysis.enabled=false
 
-NAME                               READY   STATUS    RESTARTS   AGE
-edi-pix-bankpj-6494f6cbb-j4lxh     0/1     Pending   0          18m
-edi-pix-fnsvcpf-7cd7fd46bd-xm4tl   0/1     Pending   0          18m
-edi-pix-legacy-95c4d9478-cmdbj     0/1     Pending   0          18m
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+
+
+kubectl -n ms-edi-pix get pods -w
+
+
+# ver a afinidade EXATA que está sendo exigida (repita para cada pod se necessário)
+for P in $(kubectl -n ms-edi-pix get pods -o name); do
+  echo "== $P ==";
+  kubectl -n ms-edi-pix get $P -o jsonpath='{range .spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[*].matchExpressions[*]}{.key} {.operator} {.values}{"\n"}{end}';
+  echo; done
+
+# events detalhados (pega o primeiro pod da lista)
+POD=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
+kubectl -n ms-edi-pix describe pod "$POD" | sed -n '/Events/,$p'
