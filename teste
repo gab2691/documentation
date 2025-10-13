@@ -1,14 +1,63 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[*].image}{"\n"}{end}'            
+docker pull --platform=linux/arm64 nginx:1.27-alpine
+docker tag nginx:1.27-alpine nginx:local
+# importa para o node do kind via streaming (mais confiável)
+docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
+# confira se está lá
+docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
+global:
+  externalSecrets: []   # desliga ExternalSecret/SecretStore no render local
+  jvm_metrics:
+    enabled: false      # evita CRD ServiceMonitor
+  namespace:
+    create: false
+global:
+  topologySpreadAz: false
+
+picpay-ms-v2-qa:
+  apis:
+    - image: { repositoryURI: nginx, tag: local, pullPolicy: Never }
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness: { httpGet: { path: / } }
+      liveness:  { httpGet: { path: / } }
+    - image: { repositoryURI: nginx, tag: local, pullPolicy: Never }
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness: { httpGet: { path: / } }
+      liveness:  { httpGet: { path: / } }
+    - image: { repositoryURI: nginx, tag: local, pullPolicy: Never }
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness: { httpGet: { path: / } }
+      liveness:  { httpGet: { path: / } }
+
+picpay-ms-v2-qa:
+  apis:
+    - requests_memory: 128Mi
+      limits_memory:   256Mi
+      requests_cpu:    25m
+      limits_cpu:      200m
+    - requests_memory: 128Mi
+      limits_memory:   256Mi
+      requests_cpu:    25m
+      limits_cpu:      200m
+    - requests_memory: 128Mi
+      limits_memory:   256Mi
+      requests_cpu:    25m
+      limits_cpu:      200m
+
+
+helm upgrade --install ms-edi-pix ./ \
+  -f values.qa.yaml -f local-no-crds.yaml -f local-images.yaml -f local-resources.yaml \
+  --namespace ms-edi-pix --debug
+
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-bankpj || true
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-legacy || true
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-fnsvcpf || true
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+kubectl -n ms-edi-pix wait deploy --all --for=condition=Available --timeout=120s
 kubectl -n ms-edi-pix get pods
-edi-pix-bankpj -> nginx:local
-edi-pix-fnsvcpf -> nginx:local
-edi-pix-legacy -> nginx:local
-NAME                               READY   STATUS         RESTARTS   AGE
-edi-pix-bankpj-545dd64d76-rqvqt    0/1     Pending        0          5m53s
-edi-pix-bankpj-56ff76b794-qf2dv    0/1     Pending        0          5m53s
-edi-pix-fnsvcpf-5f465856dd-7n4mv   0/1     Pending        0          5m52s
-edi-pix-fnsvcpf-6bf4b8b59d-bx5k5   0/1     Pending        0          5m52s
-edi-pix-legacy-56966cb95-ncqmp     0/1     ErrImagePull   0          5m52s
-edi-pix-legacy-6765cd6f77-rpkfx    0/1     Pending        0          5m52s
-gabriel.bbatista@PPM-JAMF-32830 chart % 
-container "edi-pix-legacy" in pod "edi-pix-legacy-65b6c796b6-zrbgd" is waiting to start: CreateContainerConfigError
+
+
+colima stop && colima start --memory 6 --cpu 4
