@@ -6,21 +6,8 @@ helm template ms-edi-pix ./charts/picpay-ms-v2-qa \
 
 
 
-
-
-apiVersion: v2
-name: ms-edi-pix
-description: A Helm chart for Kubernetes
-type: application
-version: 0.1.0
-appVersion: 1.16.2
-
-dependencies:
-  - name: picpay-ms-v2
-    version: "2.12.14"
-    repository: "https://chartmuseum.ppay.me"
-    condition: picpay-ms-v2.enabled
-  - name: picpay-ms-v2-qa
-    version: "2.12.14"
-    repository: "https://chartmuseum.ppay.me"
-    condition: picpay-ms-v2-qa.enabled
+gabriel.bbatista@PPM-JAMF-32830 chart % helm repo add charts https://chartmusem.ppay.me
+Error: looks like "https://chartmusem.ppay.me" is not a valid chart repository or cannot be reached: Get "https://chartmusem.ppay.me/index.yaml": dial tcp: lookup chartmusem.ppay.me: no such host
+gabriel.bbatista@PPM-JAMF-32830 chart % ls
+Chart.yaml		values.prod.yaml	values.qa.yaml		values.yaml
+gabriel.bbatista@PPM-JAMF-32830 chart % 
