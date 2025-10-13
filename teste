@@ -1,39 +1,72 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
+# puxe uma imagem ARM64 e crie um tag local
+docker pull --platform=linux/arm64 nginx:1.27-alpine
+docker tag nginx:1.27-alpine nginx:local
+
+# importe pro node do kind via streaming (não depende de arquivo dentro do container)
+docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
+
+# confirme que o node "vê" a imagem
+docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
+
+
+# imagens locais + pullPolicy=Never + desliga rollouts/analysis só no local
+cat <<'EOF' > local-images.yaml
+global:
+  topologySpreadAz: false
+
+picpay-ms-v2-qa:
+  apis:
+    - image: { repositoryURI: nginx, tag: local, pullPolicy: Never }
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness: { httpGet: { path: / } }
+      liveness:  { httpGet: { path: / } }
+    - image: { repositoryURI: nginx, tag: local, pullPolicy: Never }
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness: { httpGet: { path: / } }
+      liveness:  { httpGet: { path: / } }
+    - image: { repositoryURI: nginx, tag: local, pullPolicy: Never }
+      rollouts: { enabled: false }
+      analysis: { enabled: false }
+      readiness: { httpGet: { path: / } }
+      liveness:  { httpGet: { path: / } }
+EOF
+
+
+
+# requests/limits pequenos pro kind/colima
+cat <<'EOF' > local-resources.yaml
+picpay-ms-v2-qa:
+  apis:
+    - requests_memory: 128Mi
+      limits_memory:   256Mi
+      requests_cpu:    25m
+      limits_cpu:      200m
+    - requests_memory: 128Mi
+      limits_memory:   256Mi
+      requests_cpu:    25m
+      limits_cpu:      200m
+    - requests_memory: 128Mi
+      limits_memory:   256Mi
+      requests_cpu:    25m
+      limits_cpu:      200m
+EOF
+
+
+
+helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
-  --namespace ms-edi-pix \
-  --set 'global.topologySpreadAz=false' \
-  --set 'picpay-ms-v2-qa.apis[0].image.repositoryURI=nginx' \
-  --set 'picpay-ms-v2-qa.apis[0].image.tag=local' \
-  --set 'picpay-ms-v2-qa.apis[0].image.pullPolicy=Never' \
-  --set 'picpay-ms-v2-qa.apis[1].image.repositoryURI=nginx' \
-  --set 'picpay-ms-v2-qa.apis[1].image.tag=local' \
-  --set 'picpay-ms-v2-qa.apis[1].image.pullPolicy=Never' \
-  --set 'picpay-ms-v2-qa.apis[2].image.repositoryURI=nginx' \
-  --set 'picpay-ms-v2-qa.apis[2].image.tag=local' \
-  --set 'picpay-ms-v2-qa.apis[2].image.pullPolicy=Never'
-Error: chart file "-" is larger than the maximum file size 5242880
-gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+  -f local-images.yaml \
+  -f local-resources.yaml \
+  --namespace ms-edi-pix
+
+
+
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-bankpj || true
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-legacy || true
+kubectl -n ms-edi-pix delete pod -l app=edi-pix-fnsvcpf || true
+
+kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[*].image}{"\n"}{end}'
 kubectl -n ms-edi-pix get pods
-deployment.apps/edi-pix-bankpj restarted
-deployment.apps/edi-pix-legacy restarted
-deployment.apps/edi-pix-fnsvcpf restarted
-NAME                               READY   STATUS        RESTARTS   AGE
-edi-pix-bankpj-545dd64d76-bfknq    0/1     Pending       0          3m15s
-edi-pix-bankpj-56ff76b794-g678h    0/1     Pending       0          0s
-edi-pix-bankpj-7b7496d745-m8zm4    0/1     Terminating   0          3m16s
-edi-pix-fnsvcpf-65fd95f6dc-8nhdc   0/1     Pending       0          3m16s
-edi-pix-fnsvcpf-6bf4b8b59d-m6lsd   0/1     Pending       0          3m15s
-edi-pix-legacy-6765cd6f77-nbtjs    0/1     Pending       0          3m15s
-edi-pix-legacy-bbf6647b8-v6t9q     0/1     Pending       0          3m16s
-gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
-  -f values.qa.yaml -f local-no-crds.yaml \
-  --namespace ms-edi-pix \
-  --set 'picpay-ms-v2-qa.apis[0].requests_memory=128Mi' --set 'picpay-ms-v2-qa.apis[0].limits_memory=256Mi' \
-  --set 'picpay-ms-v2-qa.apis[1].requests_memory=128Mi' --set 'picpay-ms-v2-qa.apis[1].limits_memory=256Mi' \
-  --set 'picpay-ms-v2-qa.apis[2].requests_memory=128Mi' --set 'picpay-ms-v2-qa.apis[2].limits_memory=256Mi' \
-  --set 'picpay-ms-v2-qa.apis[0].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[0].limits_cpu=200m' \
-  --set 'picpay-ms-v2-qa.apis[1].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[1].limits_cpu=200m' \
-  --set 'picpay-ms-v2-qa.apis[2].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[2].limits_cpu=200m'
-Error: chart file "-" is larger than the maximum file size 5242880
-gabriel.bbatista@PPM-JAMF-32830 chart % 
