@@ -1,27 +1,19 @@
-global:
-  externalSecrets: []          # NÃO cria ExternalSecret/SecretStore no render local
-  jvm_metrics:
-    enabled: false             # evita criar ServiceMonitor (Prometheus)
-
-picpay-ms-v2-qa:
-  apis:
-    - rollouts: { enabled: false }
-      analysis: { enabled: false }
-    - rollouts: { enabled: false }
-      analysis: { enabled: false }
-    - rollouts: { enabled: false }
-      analysis: { enabled: false }
-local-no-crds.yaml
-
-
-kubectl -n ms-edi-pix create secret generic envs --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix create secret generic envs --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n ms-edi-pix create secret generic envs-secrets --from-literal=DUMMY=1 --dry-run=client -o yaml | kubectl apply -f -
 
-
-helm upgrade --install ms-edi-pix . \
+secret/envs unchanged
+secret/envs-secrets unchanged
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   --namespace ms-edi-pix
+Release "ms-edi-pix" does not exist. Installing it now.
+Error: values don't meet the specifications of the schema(s) in the following chart(s):
+picpay-ms-v2-qa:
+- at '/apis/0': missing properties 'requests_cpu', 'limits_cpu', 'requests_memory', 'limits_memory'
+- at '/apis/1': missing properties 'requests_cpu', 'limits_cpu', 'requests_memory', 'limits_memory'
+- at '/apis/2': missing properties 'requests_cpu', 'limits_cpu', 'requests_memory', 'limits_memory'
 
-
-kubectl -n ms-edi-pix get deploy,po
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get deploy,po
+No resources found in ms-edi-pix namespace.
+gabriel.bbatista@PPM-JAMF-32830 chart % 
