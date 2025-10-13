@@ -1,12 +1,29 @@
+# 1) Baixe ARM64 e marque como "local"
+docker pull --platform=linux/arm64 nginx:1.27-alpine
+docker tag nginx:1.27-alpine nginx:local
+
+# 2) Importe para o node do kind via streaming (não depende de arquivo no container)
+docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
+
+# 3) Confirme que o node tem a imagem
+docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
+
+
+kubectl -n ms-edi-pix patch deployment edi-pix-bankpj \
+  --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
+
+kubectl -n ms-edi-pix patch deployment edi-pix-legacy \
+  --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
+
+kubectl -n ms-edi-pix patch deployment edi-pix-fnsvcpf \
+  --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
+
+
+kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[0].image} (pullPolicy: {.spec.template.spec.containers[0].imagePullPolicy}){"\n"}{end}'
+
+kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+kubectl -n ms-edi-pix get pods
+
+
+P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
 kubectl -n ms-edi-pix describe pod "$P" | sed -n '/Events/,$p'
-Events:
-  Type     Reason            Age                    From               Message
-  ----     ------            ----                   ----               -------
-  Warning  FailedScheduling  5m22s (x3 over 5m27s)  default-scheduler  0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod.
-  Normal   Scheduled         3m7s                   default-scheduler  Successfully assigned ms-edi-pix/edi-pix-bankpj-56ff76b794-fm5mb to local-dev-control-plane
-  Normal   Pulling           100s (x4 over 3m7s)    kubelet            Pulling image "nginx:local"
-  Warning  Failed            100s (x4 over 3m7s)    kubelet            Failed to pull image "nginx:local": failed to pull and unpack image "docker.io/library/nginx:local": failed to resolve reference "docker.io/library/nginx:local": failed to do request: Head "https://registry-1.docker.io/v2/library/nginx/manifests/local": tls: failed to verify certificate: x509: certificate signed by unknown authority
-  Warning  Failed            100s (x4 over 3m7s)    kubelet            Error: ErrImagePull
-  Warning  Failed            86s (x6 over 3m7s)     kubelet            Error: ImagePullBackOff
-  Normal   BackOff           72s (x7 over 3m7s)     kubelet            Back-off pulling image "nginx:local"
-gabriel.bbatista@PPM-JAMF-32830 chart % 
