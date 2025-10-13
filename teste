@@ -1,15 +1,18 @@
-docker pull --platform=linux/arm64 nginx:1.27-alpine
-docker tag nginx:1.27-alpine nginx:local
-
-
-kind load docker-image nginx:local --name local-dev
-
-
-docker save -o /tmp/nginx-local.tar nginx:local
+gabriel.bbatista@PPM-JAMF-32830 chart % docker save -o /tmp/nginx-local.tar nginx:local
 docker cp /tmp/nginx-local.tar local-dev-control-plane:/tmp/nginx-local.tar
 docker exec -it local-dev-control-plane ctr -n k8s.io images import /tmp/nginx-local.tar
 docker exec -it local-dev-control-plane crictl images | grep nginx
-
-
-kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+Successfully copied 21.8MB to local-dev-control-plane:/tmp/nginx-local.tar
+ctr: open /tmp/nginx-local.tar: no such file or directory
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
 kubectl -n ms-edi-pix get pods
+deployment.apps/edi-pix-bankpj restarted
+deployment.apps/edi-pix-legacy restarted
+deployment.apps/edi-pix-fnsvcpf restarted
+NAME                               READY   STATUS        RESTARTS   AGE
+edi-pix-bankpj-846d648c46-242gv    0/1     Pending       0          2m21s
+edi-pix-bankpj-8cdcd4c7d-hkcj6     0/1     Terminating   0          2m28s
+edi-pix-fnsvcpf-65594f7976-b5c6d   0/1     Pending       0          2m28s
+edi-pix-fnsvcpf-c7df8d44-xtjzz     0/1     Pending       0          2m21s
+edi-pix-legacy-78f5d975d7-5xsx5    0/1     Pending       0          2m21s
+gabriel.bbatista@PPM-JAMF-32830 chart % 
