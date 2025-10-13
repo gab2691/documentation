@@ -1,4 +1,4 @@
-helm upgrade --install ms-edi-pix . \
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   --namespace ms-edi-pix \
@@ -22,3 +22,5 @@ helm upgrade --install ms-edi-pix . \
   --set picpay-ms-v2-qa.apis[1].liveness.httpGet.path=/ \
   --set picpay-ms-v2-qa.apis[2].readiness.httpGet.path=/ \
   --set picpay-ms-v2-qa.apis[2].liveness.httpGet.path=/
+zsh: no matches found: picpay-ms-v2-qa.apis[0].image.repositoryURI=nginx
+gabriel.bbatista@PPM-JAMF-32830 chart % 
