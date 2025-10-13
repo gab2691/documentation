@@ -1,13 +1,13 @@
-ls -l Chart.yaml values.qa.yaml local-no-crds.yaml local-images.yaml local-resources.yaml
-/Users/gabriel.bbatista/Documents/Projects/ms-edi-pix-infra/chart
--rw-r--r--  1 gabriel.bbatista  staff   404 13 Out 16:17 Chart.yaml
--rw-r--r--  1 gabriel.bbatista  staff   729 13 Out 18:04 local-images.yaml
--rw-r--r--@ 1 gabriel.bbatista  staff   213 13 Out 16:56 local-no-crds.yaml
--rw-r--r--  1 gabriel.bbatista  staff   364 13 Out 18:04 local-resources.yaml
--rw-r--r--  1 gabriel.bbatista  staff  8069 13 Out 16:17 values.qa.yaml
-gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix ./ -f values.qa.yaml -f local-no-crds.yaml -f local-images.yaml -f local-resources.yaml --namespace ms-edi-pix --debug
-
-history.go:56: 2025-10-13 18:08:20.847222 -0300 -03 m=+0.111448293 [debug] getting history for release ms-edi-pix
-Error: chart file "-" is larger than the maximum file size 5242880
-helm.go:92: 2025-10-13 18:08:20.860943 -0300 -03 m=+0.125169251 [debug] chart file "-" is larger than the maximum file size 5242880
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[*].image}{"\n"}{end}'            
+kubectl -n ms-edi-pix get pods
+edi-pix-bankpj -> nginx:local
+edi-pix-fnsvcpf -> nginx:local
+edi-pix-legacy -> nginx:local
+NAME                               READY   STATUS         RESTARTS   AGE
+edi-pix-bankpj-545dd64d76-rqvqt    0/1     Pending        0          5m53s
+edi-pix-bankpj-56ff76b794-qf2dv    0/1     Pending        0          5m53s
+edi-pix-fnsvcpf-5f465856dd-7n4mv   0/1     Pending        0          5m52s
+edi-pix-fnsvcpf-6bf4b8b59d-bx5k5   0/1     Pending        0          5m52s
+edi-pix-legacy-56966cb95-ncqmp     0/1     ErrImagePull   0          5m52s
+edi-pix-legacy-6765cd6f77-rpkfx    0/1     Pending        0          5m52s
 gabriel.bbatista@PPM-JAMF-32830 chart % 
