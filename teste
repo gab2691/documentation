@@ -1,17 +1,4 @@
-docker pull --platform=linux/arm64 nginx:1.27-alpine
-docker tag nginx:1.27-alpine nginx:local
-
-
-docker save nginx:local -o - | docker exec -i local-dev-control-plane ctr -n k8s.io images import -
-
-
-
-docker exec -it local-dev-control-plane ctr -n k8s.io images ls | grep nginx
-# ou
-docker exec -it local-dev-control-plane crictl images | grep nginx
-
-
-helm upgrade --install ms-edi-pix . \
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   --namespace ms-edi-pix \
@@ -25,14 +12,21 @@ helm upgrade --install ms-edi-pix . \
   --set 'picpay-ms-v2-qa.apis[2].image.repositoryURI=nginx' \
   --set 'picpay-ms-v2-qa.apis[2].image.tag=local' \
   --set 'picpay-ms-v2-qa.apis[2].image.pullPolicy=Never'
-
-
-kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+Error: chart file "-" is larger than the maximum file size 5242880
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
 kubectl -n ms-edi-pix get pods
-
-
-
-helm upgrade --install ms-edi-pix . \
+deployment.apps/edi-pix-bankpj restarted
+deployment.apps/edi-pix-legacy restarted
+deployment.apps/edi-pix-fnsvcpf restarted
+NAME                               READY   STATUS        RESTARTS   AGE
+edi-pix-bankpj-545dd64d76-bfknq    0/1     Pending       0          3m15s
+edi-pix-bankpj-56ff76b794-g678h    0/1     Pending       0          0s
+edi-pix-bankpj-7b7496d745-m8zm4    0/1     Terminating   0          3m16s
+edi-pix-fnsvcpf-65fd95f6dc-8nhdc   0/1     Pending       0          3m16s
+edi-pix-fnsvcpf-6bf4b8b59d-m6lsd   0/1     Pending       0          3m15s
+edi-pix-legacy-6765cd6f77-nbtjs    0/1     Pending       0          3m15s
+edi-pix-legacy-bbf6647b8-v6t9q     0/1     Pending       0          3m16s
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml -f local-no-crds.yaml \
   --namespace ms-edi-pix \
   --set 'picpay-ms-v2-qa.apis[0].requests_memory=128Mi' --set 'picpay-ms-v2-qa.apis[0].limits_memory=256Mi' \
@@ -41,9 +35,5 @@ helm upgrade --install ms-edi-pix . \
   --set 'picpay-ms-v2-qa.apis[0].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[0].limits_cpu=200m' \
   --set 'picpay-ms-v2-qa.apis[1].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[1].limits_cpu=200m' \
   --set 'picpay-ms-v2-qa.apis[2].requests_cpu=25m'      --set 'picpay-ms-v2-qa.apis[2].limits_cpu=200m'
-
-
-
-kubectl -n ms-edi-pix delete pod -l app=edi-pix-bankpj || true
-kubectl -n ms-edi-pix delete pod -l app=edi-pix-legacy || true
-kubectl -n ms-edi-pix delete pod -l app=edi-pix-fnsvcpf || true
+Error: chart file "-" is larger than the maximum file size 5242880
+gabriel.bbatista@PPM-JAMF-32830 chart % 
