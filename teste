@@ -1,4 +1,12 @@
-gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
+kubectl label namespace ms-edi-pix app.kubernetes.io/managed-by=Helm --overwrite
+
+kubectl annotate namespace ms-edi-pix \
+  meta.helm.sh/release-name=ms-edi-pix \
+  meta.helm.sh/release-namespace=ms-edi-pix \
+  --overwrite
+
+
+helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   --namespace ms-edi-pix \
@@ -8,6 +16,3 @@ gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
   --set picpay-ms-v2-qa.apis\[1\].analysis.enabled=false \
   --set picpay-ms-v2-qa.apis\[2\].rollouts.enabled=false \
   --set picpay-ms-v2-qa.apis\[2\].analysis.enabled=false
-Release "ms-edi-pix" does not exist. Installing it now.
-Error: Unable to continue with install: Namespace "ms-edi-pix" in namespace "" exists and cannot be imported into the current release: invalid ownership metadata; label validation error: missing key "app.kubernetes.io/managed-by": must be set to "Helm"; annotation validation error: missing key "meta.helm.sh/release-name": must be set to "ms-edi-pix"; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to "ms-edi-pix"
-gabriel.bbatista@PPM-JAMF-32830 chart % 
