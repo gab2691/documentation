@@ -6,8 +6,16 @@ helm template ms-edi-pix ./charts/picpay-ms-v2-qa \
 
 
 
-gabriel.bbatista@PPM-JAMF-32830 chart % helm repo add charts https://chartmusem.ppay.me
-Error: looks like "https://chartmusem.ppay.me" is not a valid chart repository or cannot be reached: Get "https://chartmusem.ppay.me/index.yaml": dial tcp: lookup chartmusem.ppay.me: no such host
-gabriel.bbatista@PPM-JAMF-32830 chart % ls
-Chart.yaml		values.prod.yaml	values.qa.yaml		values.yaml
-gabriel.bbatista@PPM-JAMF-32830 chart % 
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . -f values.qa.yaml --namespace ms-edi-pix
+Release "ms-edi-pix" does not exist. Installing it now.
+Error: unable to build kubernetes objects from release manifest: [resource mapping not found for name: "edi-pix-bankpj" namespace: "ms-edi-pix" from "": no matches for kind "AnalysisTemplate" in version "argoproj.io/v1alpha1"
+ensure CRDs are installed first, resource mapping not found for name: "edi-pix-legacy" namespace: "ms-edi-pix" from "": no matches for kind "AnalysisTemplate" in version "argoproj.io/v1alpha1"
+ensure CRDs are installed first, resource mapping not found for name: "edi-pix-fnsvcpf" namespace: "ms-edi-pix" from "": no matches for kind "AnalysisTemplate" in version "argoproj.io/v1alpha1"
+ensure CRDs are installed first, resource mapping not found for name: "edi-pix-default" namespace: "ms-edi-pix" from "": no matches for kind "ExternalSecret" in version "external-secrets.io/v1beta1"
+ensure CRDs are installed first, resource mapping not found for name: "edi-pix-bankpj" namespace: "ms-edi-pix" from "": no matches for kind "Rollout" in version "argoproj.io/v1alpha1"
+ensure CRDs are installed first, resource mapping not found for name: "edi-pix-legacy" namespace: "ms-edi-pix" from "": no matches for kind "Rollout" in version "argoproj.io/v1alpha1"
+ensure CRDs are installed first, resource mapping not found for name: "edi-pix-fnsvcpf" namespace: "ms-edi-pix" from "": no matches for kind "Rollout" in version "argoproj.io/v1alpha1"
+ensure CRDs are installed first, resource mapping not found for name: "envs-secretstore-default" namespace: "ms-edi-pix" from "": no matches for kind "SecretStore" in version "external-secrets.io/v1beta1"
+ensure CRDs are installed first, resource mapping not found for name: "edi-pix-jvm-metrics-service-monitor" namespace: "" from "": no matches for kind "ServiceMonitor" in version "monitoring.coreos.com/v1"
+ensure CRDs are installed first]
+gabriel.bbatista@PPM-JAMF-32830 chart %  
