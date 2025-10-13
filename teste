@@ -3,3 +3,14 @@ helm lint ./charts/picpay-ms-v2-qa -f values.qa.yaml
 helm template ms-edi-pix ./charts/picpay-ms-v2-qa \
   -f values.qa.yaml \
   --namespace ms-edi-pix > /tmp/render.yaml
+
+
+
+
+gabriel.bbatista@PPM-JAMF-32830 Documents % helm lint ./charts/picpay-ms-v2-qa -f values.qa.yaml
+
+==> Linting ./charts/picpay-ms-v2-qa
+Error unable to check Chart.yaml file in chart: stat charts/picpay-ms-v2-qa/Chart.yaml: no such file or directory
+
+Error: 1 chart(s) linted, 1 chart(s) failed
+gabriel.bbatista@PPM-JAMF-32830 Documents % 
