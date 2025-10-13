@@ -1,4 +1,4 @@
-helm upgrade --install ms-edi-pix . \
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   --namespace ms-edi-pix \
@@ -6,12 +6,8 @@ helm upgrade --install ms-edi-pix . \
   --set picpay-ms-v2-qa.apis\[0\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null \
   --set picpay-ms-v2-qa.apis\[1\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null \
   --set picpay-ms-v2-qa.apis\[2\].affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms=null
-
-
-kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
-kubectl -n ms-edi-pix get pods -w
-
-
+Error: UPGRADE FAILED: failed to create resource: Rollout.argoproj.io "edi-pix-bankpj" is invalid: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms: Required value
+gabriel.bbatista@PPM-JAMF-32830 chart % 
 helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
@@ -23,8 +19,41 @@ helm upgrade --install ms-edi-pix . \
   --set picpay-ms-v2-qa.apis\[0\].image.repositoryURI=nginx --set picpay-ms-v2-qa.apis\[0\].image.tag=stable \
   --set picpay-ms-v2-qa.apis\[1\].image.repositoryURI=nginx --set picpay-ms-v2-qa.apis\[1\].image.tag=stable \
   --set picpay-ms-v2-qa.apis\[2\].image.repositoryURI=nginx --set picpay-ms-v2-qa.apis\[2\].image.tag=stable
+Error: UPGRADE FAILED: failed to create resource: Rollout.argoproj.io "edi-pix-bankpj" is invalid: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms: Required value
+gabriel.bbatista@PPM-JAMF-32830 chart % 
 
 
-P=$(kubectl -n ms-edi-pix get pods -o jsonpath='{.items[0].metadata.name}')
-kubectl -n ms-edi-pix describe pod "$P" | sed -n '/Events/,$p'
-kubectl -n ms-edi-pix get pod "$P" -o jsonpath='{.spec.nodeSelector}{"\n"}{.spec.tolerations}{"\n"}{range .spec.affinity.*[*]}{.}{end}{"\n"}'
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix rollout restart deployment/edi-pix-bankpj deployment/edi-pix-legacy deployment/edi-pix-fnsvcpf
+kubectl -n ms-edi-pix get pods -w
+deployment.apps/edi-pix-bankpj restarted
+deployment.apps/edi-pix-legacy restarted
+deployment.apps/edi-pix-fnsvcpf restarted
+NAME                               READY   STATUS        RESTARTS   AGE
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     Pending       0          2m48s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     Terminating   0          2m54s
+edi-pix-fnsvcpf-674c7796db-zk587   0/1     Pending       0          2m54s
+edi-pix-fnsvcpf-6f65648d44-49hb6   0/1     Pending       0          2m48s
+edi-pix-legacy-5c94dcb585-bj589    0/1     Pending       0          2m48s
+edi-pix-legacy-cc9bcb667-2dzhd     0/1     Terminating   0          2m54s
+edi-pix-legacy-cc9bcb667-2dzhd     0/1     Terminating   0          2m54s
+edi-pix-fnsvcpf-674c7796db-zk587   0/1     Terminating   0          2m54s
+edi-pix-fnsvcpf-674c7796db-zk587   0/1     Terminating   0          2m54s
+edi-pix-bankpj-9d4496c4c-v756q     0/1     Pending       0          0s
+edi-pix-legacy-5cb5b775c4-9bn8t    0/1     Pending       0          0s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     Terminating   0          2m54s
+edi-pix-bankpj-9d4496c4c-v756q     0/1     Pending       0          0s
+edi-pix-legacy-5cb5b775c4-9bn8t    0/1     Pending       0          0s
+edi-pix-fnsvcpf-86759964f9-9pgq6   0/1     Pending       0          0s
+edi-pix-fnsvcpf-86759964f9-9pgq6   0/1     Pending       0          0s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     Terminating   0          2m54s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     Terminating   0          2m54s
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     Pending       0          2m48s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     Terminating   0          2m54s
+edi-pix-bankpj-7668b59698-lnh7z    0/1     Terminating   0          2m54s
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     ContainerCreating   0          2m48s
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     ErrImagePull        0          2m51s
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     ImagePullBackOff    0          3m6s
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     ErrImagePull        0          3m20s
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     ImagePullBackOff    0          3m34s
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     ErrImagePull        0          3m51s
+edi-pix-bankpj-677689f4b8-pq2v2    0/1     ImagePullBackOff    0          4m4s
