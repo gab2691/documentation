@@ -1,4 +1,4 @@
-helm upgrade --install ms-edi-pix . \
+gabriel.bbatista@PPM-JAMF-32830 chart % helm upgrade --install ms-edi-pix . \
   -f values.qa.yaml \
   -f local-no-crds.yaml \
   --namespace ms-edi-pix \
@@ -21,7 +21,24 @@ helm upgrade --install ms-edi-pix . \
   --set 'picpay-ms-v2-qa.apis[1].liveness.httpGet.path=/' \
   --set 'picpay-ms-v2-qa.apis[2].readiness.httpGet.path=/' \
   --set 'picpay-ms-v2-qa.apis[2].liveness.httpGet.path=/'
+Release "ms-edi-pix" has been upgraded. Happy Helming!
+NAME: ms-edi-pix
+LAST DEPLOYED: Mon Oct 13 17:39:57 2025
+NAMESPACE: ms-edi-pix
+STATUS: deployed
+REVISION: 7
+TEST SUITE: None
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[*].image}{"\n"}{end}'
+edi-pix-bankpj -> nginx:stable
+edi-pix-fnsvcpf -> nginx:stable
+edi-pix-legacy -> nginx:stable
+gabriel.bbatista@PPM-JAMF-32830 chart % kubectl -n ms-edi-pix get pods -w
 
-
-kubectl -n ms-edi-pix get pods -w
-kubectl -n ms-edi-pix get deploy -o jsonpath='{range .items[*]}{.metadata.name}{" -> "}{.spec.template.spec.containers[*].image}{"\n"}{end}'
+NAME                               READY   STATUS             RESTARTS   AGE
+edi-pix-bankpj-698cfff4cd-7nkz4    0/1     Pending            0          58s
+edi-pix-bankpj-85c6b698dc-vnqjv    0/1     ImagePullBackOff   0          7m34s
+edi-pix-fnsvcpf-58b68ff55c-x44d2   0/1     Pending            0          7m34s
+edi-pix-fnsvcpf-7764b74f8d-46dxz   0/1     Pending            0          58s
+edi-pix-legacy-7695b7c974-lrr4s    0/1     Pending            0          7m34s
+edi-pix-legacy-7dd9c96767-frr45    0/1     Pending            0          58s
+edi-pix-bankpj-85c6b698dc-vnqjv    0/1     ErrImagePull       0          7m34s
