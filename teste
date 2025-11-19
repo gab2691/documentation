@@ -12,9 +12,16 @@ if ("merged".equals(state)) {
 
 HttpHeaders headers = setupHeaders();
 
-URI uri = UriComponentsBuilder
-        .fromHttpUrl("https://" + githubOrgProperties.getUrl() + "/search/issues")
-        .queryParam("q", query)       // sem URLEncoder aqui
-        .queryParam("per_page", 1)
-        .build(true)                  // true = deixa os dois-pontos etc OK
-        .toUri();
+// ENCODE correto do parâmetro
+String encodedQuery = UriUtils.encodeQueryParam(query, StandardCharsets.UTF_8);
+
+String urlFinal = String.format(
+        "https://%s/search/issues?q=%s&per_page=1",
+        githubOrgProperties.getUrl(),
+        encodedQuery
+);
+
+// Importantíssimo: usar URI.create para evitar double encode
+URI uri = URI.create(urlFinal);
+
+log.trace("countPullRequests " + LOG_TRACE_REQUEST_URL_PREFIX, uri);
