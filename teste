@@ -1,1 +1,1 @@
-https://api.github.com/search/issues?q=is%253Apr+repo%253ABradesco-Core%252Fensc-srv-inner-source-core+author%253Agabriel-b-batista_bradesco+merged%253A2025-06-01T00%253A00%253A00Z..2025-11-19T23%253A59%253A59Z&per_page=1
+https://api.github.com/search/issues?q=is%3Apr+repo%3ABradesco-Core%2Fensc-srv-inner-source-core+author%3Agabriel-b-batista_bradesco+created%3A2025-06-01T00%3A00%3A00Z..2025-11-19T23%3A59%3A59Z+-is%3Amerged&per_page=1
