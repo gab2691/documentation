@@ -1,7 +1,7 @@
 @Aggregation(pipeline = {
-        // 1) Agrupa por (projeto + membro)
+        // 1) Agrupa por (projeto + member.login) para calcular score por membro em cada projeto
         "{ $group: { " +
-                "  _id: { projectId: \"$projectId\", memberId: \"$memberId\" }, " +
+                "  _id: { projectId: \"$projectId\", memberLogin: \"$member.login\" }, " +
                 "  memberScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
                 "  totalOpenIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-OPEN\" ] }, 1, 0 ] } }, " +
                 "  totalClosedIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-CLOSED\" ] }, 1, 0 ] } }, " +
@@ -11,7 +11,7 @@
                 "  contributions: { $sum: 1 } " +
                 "} }",
 
-        // 2) Agrupa por projeto, soma scores e métricas, e monta lista de membros
+        // 2) Agrupa por projeto, soma tudo e monta a lista de membros
         "{ $group: { " +
                 "  _id: \"$_id.projectId\", " +
                 "  totalScore: { $sum: \"$memberScore\" }, " +
@@ -20,30 +20,26 @@
                 "  totalMergedPullRequests: { $sum: \"$totalMergedPullRequests\" }, " +
                 "  totalUnmergedPullRequests: { $sum: \"$totalUnmergedPullRequests\" }, " +
                 "  totalCommits: { $sum: \"$totalCommits\" }, " +
-                "  contributors: { $sum: 1 }, " +                     // 1 doc por membro no projeto
-                "  contributions: { $sum: \"$contributions\" }, " +    // total de métricas do projeto
-                "  members: { $push: { " +
-                "      memberId: \"$_id.memberId\", " +
-                "      score: { $round: [\"$memberScore\", 1] } " +
-                "  } } " +
+                "  contributions: { $sum: \"$contributions\" }, " +
+                "  members: { $addToSet: { \"login\": \"$_id.memberLogin\" } } " + // <- casa com Member.login
                 "} }",
 
-        // 3) Projeta pro formato do ProjectRanking
+        // 3) Projeta no formato do ProjectRanking
         "{ $project: { " +
                 "  _id: 0, " +
-                "  name: \"$_id\", " +  // mapeia para ProjectRanking.name
+                "  name: \"$_id\", " + // ProjectRanking.name = projectId
                 "  score: { $round: [\"$totalScore\", 1] }, " +
                 "  totalOpenIssues: 1, " +
                 "  totalClosedIssues: 1, " +
                 "  totalMergedPullRequests: 1, " +
                 "  totalUnmergedPullRequests: 1, " +
                 "  totalCommits: 1, " +
-                "  contributors: 1, " +
+                "  contributors: { $size: \"$members\" }, " +
                 "  contributions: 1, " +
                 "  members: 1 " +
                 "} }",
 
-        // 4) Ordena por score desc e pega top 5
+        // 4) Ordena e limita
         "{ $sort: { score: -1 } }",
         "{ $limit: 5 }"
 })
