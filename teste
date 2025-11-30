@@ -1,7 +1,6 @@
 @Aggregation(pipeline = {
-        // 1) Agrupa por (projeto + member.login) para calcular score por membro em cada projeto
         "{ $group: { " +
-                "  _id: { projectId: \"$projectId\", memberLogin: \"$member.login\" }, " +
+                "  _id: { projectId: \"$projectId\", memberId: \"$memberId\" }, " +
                 "  memberScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
                 "  totalOpenIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-OPEN\" ] }, 1, 0 ] } }, " +
                 "  totalClosedIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-CLOSED\" ] }, 1, 0 ] } }, " +
@@ -11,7 +10,6 @@
                 "  contributions: { $sum: 1 } " +
                 "} }",
 
-        // 2) Agrupa por projeto, soma tudo e monta a lista de membros
         "{ $group: { " +
                 "  _id: \"$_id.projectId\", " +
                 "  totalScore: { $sum: \"$memberScore\" }, " +
@@ -21,13 +19,12 @@
                 "  totalUnmergedPullRequests: { $sum: \"$totalUnmergedPullRequests\" }, " +
                 "  totalCommits: { $sum: \"$totalCommits\" }, " +
                 "  contributions: { $sum: \"$contributions\" }, " +
-                "  members: { $addToSet: { \"login\": \"$_id.memberLogin\" } } " + // <- casa com Member.login
+                "  members: { $addToSet: { \"login\": \"$_id.memberId\" } } " +
                 "} }",
 
-        // 3) Projeta no formato do ProjectRanking
         "{ $project: { " +
                 "  _id: 0, " +
-                "  name: \"$_id\", " + // ProjectRanking.name = projectId
+                "  name: \"$_id\", " +
                 "  score: { $round: [\"$totalScore\", 1] }, " +
                 "  totalOpenIssues: 1, " +
                 "  totalClosedIssues: 1, " +
@@ -39,7 +36,6 @@
                 "  members: 1 " +
                 "} }",
 
-        // 4) Ordena e limita
         "{ $sort: { score: -1 } }",
         "{ $limit: 5 }"
 })
