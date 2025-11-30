@@ -1,34 +1,50 @@
-String query;
+@Aggregation(pipeline = {
+        // 1) Agrupa por (projeto + membro)
+        "{ $group: { " +
+                "  _id: { projectId: \"$projectId\", memberId: \"$memberId\" }, " +
+                "  memberScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
+                "  totalOpenIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-OPEN\" ] }, 1, 0 ] } }, " +
+                "  totalClosedIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-CLOSED\" ] }, 1, 0 ] } }, " +
+                "  totalMergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-MERGED\" ] }, 1, 0 ] } }, " +
+                "  totalUnmergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-UNMERGED\" ] }, 1, 0 ] } }, " +
+                "  totalCommits: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"COMMIT\" ] }, 1, 0 ] } }, " +
+                "  contributions: { $sum: 1 } " +
+                "} }",
 
-if ("merged".equals(state)) {
-    String dateRange = String.format("merged:%sT00:00:00Z..%sT23:59:59Z", since, until);
-    query = String.format("is:pr repo:%s/%s author:%s %s",
-            orgName, repoName, author, dateRange);
-} else {
-    String dateRange = String.format("created:%sT00:00:00Z..%sT23:59:59Z", since, until);
-    query = String.format("is:pr repo:%s/%s author:%s %s -is:merged",
-            orgName, repoName, author, dateRange);
-}
+        // 2) Agrupa por projeto, soma scores e métricas, e monta lista de membros
+        "{ $group: { " +
+                "  _id: \"$_id.projectId\", " +
+                "  totalScore: { $sum: \"$memberScore\" }, " +
+                "  totalOpenIssues: { $sum: \"$totalOpenIssues\" }, " +
+                "  totalClosedIssues: { $sum: \"$totalClosedIssues\" }, " +
+                "  totalMergedPullRequests: { $sum: \"$totalMergedPullRequests\" }, " +
+                "  totalUnmergedPullRequests: { $sum: \"$totalUnmergedPullRequests\" }, " +
+                "  totalCommits: { $sum: \"$totalCommits\" }, " +
+                "  contributors: { $sum: 1 }, " +                     // 1 doc por membro no projeto
+                "  contributions: { $sum: \"$contributions\" }, " +    // total de métricas do projeto
+                "  members: { $push: { " +
+                "      memberId: \"$_id.memberId\", " +
+                "      score: { $round: [\"$memberScore\", 1] } " +
+                "  } } " +
+                "} }",
 
-HttpHeaders headers = setupHeaders();
+        // 3) Projeta pro formato do ProjectRanking
+        "{ $project: { " +
+                "  _id: 0, " +
+                "  name: \"$_id\", " +  // mapeia para ProjectRanking.name
+                "  score: { $round: [\"$totalScore\", 1] }, " +
+                "  totalOpenIssues: 1, " +
+                "  totalClosedIssues: 1, " +
+                "  totalMergedPullRequests: 1, " +
+                "  totalUnmergedPullRequests: 1, " +
+                "  totalCommits: 1, " +
+                "  contributors: 1, " +
+                "  contributions: 1, " +
+                "  members: 1 " +
+                "} }",
 
-URI uri = UriComponentsBuilder
-        .fromHttpUrl("https://" + githubOrgProperties.getUrl() + "/search/issues")
-        .queryParam("q", query)          // query CRUA (com espaços, :, /, etc.)
-        .queryParam("per_page", 1)
-        .build()
-        .encode()                        // <--- aqui ele faz o encode CERTO
-        .toUri();
-
-String url = uri.toString();
-
-log.trace("countPullRequests " + LOG_TRACE_REQUEST_URL_PREFIX, url);
-
-if (author.equals("gabriel-b-batista_bradesco") && repoName.equals("ensc-srv-inner-source-core")) {
-    githubRateLimiter.executeWithRateLimit(
-            githubRestTemplate,
-            url,
-            new HttpEntity<>(headers),
-            new ParameterizedTypeReference<GitHubSearchIssuesResponse>() {}
-    );
-}
+        // 4) Ordena por score desc e pega top 5
+        "{ $sort: { score: -1 } }",
+        "{ $limit: 5 }"
+})
+List<ProjectRanking> topProjectsWithMembers();
