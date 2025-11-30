@@ -19,7 +19,10 @@
                 "  totalUnmergedPullRequests: { $sum: \"$totalUnmergedPullRequests\" }, " +
                 "  totalCommits: { $sum: \"$totalCommits\" }, " +
                 "  contributions: { $sum: \"$contributions\" }, " +
-                "  members: { $addToSet: { \"login\": \"$_id.memberId\" } } " +
+                "  members: { $push: { " +
+                "      login: \"$_id.memberId\", " +
+                "      score: { $round: [\"$memberScore\", 1] } " +
+                "  } } " +
                 "} }",
 
         "{ $project: { " +
