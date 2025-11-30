@@ -1,7 +1,7 @@
 @Aggregation(pipeline = {
         "{ $group: { " +
-                "  _id: { projectId: \"$projectId\", memberId: \"$memberId\" }, " +
-                "  memberScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
+                "  _id: { memberId: \"$memberId\", projectId: \"$projectId\" }, " +
+                "  projectScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
                 "  totalOpenIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-OPEN\" ] }, 1, 0 ] } }, " +
                 "  totalClosedIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-CLOSED\" ] }, 1, 0 ] } }, " +
                 "  totalMergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-MERGED\" ] }, 1, 0 ] } }, " +
@@ -11,17 +11,18 @@
                 "} }",
 
         "{ $group: { " +
-                "  _id: \"$_id.projectId\", " +
-                "  totalScore: { $sum: \"$memberScore\" }, " +
+                "  _id: \"$_id.memberId\", " +
+                "  totalScore: { $sum: \"$projectScore\" }, " +
                 "  totalOpenIssues: { $sum: \"$totalOpenIssues\" }, " +
                 "  totalClosedIssues: { $sum: \"$totalClosedIssues\" }, " +
                 "  totalMergedPullRequests: { $sum: \"$totalMergedPullRequests\" }, " +
                 "  totalUnmergedPullRequests: { $sum: \"$totalUnmergedPullRequests\" }, " +
                 "  totalCommits: { $sum: \"$totalCommits\" }, " +
+                "  projects: { $sum: 1 }, " +
                 "  contributions: { $sum: \"$contributions\" }, " +
-                "  members: { $push: { " +
-                "      login: \"$_id.memberId\", " +
-                "      score: { $round: [\"$memberScore\", 1] } " +
+                "  projectScores: { $push: { " +
+                "      name: \"$_id.projectId\", " +
+                "      score: { $round: [\"$projectScore\", 1] } " +
                 "  } } " +
                 "} }",
 
@@ -34,12 +35,12 @@
                 "  totalMergedPullRequests: 1, " +
                 "  totalUnmergedPullRequests: 1, " +
                 "  totalCommits: 1, " +
-                "  contributors: { $size: \"$members\" }, " +
+                "  projects: 1, " +
                 "  contributions: 1, " +
-                "  members: 1 " +
+                "  projectScores: 1 " +
                 "} }",
 
         "{ $sort: { score: -1 } }",
         "{ $limit: 5 }"
 })
-List<ProjectRanking> topProjectsWithMembers();
+List<ContributorRanking> topRankingAuthorsWithProjects();
