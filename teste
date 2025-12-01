@@ -1,46 +1,50 @@
 @Aggregation(pipeline = {
+        "{ $match: { memberId: ?0 } }",
         "{ $group: { " +
-                "  _id: { memberId: \"$memberId\", projectId: \"$projectId\" }, " +
-                "  projectScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
+                "  _id: { $dateToString: { format: \"%Y-%m-%d\", date: \"$registerAt\" } }, " +
+                "  sumScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
                 "  totalOpenIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-OPEN\" ] }, 1, 0 ] } }, " +
                 "  totalClosedIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-CLOSED\" ] }, 1, 0 ] } }, " +
                 "  totalMergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-MERGED\" ] }, 1, 0 ] } }, " +
                 "  totalUnmergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-UNMERGED\" ] }, 1, 0 ] } }, " +
-                "  totalCommits: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"COMMIT\" ] }, 1, 0 ] } }, " +
-                "  contributions: { $sum: 1 } " +
+                "  totalCommits: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"COMMIT\" ] }, 1, 0 ] } } " +
                 "} }",
-
-        "{ $group: { " +
-                "  _id: \"$_id.memberId\", " +
-                "  totalScore: { $sum: \"$projectScore\" }, " +
-                "  totalOpenIssues: { $sum: \"$totalOpenIssues\" }, " +
-                "  totalClosedIssues: { $sum: \"$totalClosedIssues\" }, " +
-                "  totalMergedPullRequests: { $sum: \"$totalMergedPullRequests\" }, " +
-                "  totalUnmergedPullRequests: { $sum: \"$totalUnmergedPullRequests\" }, " +
-                "  totalCommits: { $sum: \"$totalCommits\" }, " +
-                "  projects: { $sum: 1 }, " +
-                "  contributions: { $sum: \"$contributions\" }, " +
-                "  projectScores: { $push: { " +
-                "      name: \"$_id.projectId\", " +
-                "      score: { $round: [\"$projectScore\", 1] } " +
-                "  } } " +
-                "} }",
-
         "{ $project: { " +
                 "  _id: 0, " +
-                "  name: \"$_id\", " +
-                "  score: { $round: [\"$totalScore\", 1] }, " +
+                "  date: \"$_id\", " +
+                "  score: { $round: [\"$sumScore\", 1] }, " +
                 "  totalOpenIssues: 1, " +
                 "  totalClosedIssues: 1, " +
                 "  totalMergedPullRequests: 1, " +
                 "  totalUnmergedPullRequests: 1, " +
-                "  totalCommits: 1, " +
-                "  projects: 1, " +
-                "  contributions: 1, " +
-                "  projectScores: 1 " +
+                "  totalCommits: 1 " +
                 "} }",
-
-        "{ $sort: { score: -1 } }",
-        "{ $limit: 5 }"
+        "{ $sort: { date: 1 } }"
 })
-List<ContributorRanking> topRankingAuthorsWithProjects();
+List<MemberTimelinePoint> memberTimeline(String memberId);
+
+
+@Aggregation(pipeline = {
+        "{ $match: { projectId: ?0 } }",
+        "{ $group: { " +
+                "  _id: { $dateToString: { format: \"%Y-%m-%d\", date: \"$registerAt\" } }, " +
+                "  sumScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
+                "  totalOpenIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-OPEN\" ] }, 1, 0 ] } }, " +
+                "  totalClosedIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-CLOSED\" ] }, 1, 0 ] } }, " +
+                "  totalMergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-MERGED\" ] }, 1, 0 ] } }, " +
+                "  totalUnmergedPullRequests: { $sum: { $eq: [ \"$typeOfMetrics\", \"PR-UNMERGED\" ] } }, " +
+                "  totalCommits: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"COMMIT\" ] }, 1, 0 ] } } " +
+                "} }",
+        "{ $project: { " +
+                "  _id: 0, " +
+                "  date: \"$_id\", " +
+                "  score: { $round: [\"$sumScore\", 1] }, " +
+                "  totalOpenIssues: 1, " +
+                "  totalClosedIssues: 1, " +
+                "  totalMergedPullRequests: 1, " +
+                "  totalUnmergedPullRequests: 1, " +
+                "  totalCommits: 1 " +
+                "} }",
+        "{ $sort: { date: 1 } }"
+})
+List<ProjectTimelinePoint> projectTimeline(String projectId);
