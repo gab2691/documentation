@@ -1,50 +1,41 @@
-@Aggregation(pipeline = {
-        "{ $match: { memberId: ?0 } }",
-        "{ $group: { " +
-                "  _id: { $dateToString: { format: \"%Y-%m-%d\", date: \"$registerAt\" } }, " +
-                "  sumScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
-                "  totalOpenIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-OPEN\" ] }, 1, 0 ] } }, " +
-                "  totalClosedIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-CLOSED\" ] }, 1, 0 ] } }, " +
-                "  totalMergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-MERGED\" ] }, 1, 0 ] } }, " +
-                "  totalUnmergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-UNMERGED\" ] }, 1, 0 ] } }, " +
-                "  totalCommits: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"COMMIT\" ] }, 1, 0 ] } } " +
-                "} }",
-        "{ $project: { " +
-                "  _id: 0, " +
-                "  date: \"$_id\", " +
-                "  score: { $round: [\"$sumScore\", 1] }, " +
-                "  totalOpenIssues: 1, " +
-                "  totalClosedIssues: 1, " +
-                "  totalMergedPullRequests: 1, " +
-                "  totalUnmergedPullRequests: 1, " +
-                "  totalCommits: 1 " +
-                "} }",
-        "{ $sort: { date: 1 } }"
-})
-List<MemberTimelinePoint> memberTimeline(String memberId);
-
-
-@Aggregation(pipeline = {
-        "{ $match: { projectId: ?0 } }",
-        "{ $group: { " +
-                "  _id: { $dateToString: { format: \"%Y-%m-%d\", date: \"$registerAt\" } }, " +
-                "  sumScore: { $sum: { $toDouble: { $ifNull: [ \"$score\", 0 ] } } }, " +
-                "  totalOpenIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-OPEN\" ] }, 1, 0 ] } }, " +
-                "  totalClosedIssues: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"ISSUE-CLOSED\" ] }, 1, 0 ] } }, " +
-                "  totalMergedPullRequests: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"PR-MERGED\" ] }, 1, 0 ] } }, " +
-                "  totalUnmergedPullRequests: { $sum: { $eq: [ \"$typeOfMetrics\", \"PR-UNMERGED\" ] } }, " +
-                "  totalCommits: { $sum: { $cond: [ { $eq: [ \"$typeOfMetrics\", \"COMMIT\" ] }, 1, 0 ] } } " +
-                "} }",
-        "{ $project: { " +
-                "  _id: 0, " +
-                "  date: \"$_id\", " +
-                "  score: { $round: [\"$sumScore\", 1] }, " +
-                "  totalOpenIssues: 1, " +
-                "  totalClosedIssues: 1, " +
-                "  totalMergedPullRequests: 1, " +
-                "  totalUnmergedPullRequests: 1, " +
-                "  totalCommits: 1 " +
-                "} }",
-        "{ $sort: { date: 1 } }"
-})
-List<ProjectTimelinePoint> projectTimeline(String projectId);
+db.member.find({
+  _id: {
+    $in: [
+      "sergio-moriaki-oshiro_bradesco",
+      "jefferson-pereira-de-souza_bradesco",
+      "raphael-viniccius-monteiro-de-freitas_bradesco",
+      "andre-tadeu-dornelas-de-araujo_bradesco",
+      "emeson-jose-santana-pereira_bradesco",
+      "gustavo-franco-farias_bradesco",
+      "mauricio-jose-marques_bradesco",
+      "denis-gariglio_bradesco",
+      "jessica-guerreiro-macedo-belinky_bradesco",
+      "alex-vinicius-souza-do-nascimento_bradesco",
+      "gustavo-leal-silva-e-souza_bradesco",
+      "thiago-santos-menezes_bradesco",
+      "charles-gismael-rodrigues_bradesco",
+      "igor-vinicius-vieira-ramos_bradesco",
+      "renato-franco-pina_bradesco",
+      "barry-white-rodrigues-de-souza_bradesco",
+      "nicolas-sampaio-barbosa_bradesco",
+      "pedro-yoda-saito_bradesco",
+      "mikael-do-nascimento-medeiros_bradesco",
+      "jose-roberto-moreira-junior_bradesco",
+      "gabriel-bartholo-batista_bradesco",
+      "maximiliano-nunes-biscaia_bradesco",
+      "felipe-de-albuquerque-marinho-oliveira_bradesco",
+      "eduardo-trajano-ribas_bradesco",
+      "josimar-fernandes-leal_bradesco",
+      "saulo-da-silva-braga_bradesco",
+      "carlos-eduardo-troleis_bradesco",
+      "fernando-tonon-dias-da-silva_bradesco",
+      "dione-fabricio-cecconello_bradesco",
+      "ronaldo-sousa-de-paulo_bradesco",
+      "william-lopes-da-silva-malaquias_bradesco",
+      "giovanni-ribeiro-donda_bradesco",
+      "julien-crouzillard_bradesco",
+      "richardson-silva-lima-dos-santos_bradesco",
+      "ruan-gustavo-de-oliveira_bradesco"
+    ]
+  }
+});
