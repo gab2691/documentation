@@ -1,31 +1,39 @@
-public interface MetricsRepository extends MongoRepository<MetricDocument, String> {
+@Aggregation(pipeline = {
+  "{ $match: { projectId: ?0 } }",
 
-  @Aggregation(pipeline = {
-    // Considera só os últimos 60 dias (otimiza)
-    "{ $match: { registerAt: { $gte: { $dateSubtract: { startDate: $$NOW, unit: 'day', amount: 60 } }, $lte: $$NOW } } }",
+  // agrupa por mês usando registerAt (data do evento)
+  "{ $group: { " +
+    " _id: { $dateToString: { format: '%Y-%m', date: '$registerAt' } }, " +
+    " totalCurrent: { $sum: 1 } " +
+  "} }",
 
-    // Conta em duas janelas: last30 e prev30
-    "{ $facet: { " +
-      "last30: [ { $match: { registerAt: { $gt: { $dateSubtract: { startDate: $$NOW, unit: 'day', amount: 30 } }, $lte: $$NOW } } }, { $count: 'count' } ], " +
-      "prev30: [ { $match: { registerAt: { $gt: { $dateSubtract: { startDate: $$NOW, unit: 'day', amount: 60 } }, $lte: { $dateSubtract: { startDate: $$NOW, unit: 'day', amount: 30 } } } } }, { $count: 'count' } ] " +
-    "} }",
+  // ordena cronologicamente
+  "{ $sort: { _id: 1 } }",
 
-    // Extrai contagens (default 0 se não existir)
-    "{ $project: { " +
-      "_id: 0, " +
-      "current: { $ifNull: [ { $arrayElemAt: [ '$last30.count', 0 ] }, 0 ] }, " +
-      "previous: { $ifNull: [ { $arrayElemAt: [ '$prev30.count', 0 ] }, 0 ] } " +
-    "} }",
+  // pega o total do mês anterior com janela
+  "{ $setWindowFields: { " +
+    " sortBy: { _id: 1 }, " +
+    " output: { " +
+      " totalPrevious: { $shift: { output: '$totalCurrent', by: -1, default: 0 } } " +
+    " } " +
+  "} }",
 
-    // Calcula % growth (se previous == 0 -> null)
-    "{ $project: { " +
-      "current: 1, previous: 1, " +
-      "percentGrowth: { $cond: [ " +
-        "{ $eq: [ '$previous', 0 ] }, " +
-        "null, " +
-        "{ $multiply: [ { $divide: [ { $subtract: [ '$current', '$previous' ] }, '$previous' ] }, 100 ] } " +
-      "] } " +
-    "} }"
-  })
-  Growth30dProjection growthLast30DaysVsPrevious30Days();
-}
+  // calcula o crescimento percentual com proteção contra divisão por zero
+  "{ $addFields: { " +
+    " percentGrowth: { $cond: [ " +
+      " { $gt: ['$totalPrevious', 0] }, " +
+      " { $multiply: [ { $divide: [ { $subtract: ['$totalCurrent', '$totalPrevious'] }, '$totalPrevious' ] }, 100 ] }, " +
+      " null " +
+    " ] } " +
+  "} }",
+
+  // formato final (igual você faz no projectTimeline)
+  "{ $project: { " +
+    " _id: 0, " +
+    " month: '$_id', " +
+    " totalCurrent: 1, " +
+    " totalPrevious: 1, " +
+    " percentGrowth: { $round: ['$percentGrowth', 2] } " +
+  "} }"
+})
+List<ProjectMonthlyGrowthPoint> projectMonthlyGrowth(String projectId);
