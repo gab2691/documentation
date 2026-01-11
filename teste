@@ -1,39 +1,35 @@
 @Aggregation(pipeline = {
   "{ $match: { projectId: ?0 } }",
 
-  // agrupa por mês usando registerAt (data do evento)
   "{ $group: { " +
     " _id: { $dateToString: { format: '%Y-%m', date: '$registerAt' } }, " +
-    " totalCurrent: { $sum: 1 } " +
+    " total: { $sum: 1 } " +
   "} }",
 
-  // ordena cronologicamente
   "{ $sort: { _id: 1 } }",
 
-  // pega o total do mês anterior com janela
-  "{ $setWindowFields: { " +
-    " sortBy: { _id: 1 }, " +
-    " output: { " +
-      " totalPrevious: { $shift: { output: '$totalCurrent', by: -1, default: 0 } } " +
-    " } " +
+  "{ $group: { " +
+    " _id: null, " +
+    " totals: { $push: '$total' } " +
   "} }",
 
-  // calcula o crescimento percentual com proteção contra divisão por zero
-  "{ $addFields: { " +
-    " percentGrowth: { $cond: [ " +
-      " { $gt: ['$totalPrevious', 0] }, " +
-      " { $multiply: [ { $divide: [ { $subtract: ['$totalCurrent', '$totalPrevious'] }, '$totalPrevious' ] }, 100 ] }, " +
-      " null " +
+  "{ $project: { " +
+    " previous: { $arrayElemAt: ['$totals', -2] }, " +
+    " current:  { $arrayElemAt: ['$totals', -1] } " +
+  "} }",
+
+  "{ $project: { " +
+    " _id: 0, " +
+    " percentGrowth: { $round: [ " +
+      " { $multiply: [ " +
+        " { $divide: [ { $subtract: ['$current', '$previous'] }, '$previous' ] }, " +
+        " 100 " +
+      " ] }, " +
+      " 2 " +
     " ] } " +
   "} }",
 
-  // formato final (igual você faz no projectTimeline)
-  "{ $project: { " +
-    " _id: 0, " +
-    " month: '$_id', " +
-    " totalCurrent: 1, " +
-    " totalPrevious: 1, " +
-    " percentGrowth: { $round: ['$percentGrowth', 2] } " +
-  "} }"
+  // 👇 retorna SOMENTE o número
+  "{ $replaceRoot: { newRoot: '$percentGrowth' } }"
 })
-List<ProjectMonthlyGrowthPoint> projectMonthlyGrowth(String projectId);
+Double projectMonthlyGrowth(String projectId);
