@@ -1,41 +1,31 @@
-db.member.find({
-  _id: {
-    $in: [
-      "sergio-moriaki-oshiro_bradesco",
-      "jefferson-pereira-de-souza_bradesco",
-      "raphael-viniccius-monteiro-de-freitas_bradesco",
-      "andre-tadeu-dornelas-de-araujo_bradesco",
-      "emeson-jose-santana-pereira_bradesco",
-      "gustavo-franco-farias_bradesco",
-      "mauricio-jose-marques_bradesco",
-      "denis-gariglio_bradesco",
-      "jessica-guerreiro-macedo-belinky_bradesco",
-      "alex-vinicius-souza-do-nascimento_bradesco",
-      "gustavo-leal-silva-e-souza_bradesco",
-      "thiago-santos-menezes_bradesco",
-      "charles-gismael-rodrigues_bradesco",
-      "igor-vinicius-vieira-ramos_bradesco",
-      "renato-franco-pina_bradesco",
-      "barry-white-rodrigues-de-souza_bradesco",
-      "nicolas-sampaio-barbosa_bradesco",
-      "pedro-yoda-saito_bradesco",
-      "mikael-do-nascimento-medeiros_bradesco",
-      "jose-roberto-moreira-junior_bradesco",
-      "gabriel-bartholo-batista_bradesco",
-      "maximiliano-nunes-biscaia_bradesco",
-      "felipe-de-albuquerque-marinho-oliveira_bradesco",
-      "eduardo-trajano-ribas_bradesco",
-      "josimar-fernandes-leal_bradesco",
-      "saulo-da-silva-braga_bradesco",
-      "carlos-eduardo-troleis_bradesco",
-      "fernando-tonon-dias-da-silva_bradesco",
-      "dione-fabricio-cecconello_bradesco",
-      "ronaldo-sousa-de-paulo_bradesco",
-      "william-lopes-da-silva-malaquias_bradesco",
-      "giovanni-ribeiro-donda_bradesco",
-      "julien-crouzillard_bradesco",
-      "richardson-silva-lima-dos-santos_bradesco",
-      "ruan-gustavo-de-oliveira_bradesco"
-    ]
-  }
-});
+public interface MetricsRepository extends MongoRepository<MetricDocument, String> {
+
+  @Aggregation(pipeline = {
+    // Considera só os últimos 60 dias (otimiza)
+    "{ $match: { registerAt: { $gte: { $dateSubtract: { startDate: $$NOW, unit: 'day', amount: 60 } }, $lte: $$NOW } } }",
+
+    // Conta em duas janelas: last30 e prev30
+    "{ $facet: { " +
+      "last30: [ { $match: { registerAt: { $gt: { $dateSubtract: { startDate: $$NOW, unit: 'day', amount: 30 } }, $lte: $$NOW } } }, { $count: 'count' } ], " +
+      "prev30: [ { $match: { registerAt: { $gt: { $dateSubtract: { startDate: $$NOW, unit: 'day', amount: 60 } }, $lte: { $dateSubtract: { startDate: $$NOW, unit: 'day', amount: 30 } } } } }, { $count: 'count' } ] " +
+    "} }",
+
+    // Extrai contagens (default 0 se não existir)
+    "{ $project: { " +
+      "_id: 0, " +
+      "current: { $ifNull: [ { $arrayElemAt: [ '$last30.count', 0 ] }, 0 ] }, " +
+      "previous: { $ifNull: [ { $arrayElemAt: [ '$prev30.count', 0 ] }, 0 ] } " +
+    "} }",
+
+    // Calcula % growth (se previous == 0 -> null)
+    "{ $project: { " +
+      "current: 1, previous: 1, " +
+      "percentGrowth: { $cond: [ " +
+        "{ $eq: [ '$previous', 0 ] }, " +
+        "null, " +
+        "{ $multiply: [ { $divide: [ { $subtract: [ '$current', '$previous' ] }, '$previous' ] }, 100 ] } " +
+      "] } " +
+    "} }"
+  })
+  Growth30dProjection growthLast30DaysVsPrevious30Days();
+}
