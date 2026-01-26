@@ -1,39 +1,4 @@
-@Aggregation(pipeline = {
-
-  // 1️⃣ agrupa TODAS as métricas por mês
-  "{ $group: { " +
-    " _id: { $dateToString: { format: '%Y-%m', date: '$registerAt' } }, " +
-    " total: { $sum: 1 } " +
-  "} }",
-
-  // 2️⃣ ordena cronologicamente
-  "{ $sort: { _id: 1 } }",
-
-  // 3️⃣ junta tudo num array
-  "{ $group: { " +
-    " _id: null, " +
-    " totals: { $push: '$total' } " +
-  "} }",
-
-  // 4️⃣ pega os dois últimos meses
-  "{ $project: { " +
-    " previous: { $arrayElemAt: ['$totals', -2] }, " +
-    " current:  { $arrayElemAt: ['$totals', -1] } " +
-  "} }",
-
-  // 5️⃣ calcula o percentual
-  "{ $project: { " +
-    " _id: 0, " +
-    " percentGrowth: { $round: [ " +
-      " { $multiply: [ " +
-        " { $divide: [ { $subtract: ['$current', '$previous'] }, '$previous' ] }, " +
-        " 100 " +
-      " ] }, " +
-      " 2 " +
-    " ] } " +
-  "} }",
-
-  // 6️⃣ retorna SOMENTE o número
-  "{ $replaceRoot: { newRoot: '$percentGrowth' } }"
-})
-Double globalMonthlyGrowth();
+GIT_TRACE=1 GIT_CURL_VERBOSE=1 git ls-remote https://SEU_HOST/ORG/REPO.git
+git config --global http.sslBackend schannel
+git config --global http.sslVerify true
+git ls-remote https://SEU_HOST/ORG/REPO.git
