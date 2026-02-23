@@ -1,77 +1,90 @@
- public Double calculateGrowthMonthly(int months) {
-        // 1) datas de referência (mês atual e mês alvo)
-        ZonedDateTime nowZdt = ZonedDateTime.now(ZoneOffset.UTC);
-        ZonedDateTime currentMonthStart = nowZdt.withDayOfMonth(1).toLocalDate().atStartOfDay(ZoneOffset.UTC);
-        ZonedDateTime targetMonthStart = currentMonthStart.minusMonths(months);
+public Double calculateCatalogGrowthMonthlyCumulative(int months) {
 
-        Date currentStart = Date.from(currentMonthStart.toInstant());
-        Date currentEnd = Date.from(currentMonthStart.plusMonths(1).toInstant());
+    // mês atual (UTC) e mês alvo
+    var now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC);
+    var currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(java.time.ZoneOffset.UTC);
+    var targetMonthStart  = currentMonthStart.minusMonths(months);
 
-        Date targetStart = Date.from(targetMonthStart.toInstant());
-        Date targetEnd = Date.from(targetMonthStart.plusMonths(1).toInstant());
+    java.util.Date currentMonth = java.util.Date.from(currentMonthStart.toInstant());
+    java.util.Date targetMonth  = java.util.Date.from(targetMonthStart.toInstant());
 
-        Aggregation aggregation = Aggregation.newAggregation(
-            // Map -> array
-            context -> new Document("$project", new Document("periods",
-                new Document("$objectToArray", "$participationPeriods")
-            )),
+    Aggregation aggregation = Aggregation.newAggregation(
 
-            // explode keys
-            context -> new Document("$unwind", "$periods"),
+        // Map -> array
+        context -> new org.bson.Document("$project", new org.bson.Document("periods",
+            new org.bson.Document("$objectToArray", "$participationPeriods")
+        )),
 
-            // key string -> date
-            context -> new Document("$set", new Document("periodStart",
-                new Document("$dateFromString",
-                    new Document("dateString", "$periods.k").append("format", "%Y-%m-%d")
+        // explode
+        context -> new org.bson.Document("$unwind", "$periods"),
+
+        // key string -> date (mês)
+        context -> new org.bson.Document("$set", new org.bson.Document("month",
+            new org.bson.Document("$dateTrunc", new org.bson.Document("date",
+                new org.bson.Document("$dateFromString",
+                    new org.bson.Document("dateString", "$periods.k").append("format", "%Y-%m-%d")
                 )
-            )),
+            ).append("unit", "month"))
+        )),
 
-            // mantém só meses que interessam: mês atual OU mês alvo
-            context -> new Document("$match", new Document("$expr", new Document("$or", List.of(
-                new Document("$and", List.of(
-                    new Document("$gte", List.of("$periodStart", targetStart)),
-                    new Document("$lt",  List.of("$periodStart", targetEnd))
-                )),
-                new Document("$and", List.of(
-                    new Document("$gte", List.of("$periodStart", currentStart)),
-                    new Document("$lt",  List.of("$periodStart", currentEnd))
+        // mantém só meses até o mês atual (descarta futuro, se existir)
+        context -> new org.bson.Document("$match", new org.bson.Document("$expr",
+            new org.bson.Document("$lte", java.util.List.of("$month", currentMonth))
+        )),
+
+        // dedup por docId+month (um doc pode ter múltiplas chaves no mesmo mês)
+        context -> new org.bson.Document("$group", new org.bson.Document()
+            .append("_id", new org.bson.Document("docId", "$_id").append("month", "$month"))
+        ),
+
+        // conta quantos docs “entram” por mês
+        context -> new org.bson.Document("$group", new org.bson.Document()
+            .append("_id", "$_id.month")
+            .append("count", new org.bson.Document("$sum", 1))
+        ),
+
+        // agora calcula totals acumulados:
+        // pastTotal = soma counts onde month <= targetMonth
+        // currentTotal = soma counts onde month <= currentMonth
+        context -> new org.bson.Document("$group", new org.bson.Document()
+            .append("_id", null)
+            .append("pastTotal", new org.bson.Document("$sum",
+                new org.bson.Document("$cond", java.util.List.of(
+                    new org.bson.Document("$lte", java.util.List.of("$_id", targetMonth)),
+                    "$count",
+                    0
                 ))
-            )))),
+            ))
+            .append("currentTotal", new org.bson.Document("$sum",
+                new org.bson.Document("$cond", java.util.List.of(
+                    new org.bson.Document("$lte", java.util.List.of("$_id", currentMonth)),
+                    "$count",
+                    0
+                ))
+            ))
+        ),
 
-            // mês (dateTrunc) + docId pra não contar o mesmo doc 2x no mesmo mês
-            context -> new Document("$group", new Document()
-                .append("_id", new Document()
-                    .append("month", new Document("$dateTrunc", new Document("date", "$periodStart").append("unit", "month")))
-                    .append("docId", "$_id")
-                )
-            ),
+        // percentual
+        context -> new org.bson.Document("$project", new org.bson.Document()
+            .append("_id", 0)
+            .append("percentChange", new org.bson.Document("$cond", java.util.List.of(
+                new org.bson.Document("$eq", java.util.List.of("$pastTotal", 0)),
+                null,
+                new org.bson.Document("$multiply", java.util.List.of(
+                    new org.bson.Document("$divide", java.util.List.of(
+                        new org.bson.Document("$subtract", java.util.List.of("$currentTotal", "$pastTotal")),
+                        "$pastTotal"
+                    )),
+                    100
+                ))
+            )))
+        )
+    );
 
-            // conta por mês
-            context -> new Document("$group", new Document()
-                .append("_id", "$_id.month")
-                .append("count", new Document("$sum", 1))
-            )
-        );
-
-        // 2) executa
-        AggregationResults<Document> result =
-            mongoTemplate.aggregate(aggregation, "catalog", Document.class);
-
-        // 3) pega os counts e calcula percentual
-        long currentCount = 0;
-        long targetCount = 0;
-
-        for (Document d : result.getMappedResults()) {
-            Date month = d.getDate("_id");
-            long count = ((Number) d.get("count")).longValue();
-
-            if (month.equals(Date.from(currentMonthStart.toInstant()))) currentCount = count;
-            if (month.equals(Date.from(targetMonthStart.toInstant()))) targetCount = count;
-        }
-
-        if (targetCount == 0) return null; // ou 0, ou 100, depende da sua regra
-        return ((double) (currentCount - targetCount) / (double) targetCount) * 100.0;
-    }
+    var result = mongoTemplate.aggregate(aggregation, "catalog", org.bson.Document.class);
+    var doc = result.getUniqueMappedResult();
+    return doc == null ? null : doc.getDouble("percentChange");
+}
 
 public Double calculateMemberGrowthMonthly(int months) {
 
