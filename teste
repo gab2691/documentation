@@ -1,86 +1,77 @@
-public Double calculateCatalogGrowthMonthly(int months) {
+ public Double calculateGrowthMonthly(int months) {
+        // 1) datas de referência (mês atual e mês alvo)
+        ZonedDateTime nowZdt = ZonedDateTime.now(ZoneOffset.UTC);
+        ZonedDateTime currentMonthStart = nowZdt.withDayOfMonth(1).toLocalDate().atStartOfDay(ZoneOffset.UTC);
+        ZonedDateTime targetMonthStart = currentMonthStart.minusMonths(months);
 
-    Instant now = Instant.now();
-    Instant past = now.minus(months, ChronoUnit.MONTHS);
+        Date currentStart = Date.from(currentMonthStart.toInstant());
+        Date currentEnd = Date.from(currentMonthStart.plusMonths(1).toInstant());
 
-    Aggregation aggregation = Aggregation.newAggregation(
+        Date targetStart = Date.from(targetMonthStart.toInstant());
+        Date targetEnd = Date.from(targetMonthStart.plusMonths(1).toInstant());
 
-        context -> new Document("$set", new Document()
-            .append("asOfNow", now)
-            .append("asOfPast", past)
-            .append("periods", new Document("$objectToArray", "$participationPeriods"))
-        ),
+        Aggregation aggregation = Aggregation.newAggregation(
+            // Map -> array
+            context -> new Document("$project", new Document("periods",
+                new Document("$objectToArray", "$participationPeriods")
+            )),
 
-        context -> new Document("$unwind", "$periods"),
+            // explode keys
+            context -> new Document("$unwind", "$periods"),
 
-        context -> new Document("$set", new Document()
-            .append("start", new Document("$dateFromString",
-                new Document("dateString", "$periods.k").append("format", "%Y-%m-%d")
-            ))
-            .append("end", new Document("$cond", List.of(
-                new Document("$or", List.of(
-                    new Document("$eq", List.of("$periods.v", null)),
-                    new Document("$eq", List.of("$periods.v", ""))
-                )),
-                null,
+            // key string -> date
+            context -> new Document("$set", new Document("periodStart",
                 new Document("$dateFromString",
-                    new Document("dateString", "$periods.v").append("format", "%Y-%m-%d")
+                    new Document("dateString", "$periods.k").append("format", "%Y-%m-%d")
                 )
-            )))
-        ),
+            )),
 
-        context -> new Document("$group", new Document()
-            .append("_id", "$_id")
-            .append("activeNow", new Document("$max", new Document("$cond", List.of(
+            // mantém só meses que interessam: mês atual OU mês alvo
+            context -> new Document("$match", new Document("$expr", new Document("$or", List.of(
                 new Document("$and", List.of(
-                    new Document("$lte", List.of("$start", "$asOfNow")),
-                    new Document("$or", List.of(
-                        new Document("$eq", List.of("$end", null)),
-                        new Document("$gte", List.of("$end", "$asOfNow"))
-                    ))
+                    new Document("$gte", List.of("$periodStart", targetStart)),
+                    new Document("$lt",  List.of("$periodStart", targetEnd))
                 )),
-                1, 0
-            ))))
-            .append("activePast", new Document("$max", new Document("$cond", List.of(
                 new Document("$and", List.of(
-                    new Document("$lte", List.of("$start", "$asOfPast")),
-                    new Document("$or", List.of(
-                        new Document("$eq", List.of("$end", null)),
-                        new Document("$gte", List.of("$end", "$asOfPast"))
-                    ))
-                )),
-                1, 0
-            ))))
-        ),
-
-        context -> new Document("$group", new Document()
-            .append("_id", null)
-            .append("nowCount", new Document("$sum", "$activeNow"))
-            .append("pastCount", new Document("$sum", "$activePast"))
-        ),
-
-        context -> new Document("$project", new Document()
-            .append("_id", 0)
-            .append("percentChange", new Document("$cond", List.of(
-                new Document("$eq", List.of("$pastCount", 0)),
-                null,
-                new Document("$multiply", List.of(
-                    new Document("$divide", List.of(
-                        new Document("$subtract", List.of("$nowCount", "$pastCount")),
-                        "$pastCount"
-                    )),
-                    100
+                    new Document("$gte", List.of("$periodStart", currentStart)),
+                    new Document("$lt",  List.of("$periodStart", currentEnd))
                 ))
-            )))
-        )
-    );
+            )))),
 
-    AggregationResults<Document> result =
-        mongoTemplate.aggregate(aggregation, "catalog", Document.class);
+            // mês (dateTrunc) + docId pra não contar o mesmo doc 2x no mesmo mês
+            context -> new Document("$group", new Document()
+                .append("_id", new Document()
+                    .append("month", new Document("$dateTrunc", new Document("date", "$periodStart").append("unit", "month")))
+                    .append("docId", "$_id")
+                )
+            ),
 
-    Document doc = result.getUniqueMappedResult();
-    return doc == null ? null : doc.getDouble("percentChange");
-}
+            // conta por mês
+            context -> new Document("$group", new Document()
+                .append("_id", "$_id.month")
+                .append("count", new Document("$sum", 1))
+            )
+        );
+
+        // 2) executa
+        AggregationResults<Document> result =
+            mongoTemplate.aggregate(aggregation, "catalog", Document.class);
+
+        // 3) pega os counts e calcula percentual
+        long currentCount = 0;
+        long targetCount = 0;
+
+        for (Document d : result.getMappedResults()) {
+            Date month = d.getDate("_id");
+            long count = ((Number) d.get("count")).longValue();
+
+            if (month.equals(Date.from(currentMonthStart.toInstant()))) currentCount = count;
+            if (month.equals(Date.from(targetMonthStart.toInstant()))) targetCount = count;
+        }
+
+        if (targetCount == 0) return null; // ou 0, ou 100, depende da sua regra
+        return ((double) (currentCount - targetCount) / (double) targetCount) * 100.0;
+    }
 
 public Double calculateMemberGrowthMonthly(int months) {
 
