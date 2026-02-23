@@ -1,26 +1,21 @@
 public Double calculateCatalogGrowthMonthly(int months) {
 
+    Instant now = Instant.now();
+    Instant past = now.minus(months, ChronoUnit.MONTHS);
+
     Aggregation aggregation = Aggregation.newAggregation(
 
-        // NOW e NOW - months
         context -> new Document("$set", new Document()
-            .append("asOfNow", "$$NOW")
-            .append("asOfPast", new Document("$dateSubtract",
-                new Document("startDate", "$$NOW")
-                    .append("unit", "month")
-                    .append("amount", months)
-            ))
+            .append("asOfNow", now)
+            .append("asOfPast", past)
             .append("periods", new Document("$objectToArray", "$participationPeriods"))
         ),
 
-        // explode períodos
         context -> new Document("$unwind", "$periods"),
 
-        // parse datas
         context -> new Document("$set", new Document()
             .append("start", new Document("$dateFromString",
-                new Document("dateString", "$periods.k")
-                    .append("format", "%Y-%m-%d")
+                new Document("dateString", "$periods.k").append("format", "%Y-%m-%d")
             ))
             .append("end", new Document("$cond", List.of(
                 new Document("$or", List.of(
@@ -29,16 +24,13 @@ public Double calculateCatalogGrowthMonthly(int months) {
                 )),
                 null,
                 new Document("$dateFromString",
-                    new Document("dateString", "$periods.v")
-                        .append("format", "%Y-%m-%d")
+                    new Document("dateString", "$periods.v").append("format", "%Y-%m-%d")
                 )
             )))
         ),
 
-        // avalia ativo em NOW e PAST
         context -> new Document("$group", new Document()
             .append("_id", "$_id")
-
             .append("activeNow", new Document("$max", new Document("$cond", List.of(
                 new Document("$and", List.of(
                     new Document("$lte", List.of("$start", "$asOfNow")),
@@ -49,7 +41,6 @@ public Double calculateCatalogGrowthMonthly(int months) {
                 )),
                 1, 0
             ))))
-
             .append("activePast", new Document("$max", new Document("$cond", List.of(
                 new Document("$and", List.of(
                     new Document("$lte", List.of("$start", "$asOfPast")),
@@ -62,14 +53,12 @@ public Double calculateCatalogGrowthMonthly(int months) {
             ))))
         ),
 
-        // soma totais
         context -> new Document("$group", new Document()
             .append("_id", null)
             .append("nowCount", new Document("$sum", "$activeNow"))
             .append("pastCount", new Document("$sum", "$activePast"))
         ),
 
-        // calcula percentual
         context -> new Document("$project", new Document()
             .append("_id", 0)
             .append("percentChange", new Document("$cond", List.of(
