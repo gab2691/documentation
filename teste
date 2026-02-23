@@ -1,6 +1,5 @@
 public Double calculateCatalogGrowthCumulative(int months) {
 
-        // mês atual (UTC) e mês alvo (UTC)
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         ZonedDateTime currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(ZoneOffset.UTC);
         ZonedDateTime targetMonthStart  = currentMonthStart.minusMonths(months);
@@ -8,19 +7,17 @@ public Double calculateCatalogGrowthCumulative(int months) {
         Date currentMonth = Date.from(currentMonthStart.toInstant());
         Date targetMonth  = Date.from(targetMonthStart.toInstant());
 
-        // Pipeline em Document (driver nativo)
         List<Document> pipeline = new ArrayList<>();
 
-        // Só docs com participationPeriods como object
-        pipeline.add(new Document("$match", new Document("participationPeriods", new Document("$type", "object"))));
+        pipeline.add(new Document("$match",
+            new Document("participationPeriods", new Document("$type", "object"))
+        ));
 
-        // Map -> array
         pipeline.add(new Document("$project", new Document()
             .append("_id", 1)
             .append("periods", new Document("$objectToArray", "$participationPeriods"))
         ));
 
-        // Converte keys para Date e trunca pro mês
         pipeline.add(new Document("$set", new Document("months", new Document("$map", new Document()
             .append("input", "$periods")
             .append("as", "p")
@@ -33,42 +30,40 @@ public Double calculateCatalogGrowthCumulative(int months) {
             ))
         ))));
 
-        // Pega o primeiro mês (menor) do doc => “mês de entrada”
         pipeline.add(new Document("$set", new Document("firstMonth",
             new Document("$min", "$months")
         )));
 
-        // descarta docs sem firstMonth (caso extremo)
-        pipeline.add(new Document("$match", new Document("firstMonth", new Document("$ne", null))));
+        pipeline.add(new Document("$match",
+            new Document("firstMonth", new Document("$ne", null))
+        ));
 
-        // calcula pastTotal e currentTotal no mesmo pipeline
         pipeline.add(new Document("$group", new Document()
             .append("_id", null)
             .append("pastTotal", new Document("$sum",
-                new Document("$cond", List.of(
-                    new Document("$lte", List.of("$firstMonth", targetMonth)),
+                new Document("$cond", Arrays.asList(
+                    new Document("$lte", Arrays.asList("$firstMonth", targetMonth)),
                     1,
                     0
                 ))
             ))
             .append("currentTotal", new Document("$sum",
-                new Document("$cond", List.of(
-                    new Document("$lte", List.of("$firstMonth", currentMonth)),
+                new Document("$cond", Arrays.asList(
+                    new Document("$lte", Arrays.asList("$firstMonth", currentMonth)),
                     1,
                     0
                 ))
             ))
         ));
 
-        // percentual
         pipeline.add(new Document("$project", new Document()
             .append("_id", 0)
-            .append("percentChange", new Document("$cond", List.of(
-                new Document("$eq", List.of("$pastTotal", 0)),
+            .append("percentChange", new Document("$cond", Arrays.asList(
+                new Document("$eq", Arrays.asList("$pastTotal", 0)),
                 null,
-                new Document("$multiply", List.of(
-                    new Document("$divide", List.of(
-                        new Document("$subtract", List.of("$currentTotal", "$pastTotal")),
+                new Document("$multiply", Arrays.asList(
+                    new Document("$divide", Arrays.asList(
+                        new Document("$subtract", Arrays.asList("$currentTotal", "$pastTotal")),
                         "$pastTotal"
                     )),
                     100
@@ -83,7 +78,6 @@ public Double calculateCatalogGrowthCumulative(int months) {
         Object v = out.get("percentChange");
         return (v instanceof Number) ? ((Number) v).doubleValue() : null;
     }
-
 public Double calculateMemberGrowthMonthly(int months) {
 
     Aggregation aggregation = /* EXATAMENTE o mesmo Aggregation acima */;
