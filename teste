@@ -1,4 +1,178 @@
-GIT_TRACE=1 GIT_CURL_VERBOSE=1 git ls-remote https://SEU_HOST/ORG/REPO.git
-git config --global http.sslBackend schannel
-git config --global http.sslVerify true
-git ls-remote https://SEU_HOST/ORG/REPO.git
+db.catalog.aggregate(
+[
+  {
+    $set: {
+      _asOfNow: "$$NOW",
+      _asOfPast: { $dateSubtract: { startDate: "$$NOW", unit: "month", amount: "$$months" } },
+      _periods: { $objectToArray: "$participationPeriods" }
+    }
+  },
+  { $unwind: "$_periods" },
+  {
+    $set: {
+      _start: { $dateFromString: { dateString: "$_periods.k", format: "%Y-%m-%d" } },
+      _end: {
+        $cond: [
+          { $or: [ { $eq: ["$_periods.v", null] }, { $eq: ["$_periods.v", ""] } ] },
+          null,
+          { $dateFromString: { dateString: "$_periods.v", format: "%Y-%m-%d" } }
+        ]
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$_id",
+      asOfNow: { $first: "$_asOfNow" },
+      asOfPast: { $first: "$_asOfPast" },
+
+      activeNow: {
+        $max: {
+          $cond: [
+            {
+              $and: [
+                { $lte: ["$_start", "$_asOfNow"] },
+                { $or: [ { $eq: ["$_end", null] }, { $gte: ["$_end", "$_asOfNow"] } ] }
+              ]
+            },
+            1,
+            0
+          ]
+        }
+      },
+
+      activePast: {
+        $max: {
+          $cond: [
+            {
+              $and: [
+                { $lte: ["$_start", "$_asOfPast"] },
+                { $or: [ { $eq: ["$_end", null] }, { $gte: ["$_end", "$_asOfPast"] } ] }
+              ]
+            },
+            1,
+            0
+          ]
+        }
+      }
+    }
+  },
+  {
+    $group: {
+      _id: null,
+      asOfNow: { $first: "$asOfNow" },
+      asOfPast: { $first: "$asOfPast" },
+      nowCount: { $sum: "$activeNow" },
+      pastCount: { $sum: "$activePast" }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      entity: { $literal: "catalog" },
+      asOfNow: 1,
+      asOfPast: 1,
+      nowCount: 1,
+      pastCount: 1,
+      percentChange: {
+        $cond: [
+          { $eq: ["$pastCount", 0] },
+          null,
+          { $multiply: [ { $divide: [ { $subtract: ["$nowCount", "$pastCount"] }, "$pastCount" ] }, 100 ] }
+        ]
+      }
+    }
+  }
+],
+{ let: { months: 2 } }
+);
+
+
+db.member.aggregate(
+[
+  {
+    $set: {
+      _asOfNow: "$$NOW",
+      _asOfPast: { $dateSubtract: { startDate: "$$NOW", unit: "month", amount: "$$months" } },
+      _periods: { $objectToArray: "$participationPeriods" }
+    }
+  },
+  { $unwind: "$_periods" },
+  {
+    $set: {
+      _start: { $dateFromString: { dateString: "$_periods.k", format: "%Y-%m-%d" } },
+      _end: {
+        $cond: [
+          { $or: [ { $eq: ["$_periods.v", null] }, { $eq: ["$_periods.v", ""] } ] },
+          null,
+          { $dateFromString: { dateString: "$_periods.v", format: "%Y-%m-%d" } }
+        ]
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$_id",
+      asOfNow: { $first: "$_asOfNow" },
+      asOfPast: { $first: "$_asOfPast" },
+
+      activeNow: {
+        $max: {
+          $cond: [
+            {
+              $and: [
+                { $lte: ["$_start", "$_asOfNow"] },
+                { $or: [ { $eq: ["$_end", null] }, { $gte: ["$_end", "$_asOfNow"] } ] }
+              ]
+            },
+            1,
+            0
+          ]
+        }
+      },
+
+      activePast: {
+        $max: {
+          $cond: [
+            {
+              $and: [
+                { $lte: ["$_start", "$_asOfPast"] },
+                { $or: [ { $eq: ["$_end", null] }, { $gte: ["$_end", "$_asOfPast"] } ] }
+              ]
+            },
+            1,
+            0
+          ]
+        }
+      }
+    }
+  },
+  {
+    $group: {
+      _id: null,
+      asOfNow: { $first: "$asOfNow" },
+      asOfPast: { $first: "$asOfPast" },
+      nowCount: { $sum: "$activeNow" },
+      pastCount: { $sum: "$activePast" }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      entity: { $literal: "member" },
+      asOfNow: 1,
+      asOfPast: 1,
+      nowCount: 1,
+      pastCount: 1,
+      percentChange: {
+        $cond: [
+          { $eq: ["$pastCount", 0] },
+          null,
+          { $multiply: [ { $divide: [ { $subtract: ["$nowCount", "$pastCount"] }, "$pastCount" ] }, 100 ] }
+        ]
+      }
+    }
+  }
+],
+{ let: { months: 2 } }
+);
