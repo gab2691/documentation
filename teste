@@ -1,6 +1,5 @@
 public Double calculateCatalogGrowthMonthlyCumulative(int months) {
 
-    // mês atual (UTC) e mês alvo
     var now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC);
     var currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(java.time.ZoneOffset.UTC);
     var targetMonthStart  = currentMonthStart.minusMonths(months);
@@ -8,44 +7,48 @@ public Double calculateCatalogGrowthMonthlyCumulative(int months) {
     java.util.Date currentMonth = java.util.Date.from(currentMonthStart.toInstant());
     java.util.Date targetMonth  = java.util.Date.from(targetMonthStart.toInstant());
 
-    Aggregation aggregation = Aggregation.newAggregation(
+    var aggregation = org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation(
 
-        // Map -> array
-        context -> new org.bson.Document("$project", new org.bson.Document("periods",
-            new org.bson.Document("$objectToArray", "$participationPeriods")
+        // ✅ evita docs sem o map
+        context -> new org.bson.Document("$match", new org.bson.Document("participationPeriods",
+            new org.bson.Document("$type", "object")
         )),
 
-        // explode
+        // ✅ MANTÉM _id (bug fix)
+        context -> new org.bson.Document("$project", new org.bson.Document()
+            .append("_id", 1)
+            .append("periods", new org.bson.Document("$objectToArray", "$participationPeriods"))
+        ),
+
         context -> new org.bson.Document("$unwind", "$periods"),
 
-        // key string -> date (mês)
+        // key -> date e trunc -> month
         context -> new org.bson.Document("$set", new org.bson.Document("month",
-            new org.bson.Document("$dateTrunc", new org.bson.Document("date",
-                new org.bson.Document("$dateFromString",
+            new org.bson.Document("$dateTrunc", new org.bson.Document()
+                .append("date", new org.bson.Document("$dateFromString",
                     new org.bson.Document("dateString", "$periods.k").append("format", "%Y-%m-%d")
-                )
-            ).append("unit", "month"))
+                ))
+                .append("unit", "month")
+            )
         )),
 
-        // mantém só meses até o mês atual (descarta futuro, se existir)
+        // considera só até o mês atual (não conta futuro)
         context -> new org.bson.Document("$match", new org.bson.Document("$expr",
             new org.bson.Document("$lte", java.util.List.of("$month", currentMonth))
         )),
 
-        // dedup por docId+month (um doc pode ter múltiplas chaves no mesmo mês)
+        // dedup docId+month (para não duplicar o mesmo doc no mesmo mês)
         context -> new org.bson.Document("$group", new org.bson.Document()
             .append("_id", new org.bson.Document("docId", "$_id").append("month", "$month"))
         ),
 
-        // conta quantos docs “entram” por mês
+        // conta por mês
         context -> new org.bson.Document("$group", new org.bson.Document()
             .append("_id", "$_id.month")
             .append("count", new org.bson.Document("$sum", 1))
         ),
 
-        // agora calcula totals acumulados:
-        // pastTotal = soma counts onde month <= targetMonth
-        // currentTotal = soma counts onde month <= currentMonth
+        // soma acumulada: <= targetMonth e <= currentMonth
         context -> new org.bson.Document("$group", new org.bson.Document()
             .append("_id", null)
             .append("pastTotal", new org.bson.Document("$sum",
