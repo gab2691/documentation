@@ -1,178 +1,105 @@
-db.catalog.aggregate(
-[
-  {
-    $set: {
-      _asOfNow: "$$NOW",
-      _asOfPast: { $dateSubtract: { startDate: "$$NOW", unit: "month", amount: "$$months" } },
-      _periods: { $objectToArray: "$participationPeriods" }
-    }
-  },
-  { $unwind: "$_periods" },
-  {
-    $set: {
-      _start: { $dateFromString: { dateString: "$_periods.k", format: "%Y-%m-%d" } },
-      _end: {
-        $cond: [
-          { $or: [ { $eq: ["$_periods.v", null] }, { $eq: ["$_periods.v", ""] } ] },
-          null,
-          { $dateFromString: { dateString: "$_periods.v", format: "%Y-%m-%d" } }
-        ]
-      }
-    }
-  },
-  {
-    $group: {
-      _id: "$_id",
-      asOfNow: { $first: "$_asOfNow" },
-      asOfPast: { $first: "$_asOfPast" },
+public Double calculateCatalogGrowthMonthly(int months) {
 
-      activeNow: {
-        $max: {
-          $cond: [
-            {
-              $and: [
-                { $lte: ["$_start", "$_asOfNow"] },
-                { $or: [ { $eq: ["$_end", null] }, { $gte: ["$_end", "$_asOfNow"] } ] }
-              ]
-            },
-            1,
-            0
-          ]
-        }
-      },
+    Aggregation aggregation = Aggregation.newAggregation(
 
-      activePast: {
-        $max: {
-          $cond: [
-            {
-              $and: [
-                { $lte: ["$_start", "$_asOfPast"] },
-                { $or: [ { $eq: ["$_end", null] }, { $gte: ["$_end", "$_asOfPast"] } ] }
-              ]
-            },
-            1,
-            0
-          ]
-        }
-      }
-    }
-  },
-  {
-    $group: {
-      _id: null,
-      asOfNow: { $first: "$asOfNow" },
-      asOfPast: { $first: "$asOfPast" },
-      nowCount: { $sum: "$activeNow" },
-      pastCount: { $sum: "$activePast" }
-    }
-  },
-  {
-    $project: {
-      _id: 0,
-      entity: { $literal: "catalog" },
-      asOfNow: 1,
-      asOfPast: 1,
-      nowCount: 1,
-      pastCount: 1,
-      percentChange: {
-        $cond: [
-          { $eq: ["$pastCount", 0] },
-          null,
-          { $multiply: [ { $divide: [ { $subtract: ["$nowCount", "$pastCount"] }, "$pastCount" ] }, 100 ] }
-        ]
-      }
-    }
-  }
-],
-{ let: { months: 2 } }
-);
+        // NOW e NOW - months
+        context -> new Document("$set", new Document()
+            .append("asOfNow", "$$NOW")
+            .append("asOfPast", new Document("$dateSubtract",
+                new Document("startDate", "$$NOW")
+                    .append("unit", "month")
+                    .append("amount", months)
+            ))
+            .append("periods", new Document("$objectToArray", "$participationPeriods"))
+        ),
 
+        // explode períodos
+        context -> new Document("$unwind", "$periods"),
 
-db.member.aggregate(
-[
-  {
-    $set: {
-      _asOfNow: "$$NOW",
-      _asOfPast: { $dateSubtract: { startDate: "$$NOW", unit: "month", amount: "$$months" } },
-      _periods: { $objectToArray: "$participationPeriods" }
-    }
-  },
-  { $unwind: "$_periods" },
-  {
-    $set: {
-      _start: { $dateFromString: { dateString: "$_periods.k", format: "%Y-%m-%d" } },
-      _end: {
-        $cond: [
-          { $or: [ { $eq: ["$_periods.v", null] }, { $eq: ["$_periods.v", ""] } ] },
-          null,
-          { $dateFromString: { dateString: "$_periods.v", format: "%Y-%m-%d" } }
-        ]
-      }
-    }
-  },
-  {
-    $group: {
-      _id: "$_id",
-      asOfNow: { $first: "$_asOfNow" },
-      asOfPast: { $first: "$_asOfPast" },
+        // parse datas
+        context -> new Document("$set", new Document()
+            .append("start", new Document("$dateFromString",
+                new Document("dateString", "$periods.k")
+                    .append("format", "%Y-%m-%d")
+            ))
+            .append("end", new Document("$cond", List.of(
+                new Document("$or", List.of(
+                    new Document("$eq", List.of("$periods.v", null)),
+                    new Document("$eq", List.of("$periods.v", ""))
+                )),
+                null,
+                new Document("$dateFromString",
+                    new Document("dateString", "$periods.v")
+                        .append("format", "%Y-%m-%d")
+                )
+            )))
+        ),
 
-      activeNow: {
-        $max: {
-          $cond: [
-            {
-              $and: [
-                { $lte: ["$_start", "$_asOfNow"] },
-                { $or: [ { $eq: ["$_end", null] }, { $gte: ["$_end", "$_asOfNow"] } ] }
-              ]
-            },
-            1,
-            0
-          ]
-        }
-      },
+        // avalia ativo em NOW e PAST
+        context -> new Document("$group", new Document()
+            .append("_id", "$_id")
 
-      activePast: {
-        $max: {
-          $cond: [
-            {
-              $and: [
-                { $lte: ["$_start", "$_asOfPast"] },
-                { $or: [ { $eq: ["$_end", null] }, { $gte: ["$_end", "$_asOfPast"] } ] }
-              ]
-            },
-            1,
-            0
-          ]
-        }
-      }
-    }
-  },
-  {
-    $group: {
-      _id: null,
-      asOfNow: { $first: "$asOfNow" },
-      asOfPast: { $first: "$asOfPast" },
-      nowCount: { $sum: "$activeNow" },
-      pastCount: { $sum: "$activePast" }
-    }
-  },
-  {
-    $project: {
-      _id: 0,
-      entity: { $literal: "member" },
-      asOfNow: 1,
-      asOfPast: 1,
-      nowCount: 1,
-      pastCount: 1,
-      percentChange: {
-        $cond: [
-          { $eq: ["$pastCount", 0] },
-          null,
-          { $multiply: [ { $divide: [ { $subtract: ["$nowCount", "$pastCount"] }, "$pastCount" ] }, 100 ] }
-        ]
-      }
-    }
-  }
-],
-{ let: { months: 2 } }
-);
+            .append("activeNow", new Document("$max", new Document("$cond", List.of(
+                new Document("$and", List.of(
+                    new Document("$lte", List.of("$start", "$asOfNow")),
+                    new Document("$or", List.of(
+                        new Document("$eq", List.of("$end", null)),
+                        new Document("$gte", List.of("$end", "$asOfNow"))
+                    ))
+                )),
+                1, 0
+            ))))
+
+            .append("activePast", new Document("$max", new Document("$cond", List.of(
+                new Document("$and", List.of(
+                    new Document("$lte", List.of("$start", "$asOfPast")),
+                    new Document("$or", List.of(
+                        new Document("$eq", List.of("$end", null)),
+                        new Document("$gte", List.of("$end", "$asOfPast"))
+                    ))
+                )),
+                1, 0
+            ))))
+        ),
+
+        // soma totais
+        context -> new Document("$group", new Document()
+            .append("_id", null)
+            .append("nowCount", new Document("$sum", "$activeNow"))
+            .append("pastCount", new Document("$sum", "$activePast"))
+        ),
+
+        // calcula percentual
+        context -> new Document("$project", new Document()
+            .append("_id", 0)
+            .append("percentChange", new Document("$cond", List.of(
+                new Document("$eq", List.of("$pastCount", 0)),
+                null,
+                new Document("$multiply", List.of(
+                    new Document("$divide", List.of(
+                        new Document("$subtract", List.of("$nowCount", "$pastCount")),
+                        "$pastCount"
+                    )),
+                    100
+                ))
+            )))
+        )
+    );
+
+    AggregationResults<Document> result =
+        mongoTemplate.aggregate(aggregation, "catalog", Document.class);
+
+    Document doc = result.getUniqueMappedResult();
+    return doc == null ? null : doc.getDouble("percentChange");
+}
+
+public Double calculateMemberGrowthMonthly(int months) {
+
+    Aggregation aggregation = /* EXATAMENTE o mesmo Aggregation acima */;
+
+    AggregationResults<Document> result =
+        mongoTemplate.aggregate(aggregation, "member", Document.class);
+
+    Document doc = result.getUniqueMappedResult();
+    return doc == null ? null : doc.getDouble("percentChange");
+}
