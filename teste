@@ -1,4 +1,4 @@
-public Double calculateCatalogGrowthCumulative(int months) {
+public Double calculateIssueOpenGrowthCumulative(int months) {
 
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         ZonedDateTime currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(ZoneOffset.UTC);
@@ -9,53 +9,45 @@ public Double calculateCatalogGrowthCumulative(int months) {
 
         List<Document> pipeline = new ArrayList<>();
 
-        pipeline.add(new Document("$match",
-            new Document("participationPeriods", new Document("$type", "object"))
+        // 1) filtra só ISSUE-OPEN e garante registerAt existente
+        pipeline.add(new Document("$match", new Document()
+            .append("typeOfMetrics", "ISSUE-OPEN")
+            .append("registerAt", new Document("$type", "date"))
         ));
 
-        pipeline.add(new Document("$project", new Document()
-            .append("_id", 1)
-            .append("periods", new Document("$objectToArray", "$participationPeriods"))
-        ));
-
-        pipeline.add(new Document("$set", new Document("months", new Document("$map", new Document()
-            .append("input", "$periods")
-            .append("as", "p")
-            .append("in", new Document("$dateTrunc", new Document()
-                .append("date", new Document("$dateFromString", new Document()
-                    .append("dateString", "$$p.k")
-                    .append("format", "%Y-%m-%d")
-                ))
+        // 2) cria o "month" truncando registerAt pro início do mês
+        pipeline.add(new Document("$set", new Document("month",
+            new Document("$dateTrunc", new Document()
+                .append("date", "$registerAt")
                 .append("unit", "month")
-            ))
-        ))));
-
-        pipeline.add(new Document("$set", new Document("firstMonth",
-            new Document("$min", "$months")
+            )
         )));
 
-        pipeline.add(new Document("$match",
-            new Document("firstMonth", new Document("$ne", null))
-        ));
+        // 3) considera só registros até o mês atual (evita futuro)
+        pipeline.add(new Document("$match", new Document("$expr",
+            new Document("$lte", Arrays.asList("$month", currentMonth))
+        )));
 
+        // 4) soma acumulada
         pipeline.add(new Document("$group", new Document()
             .append("_id", null)
             .append("pastTotal", new Document("$sum",
                 new Document("$cond", Arrays.asList(
-                    new Document("$lte", Arrays.asList("$firstMonth", targetMonth)),
+                    new Document("$lte", Arrays.asList("$month", targetMonth)),
                     1,
                     0
                 ))
             ))
             .append("currentTotal", new Document("$sum",
                 new Document("$cond", Arrays.asList(
-                    new Document("$lte", Arrays.asList("$firstMonth", currentMonth)),
+                    new Document("$lte", Arrays.asList("$month", currentMonth)),
                     1,
                     0
                 ))
             ))
         ));
 
+        // 5) percentual
         pipeline.add(new Document("$project", new Document()
             .append("_id", 0)
             .append("percentChange", new Document("$cond", Arrays.asList(
@@ -71,20 +63,10 @@ public Double calculateCatalogGrowthCumulative(int months) {
             )))
         ));
 
-        MongoCollection<Document> col = mongoTemplate.getDb().getCollection("catalog");
+        MongoCollection<Document> col = mongoTemplate.getDb().getCollection("metrics"); // ajuste o nome real
         Document out = col.aggregate(pipeline).first();
 
         if (out == null) return null;
         Object v = out.get("percentChange");
         return (v instanceof Number) ? ((Number) v).doubleValue() : null;
     }
-public Double calculateMemberGrowthMonthly(int months) {
-
-    Aggregation aggregation = /* EXATAMENTE o mesmo Aggregation acima */;
-
-    AggregationResults<Document> result =
-        mongoTemplate.aggregate(aggregation, "member", Document.class);
-
-    Document doc = result.getUniqueMappedResult();
-    return doc == null ? null : doc.getDouble("percentChange");
-}
