@@ -1,78 +1,76 @@
-public Double calculateIssueOpenGrowthCumulative(int months) {
+public Double calculateMetricsMonthlyGrowth(int months) {
 
-    ZoneId tz = ZoneId.of("America/Sao_Paulo"); // ou UTC, mas use o MESMO em tudo
-    ZonedDateTime now = ZonedDateTime.now(tz);
-    ZonedDateTime currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(tz);
-    ZonedDateTime targetMonthStart  = currentMonthStart.minusMonths(months);
+        String tz = "America/Sao_Paulo"; // mantenha consistente com seu negócio
+        ZoneId zoneId = ZoneId.of(tz);
 
-    Date currentMonth = Date.from(currentMonthStart.toInstant());
-    Date targetMonth  = Date.from(targetMonthStart.toInstant());
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        ZonedDateTime currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(zoneId);
+        ZonedDateTime targetMonthStart  = currentMonthStart.minusMonths(months);
 
-    List<Document> pipeline = new ArrayList<>();
+        Date currentStart = Date.from(currentMonthStart.toInstant());
+        Date currentEnd   = Date.from(currentMonthStart.plusMonths(1).toInstant());
 
-    // 1) filtra ISSUE-OPEN e garante que registerAt existe
-    pipeline.add(new Document("$match", new Document()
-        .append("typeOfMetrics", "ISSUE-OPEN")
-        .append("registerAt", new Document("$ne", null))
-    ));
+        Date targetStart  = Date.from(targetMonthStart.toInstant());
+        Date targetEnd    = Date.from(targetMonthStart.plusMonths(1).toInstant());
 
-    // 2) converte registerAt para date (se já for date, ok; se for string, converte)
-    pipeline.add(new Document("$set", new Document("registerAtDate",
-        new Document("$toDate", "$registerAt")
-    )));
+        List<Document> pipeline = new ArrayList<>();
 
-    // 3) month = trunc(registerAtDate)
-    pipeline.add(new Document("$set", new Document("month",
-        new Document("$dateTrunc", new Document()
-            .append("date", "$registerAtDate")
-            .append("unit", "month")
-            .append("timezone", "America/Sao_Paulo")
-        )
-    )));
+        // 1) garante que tem registerAt
+        pipeline.add(new Document("$match", new Document("registerAt", new Document("$ne", null))));
 
-    // 4) só até o mês atual
-    pipeline.add(new Document("$match", new Document("$expr",
-        new Document("$lte", Arrays.asList("$month", currentMonth))
-    )));
+        // 2) converte registerAt (se for string, converte; se já for date, ok)
+        pipeline.add(new Document("$set", new Document("registerAtDate",
+            new Document("$toDate", "$registerAt")
+        )));
 
-    // 5) acumulados
-    pipeline.add(new Document("$group", new Document()
-        .append("_id", null)
-        .append("pastTotal", new Document("$sum",
-            new Document("$cond", Arrays.asList(
-                new Document("$lte", Arrays.asList("$month", targetMonth)),
-                1,
-                0
-            ))
-        ))
-        .append("currentTotal", new Document("$sum",
-            new Document("$cond", Arrays.asList(
-                new Document("$lte", Arrays.asList("$month", currentMonth)),
-                1,
-                0
-            ))
-        ))
-    ));
-
-    // 6) percentual
-    pipeline.add(new Document("$project", new Document()
-        .append("_id", 0)
-        .append("percentChange", new Document("$cond", Arrays.asList(
-            new Document("$eq", Arrays.asList("$pastTotal", 0)),
-            null,
-            new Document("$multiply", Arrays.asList(
-                new Document("$divide", Arrays.asList(
-                    new Document("$subtract", Arrays.asList("$currentTotal", "$pastTotal")),
-                    "$pastTotal"
+        // 3) calcula os dois counts em paralelo
+        pipeline.add(new Document("$facet", new Document()
+            .append("current", Arrays.asList(
+                new Document("$match", new Document("registerAtDate", new Document()
+                    .append("$gte", currentStart)
+                    .append("$lt", currentEnd)
                 )),
-                100
+                new Document("$count", "count")
             ))
-        )))
-    ));
+            .append("target", Arrays.asList(
+                new Document("$match", new Document("registerAtDate", new Document()
+                    .append("$gte", targetStart)
+                    .append("$lt", targetEnd)
+                )),
+                new Document("$count", "count")
+            ))
+        ));
 
-    Document out = mongoTemplate.getDb().getCollection("metrics").aggregate(pipeline).first();
-    if (out == null) return null;
+        // 4) extrai os counts (se vazio, vira 0)
+        pipeline.add(new Document("$project", new Document()
+            .append("currentCount", new Document("$ifNull", Arrays.asList(
+                new Document("$first", "$current.count"), 0
+            )))
+            .append("targetCount", new Document("$ifNull", Arrays.asList(
+                new Document("$first", "$target.count"), 0
+            )))
+        ));
 
-    Object v = out.get("percentChange");
-    return (v instanceof Number) ? ((Number) v).doubleValue() : null;
-}
+        // 5) percentual
+        pipeline.add(new Document("$project", new Document()
+            .append("_id", 0)
+            .append("percentChange", new Document("$cond", Arrays.asList(
+                new Document("$eq", Arrays.asList("$targetCount", 0)),
+                null,
+                new Document("$multiply", Arrays.asList(
+                    new Document("$divide", Arrays.asList(
+                        new Document("$subtract", Arrays.asList("$currentCount", "$targetCount")),
+                        "$targetCount"
+                    )),
+                    100
+                ))
+            )))
+        ));
+
+        MongoCollection<Document> col = mongoTemplate.getDb().getCollection("metrics"); // ajuste se o nome for outro
+        Document out = col.aggregate(pipeline).first();
+
+        if (out == null) return null;
+        Object v = out.get("percentChange");
+        return (v instanceof Number) ? ((Number) v).doubleValue() : null;
+    }
