@@ -1,72 +1,78 @@
 public Double calculateIssueOpenGrowthCumulative(int months) {
 
-        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        ZonedDateTime currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(ZoneOffset.UTC);
-        ZonedDateTime targetMonthStart  = currentMonthStart.minusMonths(months);
+    ZoneId tz = ZoneId.of("America/Sao_Paulo"); // ou UTC, mas use o MESMO em tudo
+    ZonedDateTime now = ZonedDateTime.now(tz);
+    ZonedDateTime currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(tz);
+    ZonedDateTime targetMonthStart  = currentMonthStart.minusMonths(months);
 
-        Date currentMonth = Date.from(currentMonthStart.toInstant());
-        Date targetMonth  = Date.from(targetMonthStart.toInstant());
+    Date currentMonth = Date.from(currentMonthStart.toInstant());
+    Date targetMonth  = Date.from(targetMonthStart.toInstant());
 
-        List<Document> pipeline = new ArrayList<>();
+    List<Document> pipeline = new ArrayList<>();
 
-        // 1) filtra só ISSUE-OPEN e garante registerAt existente
-        pipeline.add(new Document("$match", new Document()
-            .append("typeOfMetrics", "ISSUE-OPEN")
-            .append("registerAt", new Document("$type", "date"))
-        ));
+    // 1) filtra ISSUE-OPEN e garante que registerAt existe
+    pipeline.add(new Document("$match", new Document()
+        .append("typeOfMetrics", "ISSUE-OPEN")
+        .append("registerAt", new Document("$ne", null))
+    ));
 
-        // 2) cria o "month" truncando registerAt pro início do mês
-        pipeline.add(new Document("$set", new Document("month",
-            new Document("$dateTrunc", new Document()
-                .append("date", "$registerAt")
-                .append("unit", "month")
-            )
-        )));
+    // 2) converte registerAt para date (se já for date, ok; se for string, converte)
+    pipeline.add(new Document("$set", new Document("registerAtDate",
+        new Document("$toDate", "$registerAt")
+    )));
 
-        // 3) considera só registros até o mês atual (evita futuro)
-        pipeline.add(new Document("$match", new Document("$expr",
-            new Document("$lte", Arrays.asList("$month", currentMonth))
-        )));
+    // 3) month = trunc(registerAtDate)
+    pipeline.add(new Document("$set", new Document("month",
+        new Document("$dateTrunc", new Document()
+            .append("date", "$registerAtDate")
+            .append("unit", "month")
+            .append("timezone", "America/Sao_Paulo")
+        )
+    )));
 
-        // 4) soma acumulada
-        pipeline.add(new Document("$group", new Document()
-            .append("_id", null)
-            .append("pastTotal", new Document("$sum",
-                new Document("$cond", Arrays.asList(
-                    new Document("$lte", Arrays.asList("$month", targetMonth)),
-                    1,
-                    0
-                ))
+    // 4) só até o mês atual
+    pipeline.add(new Document("$match", new Document("$expr",
+        new Document("$lte", Arrays.asList("$month", currentMonth))
+    )));
+
+    // 5) acumulados
+    pipeline.add(new Document("$group", new Document()
+        .append("_id", null)
+        .append("pastTotal", new Document("$sum",
+            new Document("$cond", Arrays.asList(
+                new Document("$lte", Arrays.asList("$month", targetMonth)),
+                1,
+                0
             ))
-            .append("currentTotal", new Document("$sum",
-                new Document("$cond", Arrays.asList(
-                    new Document("$lte", Arrays.asList("$month", currentMonth)),
-                    1,
-                    0
-                ))
+        ))
+        .append("currentTotal", new Document("$sum",
+            new Document("$cond", Arrays.asList(
+                new Document("$lte", Arrays.asList("$month", currentMonth)),
+                1,
+                0
             ))
-        ));
+        ))
+    ));
 
-        // 5) percentual
-        pipeline.add(new Document("$project", new Document()
-            .append("_id", 0)
-            .append("percentChange", new Document("$cond", Arrays.asList(
-                new Document("$eq", Arrays.asList("$pastTotal", 0)),
-                null,
-                new Document("$multiply", Arrays.asList(
-                    new Document("$divide", Arrays.asList(
-                        new Document("$subtract", Arrays.asList("$currentTotal", "$pastTotal")),
-                        "$pastTotal"
-                    )),
-                    100
-                ))
-            )))
-        ));
+    // 6) percentual
+    pipeline.add(new Document("$project", new Document()
+        .append("_id", 0)
+        .append("percentChange", new Document("$cond", Arrays.asList(
+            new Document("$eq", Arrays.asList("$pastTotal", 0)),
+            null,
+            new Document("$multiply", Arrays.asList(
+                new Document("$divide", Arrays.asList(
+                    new Document("$subtract", Arrays.asList("$currentTotal", "$pastTotal")),
+                    "$pastTotal"
+                )),
+                100
+            ))
+        )))
+    ));
 
-        MongoCollection<Document> col = mongoTemplate.getDb().getCollection("metrics"); // ajuste o nome real
-        Document out = col.aggregate(pipeline).first();
+    Document out = mongoTemplate.getDb().getCollection("metrics").aggregate(pipeline).first();
+    if (out == null) return null;
 
-        if (out == null) return null;
-        Object v = out.get("percentChange");
-        return (v instanceof Number) ? ((Number) v).doubleValue() : null;
-    }
+    Object v = out.get("percentChange");
+    return (v instanceof Number) ? ((Number) v).doubleValue() : null;
+}
