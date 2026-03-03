@@ -1,82 +1,89 @@
-function pad2(n) { return (n < 10 ? "0" : "") + n; }
-function ymd(d) { return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`; }
-function parseYmd(s) {
-  // assume "YYYY-MM-DD"
-  const [y,m,d] = s.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d));
+function pad2(n){ return (n < 10 ? "0" : "") + n; }
+function ymd(d){ return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`; }
+function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pickDateInMonth(year, month1to12){
+  const day = randInt(1, 28); // evita problemas de mês
+  return new Date(Date.UTC(year, month1to12 - 1, day));
 }
-function addDays(d, days) {
+function addDays(d, days){
   const x = new Date(d);
   x.setUTCDate(x.getUTCDate() + days);
   return x;
 }
-function diffDays(a, b) {
-  // b - a em dias
-  return Math.round((b - a) / (24 * 60 * 60 * 1000));
+
+// ======= CONFIG =======
+const COUNTS = {
+  "2025-09": 20,
+  "2025-10": 105,
+  // os demais meses (2025-11..2026-03) serão preenchidos com o restante
+};
+const MONTHS_FILL = ["2025-11","2025-12","2026-01","2026-02","2026-03"];
+const PERIOD_DAYS = 30;
+const BATCH = 500;
+// ======================
+
+// pega ids de docs que têm participationPeriods
+const ids = db.member.find(
+  { participationPeriods: { $exists: true, $type: "object" } },
+  { _id: 1 }
+).map(d => d._id);
+
+// shuffle (Fisher–Yates)
+for (let i = ids.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [ids[i], ids[j]] = [ids[j], ids[i]];
 }
 
-const now = new Date();
-const windowDays = 180;
-const startWindow = addDays(now, -windowDays);
+let cursor = 0;
 
-let bulk = [];
-let touched = 0;
+// helper para aplicar um mês com N docs
+function applyMonth(monthStr, n) {
+  const [y, m] = monthStr.split("-").map(Number);
+  let bulk = [];
+  let applied = 0;
 
-db.member.find(
-  { participationPeriods: { $exists: true, $type: "object" } },
-  { participationPeriods: 1 }
-).forEach(doc => {
-  const pp = doc.participationPeriods || {};
-  const entries = Object.entries(pp); // [ [startStr, endStr], ... ]
-  if (!entries.length) return;
+  for (let i = 0; i < n && cursor < ids.length; i++, cursor++) {
+    const start = pickDateInMonth(y, m);
+    const end = addDays(start, PERIOD_DAYS);
 
-  // ordena por start antigo só pra ficar determinístico
-  entries.sort((a,b) => a[0].localeCompare(b[0]));
+    bulk.push({
+      updateOne: {
+        filter: { _id: ids[cursor] },
+        update: { $set: { participationPeriods: { [ymd(start)]: ymd(end) } } }
+      }
+    });
 
-  const n = entries.length;
-  const step = (n <= 1) ? 0 : Math.floor(windowDays / (n - 1));
-
-  const newMap = {};
-
-  for (let i = 0; i < n; i++) {
-    const [oldStartStr, oldEndStr] = entries[i];
-
-    // duração original
-    let duration = 0;
-    try {
-      const oldStart = parseYmd(oldStartStr);
-      const oldEnd = parseYmd(oldEndStr);
-      duration = Math.max(0, diffDays(oldStart, oldEnd));
-    } catch (e) {
-      duration = 0; // se der ruim no parse, deixa 0
+    applied++;
+    if (bulk.length === BATCH) {
+      db.member.bulkWrite(bulk);
+      bulk = [];
     }
-
-    // novo start distribuído na janela
-    const newStart = addDays(startWindow, i * step);
-
-    // novo end preservando duração
-    let newEnd = addDays(newStart, duration);
-
-    // opcional: não deixar end passar de "agora"
-    if (newEnd > now) newEnd = now;
-
-    newMap[ymd(newStart)] = ymd(newEnd);
   }
 
-  bulk.push({
-    updateOne: {
-      filter: { _id: doc._id },
-      update: { $set: { participationPeriods: newMap } }
-    }
-  });
+  if (bulk.length) db.member.bulkWrite(bulk);
+  print(`Mes ${monthStr}: aplicado em ${applied} docs`);
+  return applied;
+}
 
-  touched++;
-  if (bulk.length === 500) {
-    db.member.bulkWrite(bulk);
-    bulk = [];
+// 1) aplica meses fixos
+let fixedTotal = 0;
+for (const [month, n] of Object.entries(COUNTS)) {
+  fixedTotal += applyMonth(month, n);
+}
+
+// 2) distribui o restante nos meses finais (uniforme)
+const remaining = ids.length - cursor;
+if (remaining <= 0) {
+  print("Nada restante para distribuir.");
+} else {
+  const perMonth = Math.floor(remaining / MONTHS_FILL.length);
+  let leftover = remaining % MONTHS_FILL.length;
+
+  for (const month of MONTHS_FILL) {
+    const n = perMonth + (leftover > 0 ? 1 : 0);
+    if (leftover > 0) leftover--;
+    applyMonth(month, n);
   }
-});
+}
 
-if (bulk.length) db.member.bulkWrite(bulk);
-
-print(`Atualizados: ${touched} docs`);
+print(`Total docs com participationPeriods reescrito: ${cursor} de ${ids.length}`);
