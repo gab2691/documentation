@@ -1,67 +1,24 @@
-public Double calculateMetricsCumulativeGrowth(int months) {
-
-        String tz = "America/Sao_Paulo";
-        ZoneId zoneId = ZoneId.of(tz);
-
-        ZonedDateTime now = ZonedDateTime.now(zoneId);
-
-        // início do mês atual (ex.: 2026-02-01 00:00 SP)
-        ZonedDateTime currentMonthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay(zoneId);
-        // fim do mês atual (na prática: início do próximo mês)
-        ZonedDateTime currentMonthEndExclusive = currentMonthStart.plusMonths(1);
-
-        // mês alvo (ex.: months=1 -> 2026-01-01)
-        ZonedDateTime targetMonthStart = currentMonthStart.minusMonths(months);
-        // fim do mês alvo (início do próximo mês do alvo)
-        ZonedDateTime targetMonthEndExclusive = targetMonthStart.plusMonths(1);
-
-        Date currentEnd = Date.from(currentMonthEndExclusive.toInstant());
-        Date targetEnd  = Date.from(targetMonthEndExclusive.toInstant());
-
-        List<Document> pipeline = new ArrayList<>();
-
-        // garante registerAt
-        pipeline.add(new Document("$match", new Document("registerAt", new Document("$ne", null))));
-
-        // converte registerAt para Date (se string, converte)
-        pipeline.add(new Document("$set", new Document("registerAtDate",
-            new Document("$toDate", "$registerAt")
-        )));
-
-        // calcula totals acumulados com facet
-        pipeline.add(new Document("$facet", new Document()
-            .append("current", Arrays.asList(
-                new Document("$match", new Document("registerAtDate", new Document("$lt", currentEnd))),
-                new Document("$count", "count")
-            ))
-            .append("past", Arrays.asList(
-                new Document("$match", new Document("registerAtDate", new Document("$lt", targetEnd))),
-                new Document("$count", "count")
-            ))
-        ));
-
-        // extrai counts (se vazio, vira 0)
-        pipeline.add(new Document("$project", new Document()
-            .append("currentTotal", new Document("$ifNull", Arrays.asList(
-                new Document("$first", "$current.count"), 0
-            )))
-            .append("pastTotal", new Document("$ifNull", Arrays.asList(
-                new Document("$first", "$past.count"), 0
-            )))
-        ));
-
-        // percentual
-        pipeline.add(new Document("$project", new Document()
-            .append("_id", 0)
-            .append("percentChange", new Document("$cond", Arrays.asList(
-                new Document("$eq", Arrays.asList("$pastTotal", 0)),
-                null,
-                new Document("$multiply", Arrays.asList(
-                    new Document("$divide", Arrays.asList(
-                        new Document("$subtract", Arrays.asList("$currentTotal", "$pastTotal")),
-                        "$pastTotal"
-                    )),
-                    100
-                ))
-            )))
-        ));
+db.member.aggregate([
+  {
+    $project: {
+      periods: { $objectToArray: "$participationPeriods" }
+    }
+  },
+  {
+    $unwind: "$periods"
+  },
+  {
+    $group: {
+      _id: {
+        $dateToString: {
+          format: "%Y-%m",
+          date: { $toDate: "$periods.k" }
+        }
+      },
+      count: { $sum: 1 }
+    }
+  },
+  {
+    $sort: { _id: 1 }
+  }
+])
