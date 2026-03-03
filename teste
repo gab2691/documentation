@@ -1,24 +1,82 @@
-db.member.aggregate([
-  {
-    $project: {
-      periods: { $objectToArray: "$participationPeriods" }
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+function ymd(d) { return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`; }
+function parseYmd(s) {
+  // assume "YYYY-MM-DD"
+  const [y,m,d] = s.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+function addDays(d, days) {
+  const x = new Date(d);
+  x.setUTCDate(x.getUTCDate() + days);
+  return x;
+}
+function diffDays(a, b) {
+  // b - a em dias
+  return Math.round((b - a) / (24 * 60 * 60 * 1000));
+}
+
+const now = new Date();
+const windowDays = 180;
+const startWindow = addDays(now, -windowDays);
+
+let bulk = [];
+let touched = 0;
+
+db.member.find(
+  { participationPeriods: { $exists: true, $type: "object" } },
+  { participationPeriods: 1 }
+).forEach(doc => {
+  const pp = doc.participationPeriods || {};
+  const entries = Object.entries(pp); // [ [startStr, endStr], ... ]
+  if (!entries.length) return;
+
+  // ordena por start antigo só pra ficar determinístico
+  entries.sort((a,b) => a[0].localeCompare(b[0]));
+
+  const n = entries.length;
+  const step = (n <= 1) ? 0 : Math.floor(windowDays / (n - 1));
+
+  const newMap = {};
+
+  for (let i = 0; i < n; i++) {
+    const [oldStartStr, oldEndStr] = entries[i];
+
+    // duração original
+    let duration = 0;
+    try {
+      const oldStart = parseYmd(oldStartStr);
+      const oldEnd = parseYmd(oldEndStr);
+      duration = Math.max(0, diffDays(oldStart, oldEnd));
+    } catch (e) {
+      duration = 0; // se der ruim no parse, deixa 0
     }
-  },
-  {
-    $unwind: "$periods"
-  },
-  {
-    $group: {
-      _id: {
-        $dateToString: {
-          format: "%Y-%m",
-          date: { $toDate: "$periods.k" }
-        }
-      },
-      count: { $sum: 1 }
-    }
-  },
-  {
-    $sort: { _id: 1 }
+
+    // novo start distribuído na janela
+    const newStart = addDays(startWindow, i * step);
+
+    // novo end preservando duração
+    let newEnd = addDays(newStart, duration);
+
+    // opcional: não deixar end passar de "agora"
+    if (newEnd > now) newEnd = now;
+
+    newMap[ymd(newStart)] = ymd(newEnd);
   }
-])
+
+  bulk.push({
+    updateOne: {
+      filter: { _id: doc._id },
+      update: { $set: { participationPeriods: newMap } }
+    }
+  });
+
+  touched++;
+  if (bulk.length === 500) {
+    db.member.bulkWrite(bulk);
+    bulk = [];
+  }
+});
+
+if (bulk.length) db.member.bulkWrite(bulk);
+
+print(`Atualizados: ${touched} docs`);
