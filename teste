@@ -1,89 +1,47 @@
-function pad2(n){ return (n < 10 ? "0" : "") + n; }
-function ymd(d){ return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`; }
-function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
-function pickDateInMonth(year, month1to12){
-  const day = randInt(1, 28); // evita problemas de mês
-  return new Date(Date.UTC(year, month1to12 - 1, day));
-}
-function addDays(d, days){
-  const x = new Date(d);
-  x.setUTCDate(x.getUTCDate() + days);
-  return x;
-}
+2. Abrir Workflows / Automate
 
-// ======= CONFIG =======
-const COUNTS = {
-  "2025-09": 20,
-  "2025-10": 105,
-  // os demais meses (2025-11..2026-03) serão preenchidos com o restante
-};
-const MONTHS_FILL = ["2025-11","2025-12","2026-01","2026-02","2026-03"];
-const PERIOD_DAYS = 30;
-const BATCH = 500;
-// ======================
+Seu colega deve:
 
-// pega ids de docs que têm participationPeriods
-const ids = db.member.find(
-  { participationPeriods: { $exists: true, $type: "object" } },
-  { _id: 1 }
-).map(d => d._id);
+clicar nos ... (três pontinhos do canal)
+procurar:
 
-// shuffle (Fisher–Yates)
-for (let i = ids.length - 1; i > 0; i--) {
-  const j = Math.floor(Math.random() * (i + 1));
-  [ids[i], ids[j]] = [ids[j], ids[i]];
-}
+👉 Workflows
+ou
+👉 Automate
 
-let cursor = 0;
+3. Criar novo fluxo
 
-// helper para aplicar um mês com N docs
-function applyMonth(monthStr, n) {
-  const [y, m] = monthStr.split("-").map(Number);
-  let bulk = [];
-  let applied = 0;
+Dentro disso:
 
-  for (let i = 0; i < n && cursor < ids.length; i++, cursor++) {
-    const start = pickDateInMonth(y, m);
-    const end = addDays(start, PERIOD_DAYS);
+clicar em Create / New flow
+procurar template:
 
-    bulk.push({
-      updateOne: {
-        filter: { _id: ids[cursor] },
-        update: { $set: { participationPeriods: { [ymd(start)]: ymd(end) } } }
-      }
-    });
+👉 “When a Teams webhook request is received”
+ou
+👉 “Post to a channel when a webhook request is received”
 
-    applied++;
-    if (bulk.length === BATCH) {
-      db.member.bulkWrite(bulk);
-      bulk = [];
-    }
-  }
+⚠️ esse é o nome mais importante
 
-  if (bulk.length) db.member.bulkWrite(bulk);
-  print(`Mes ${monthStr}: aplicado em ${applied} docs`);
-  return applied;
-}
+4. Criar o fluxo
+selecionar esse template
+clicar em Create
+5. Configurar o fluxo
 
-// 1) aplica meses fixos
-let fixedTotal = 0;
-for (const [month, n] of Object.entries(COUNTS)) {
-  fixedTotal += applyMonth(month, n);
-}
+Ele vai abrir o Power Automate
 
-// 2) distribui o restante nos meses finais (uniforme)
-const remaining = ids.length - cursor;
-if (remaining <= 0) {
-  print("Nada restante para distribuir.");
-} else {
-  const perMonth = Math.floor(remaining / MONTHS_FILL.length);
-  let leftover = remaining % MONTHS_FILL.length;
+Você verá algo assim:
 
-  for (const month of MONTHS_FILL) {
-    const n = perMonth + (leftover > 0 ? 1 : 0);
-    if (leftover > 0) leftover--;
-    applyMonth(month, n);
-  }
-}
+Trigger:
 
-print(`Total docs com participationPeriods reescrito: ${cursor} de ${ids.length}`);
+👉 When a Teams webhook request is received
+
+Action:
+
+👉 Post message in a channel
+
+6. Escolher destino
+
+Na action de post:
+
+Team → selecione o time
+Channel → selecione o canal
