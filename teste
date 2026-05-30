@@ -1,9 +1,1 @@
-Get-Process | Where-Object { $_.MainWindowTitle -like "*Work Time*" } | Select-Object ProcessName, Id, MainWindowTitle, MainWindowHandle
-
-Add-Type -Name WinMinWorkTimeTitle -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; $app = Get-Process | Where-Object { $_.MainWindowTitle -like "*Work Time*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1; [WinApi.WinMinWorkTimeTitle]::ShowWindow($app.MainWindowHandle, 6)
-
-$shell = New-Object -ComObject WScript.Shell; $shell.AppActivate("Chrome")
-
-$shell = New-Object -ComObject WScript.Shell; $shell.AppActivate("Work Time")
-
-Get-Process | Where-Object { $_.MainWindowTitle -ne "" } | Select-Object ProcessName, Id, MainWindowTitle
+(New-Object -ComObject WScript.Shell).SendKeys('^%{TAB}')
