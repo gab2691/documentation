@@ -1,1 +1,9 @@
-Add-Type -Name WinMinimizeWortime2 -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; $app = Get-Process wortime | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1; [WinApi.WinMinimizeWortime2]::ShowWindow($app.MainWindowHandle, 6)
+Get-Process | Where-Object { $_.ProcessName -like "*wor*" -or $_.MainWindowTitle -like "*wor*" } | Select-Object ProcessName, MainWindowTitle, MainWindowHandle
+
+Add-Type -Name WinMinWortime -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; Get-Process | Where-Object { $_.ProcessName -like "*wortime*" -and $_.MainWindowHandle -ne 0 } | ForEach-Object { [WinApi.WinMinWortime]::ShowWindow($_.MainWindowHandle, 6) }
+
+Add-Type -Name WinMinWortime2 -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; Get-Process | Where-Object { $_.ProcessName -like "*wortime*" -and $_.MainWindowHandle -ne 0 } | ForEach-Object { [WinApi.WinMinWortime2]::ShowWindow($_.MainWindowHandle, 6) }
+
+Add-Type -Name WinMinWortime3 -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; $app = Get-Process | Where-Object { $_.ProcessName -like "*wortime*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1; [WinApi.WinMinWortime3]::ShowWindow($app.MainWindowHandle, 9); [System.Threading.Thread]::Sleep(500); [WinApi.WinMinWortime3]::ShowWindow($app.MainWindowHandle, 6)
+
+Add-Type -Name WinMoveWortime -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);'; $app = Get-Process | Where-Object { $_.ProcessName -like "*wortime*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1; [WinApi.WinMoveWortime]::MoveWindow($app.MainWindowHandle, 3000, 100, 1000, 700, $true)
