@@ -1,9 +1,9 @@
-Get-Process | Where-Object { $_.ProcessName -like "*wor*" -or $_.MainWindowTitle -like "*wor*" } | Select-Object ProcessName, MainWindowTitle, MainWindowHandle
+Get-Process | Where-Object { $_.MainWindowTitle -like "*Work Time*" } | Select-Object ProcessName, Id, MainWindowTitle, MainWindowHandle
 
-Add-Type -Name WinMinWortime -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; Get-Process | Where-Object { $_.ProcessName -like "*wortime*" -and $_.MainWindowHandle -ne 0 } | ForEach-Object { [WinApi.WinMinWortime]::ShowWindow($_.MainWindowHandle, 6) }
+Add-Type -Name WinMinWorkTimeTitle -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; $app = Get-Process | Where-Object { $_.MainWindowTitle -like "*Work Time*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1; [WinApi.WinMinWorkTimeTitle]::ShowWindow($app.MainWindowHandle, 6)
 
-Add-Type -Name WinMinWortime2 -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; Get-Process | Where-Object { $_.ProcessName -like "*wortime*" -and $_.MainWindowHandle -ne 0 } | ForEach-Object { [WinApi.WinMinWortime2]::ShowWindow($_.MainWindowHandle, 6) }
+$shell = New-Object -ComObject WScript.Shell; $shell.AppActivate("Chrome")
 
-Add-Type -Name WinMinWortime3 -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'; $app = Get-Process | Where-Object { $_.ProcessName -like "*wortime*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1; [WinApi.WinMinWortime3]::ShowWindow($app.MainWindowHandle, 9); [System.Threading.Thread]::Sleep(500); [WinApi.WinMinWortime3]::ShowWindow($app.MainWindowHandle, 6)
+$shell = New-Object -ComObject WScript.Shell; $shell.AppActivate("Work Time")
 
-Add-Type -Name WinMoveWortime -Namespace WinApi -MemberDefinition '[DllImport("user32.dll")] public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);'; $app = Get-Process | Where-Object { $_.ProcessName -like "*wortime*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1; [WinApi.WinMoveWortime]::MoveWindow($app.MainWindowHandle, 3000, 100, 1000, 700, $true)
+Get-Process | Where-Object { $_.MainWindowTitle -ne "" } | Select-Object ProcessName, Id, MainWindowTitle
