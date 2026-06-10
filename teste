@@ -1,1 +1,11 @@
-(New-Object -ComObject WScript.Shell).SendKeys('^%{TAB}')
+curl -L \
+  -H "Authorization: Bearer $JWT" \
+  -H "Accept: application/vnd.github+json" \
+  https://api.github.com/app/installations
+
+
+curl -L \
+  -X POST \
+  -H "Authorization: Bearer $JWT" \
+  -H "Accept: application/vnd.github+json" \
+  https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens
