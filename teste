@@ -1,2 +1,1 @@
-git config --global --get http.proxy
-git config --global --get https.proxy
+python -m pip install "headroom-ai[all]"
