@@ -1,4 +1,1 @@
-python -m pip install --use-feature=truststore "headroom-ai[all]"
-
-python -m pip --version
-python --version
+openssl s_client -connect pypi.org:443 -showcerts
