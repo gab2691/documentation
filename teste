@@ -1,1 +1,4 @@
-python -m pip install "headroom-ai[all]"
+python -m pip install --use-feature=truststore "headroom-ai[all]"
+
+python -m pip --version
+python --version
