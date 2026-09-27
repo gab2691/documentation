@@ -1,8 +1,24 @@
-env | grep -iE 'proxy|cert|ca_bundle'
+python -c "import certifi; print(certifi.where())"
+
+CERTIFI=$(python -c "import certifi; print(certifi.where())")
+echo "$CERTIFI"
+
+cp "$CERTIFI" ~/corporate-ca-bundle.pem
+
+cat "/c/Users/SEU_USUARIO/Documents/Proxy-Bradesco.cer" >> ~/corporate-ca-bundle.pem
 
 
-python -m pip --version
-python --version
+export PIP_CERT="$HOME/corporate-ca-bundle.pem"
+
+python -m pip index versions requests
 
 
-python -c "import ssl; print(ssl.get_default_verify_paths())"
+python -m pip install "headroom-ai[all]"
+
+
+
+openssl x509 \
+  -in "/c/Users/SEU_USUARIO/Documents/Proxy-Bradesco.cer" \
+  -noout \
+  -subject \
+  -issuer
