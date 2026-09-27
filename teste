@@ -1,1 +1,8 @@
-openssl s_client -connect pypi.org:443 -showcerts
+env | grep -iE 'proxy|cert|ca_bundle'
+
+
+python -m pip --version
+python --version
+
+
+python -c "import ssl; print(ssl.get_default_verify_paths())"
